@@ -2,8 +2,10 @@ mod commands;
 mod services;
 mod state;
 mod utils;
+mod database;
 
 use tauri::Manager;
+use database::init::init_database;
 
 fn main() {
     tauri::Builder::default()
@@ -30,6 +32,20 @@ fn main() {
             {
                 app.handle().plugin(tauri_plugin_devtools::init())?;
             }
+            
+            // Initialize database
+            let handle = app.handle();
+            tauri::async_runtime::spawn(async move {
+                match init_database().await {
+                    Ok(pool) => {
+                        handle.manage(pool);
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to initialize database: {}", e);
+                    }
+                }
+            });
+            
             Ok(())
         })
         .run(tauri::generate_context!())

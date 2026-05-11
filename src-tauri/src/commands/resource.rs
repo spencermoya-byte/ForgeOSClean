@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use tauri::State;
-use std::collections::HashMap;
+use crate::database::resource::ResourceDatabase;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Resource {
@@ -33,119 +33,62 @@ pub struct ResourcesResponse {
     pub resources: Vec<Resource>,
 }
 
-// In-memory storage for resources (in production, this would be a database)
-// This is just for demonstration purposes
-static mut RESOURCES: Option<HashMap<String, Resource>> = None;
-
 #[tauri::command]
-pub fn create_resource(
-    _app_handle: tauri::AppHandle,
+pub async fn create_resource(
+    db: State<'_, sqlx::SqlitePool>,
     request: CreateResourceRequest,
 ) -> Result<ResourceResponse, String> {
-    let id = uuid::Uuid::new_v4().to_string();
-    let now = chrono::Utc::now().to_rfc3339();
-    
-    let resource = Resource {
-        id: id.clone(),
-        name: request.name,
-        description: request.description,
-        created_at: now.clone(),
-        updated_at: now,
-    };
-    
-    unsafe {
-        if RESOURCES.is_none() {
-            RESOURCES = Some(HashMap::new());
-        }
-        RESOURCES.as_mut().unwrap().insert(id, resource.clone());
-    }
-    
-    Ok(ResourceResponse { resource })
-}
-
-#[tauri::command]
-pub fn get_resources(_app_handle: tauri::AppHandle) -> Result<ResourcesResponse, String> {
-    unsafe {
-        if RESOURCES.is_none() {
-            RESOURCES = Some(HashMap::new());
-        }
-        let resources: Vec<Resource> = RESOURCES.as_ref().unwrap().values().cloned().collect();
-        Ok(ResourcesResponse { resources })
+    let resource_db = ResourceDatabase::new(db.inner().clone());
+    match resource_db.create_resource(request).await {
+        Ok(resource) => Ok(ResourceResponse { resource }),
+        Err(e) => Err(format!("Failed to create resource: {}", e)),
     }
 }
 
 #[tauri::command]
-pub fn get_resource(
-    _app_handle: tauri::AppHandle,
+pub async fn get_resources(
+    db: State<'_, sqlx::SqlitePool>,
+) -> Result<ResourcesResponse, String> {
+    let resource_db = ResourceDatabase::new(db.inner().clone());
+    match resource_db.get_resources().await {
+        Ok(resources) => Ok(ResourcesResponse { resources }),
+        Err(e) => Err(format!("Failed to get resources: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn get_resource(
+    db: State<'_, sqlx::SqlitePool>,
     id: String,
 ) -> Result<ResourceResponse, String> {
-    unsafe {
-        if RESOURCES.is_none() {
-            RESOURCES = Some(HashMap::new());
-        }
-        match RESOURCES.as_ref().unwrap().get(&id) {
-            Some(resource) => Ok(ResourceResponse { resource: resource.clone() }),
-            None => Err("Resource not found".to_string()),
-        }
+    let resource_db = ResourceDatabase::new(db.inner().clone());
+    match resource_db.get_resource(&id).await {
+        Ok(resource) => Ok(ResourceResponse { resource }),
+        Err(e) => Err(format!("Failed to get resource: {}", e)),
     }
 }
 
 #[tauri::command]
-pub fn update_resource(
-    _app_handle: tauri::AppHandle,
+pub async fn update_resource(
+    db: State<'_, sqlx::SqlitePool>,
     id: String,
     request: UpdateResourceRequest,
 ) -> Result<ResourceResponse, String> {
-    unsafe {
-        if RESOURCES.is_none() {
-            RESOURCES = Some(HashMap::new());
-        }
-        match RESOURCES.as_mut().unwrap().get_mut(&id) {
-            Some(resource) => {
-                let now = chrono::Utc::now().to_rfc3339();
-                if let Some(name) = request.name {
-                    resource.name = name;
-                }
-                if let Some(description) = request.description {
-                    resource.description = description;
-                }
-                resource.updated_at = now;
-                Ok(ResourceResponse { resource: resource.clone() })
-            }
-            None => Err("Resource not found".to_string()),
-        }
+    let resource_db = ResourceDatabase::new(db.inner().clone());
+    match resource_db.update_resource(&id, request).await {
+        Ok(resource) => Ok(ResourceResponse { resource }),
+        Err(e) => Err(format!("Failed to update resource: {}", e)),
     }
 }
 
 #[tauri::command]
-pub fn delete_resource(
-    _app_handle: tauri::AppHandle,
+pub async fn delete_resource(
+    db: State<'_, sqlx::SqlitePool>,
     id: String,
 ) -> Result<(), String> {
-    unsafe {
-        if RESOURCES.is_none() {
-            RESOURCES = Some(HashMap::new());
-        }
-        match RESOURCES.as_mut().unwrap().remove(&id) {
-            Some(_) => Ok(()),
-            None => Err("Resource not found".to_string()),
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_create_resource() {
-        let result = create_resource(
-            tauri::AppHandle::default(),
-            CreateResourceRequest {
-                name: "Test Resource".to_string(),
-                description: "Test Description".to_string(),
-            },
-        );
-        assert!(result.is_ok());
+    let resource_db = ResourceDatabase::new(db.inner().clone());
+    match resource_db.delete_resource(&id).await {
+        Ok(_) => Ok(()),
+        Err(e) => Err(format!("Failed to delete resource: {}", e)),
     }
 }
