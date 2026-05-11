@@ -1,48 +1,35 @@
-import axios from '../services/axios';
+import axios from './axios';
 
-const getUser = async () => {
-  const response = await axios.get('/users/me');
-  return response.data;
-};
-
-const login = async (username: string, password: string) => {
+export const login = async (username: string, password: string) => {
   const response = await axios.post('/auth/login', { username, password });
   localStorage.setItem('token', response.data.token);
   return response.data;
 };
 
-const register = async (username: string, password: string) => {
+export const register = async (username: string, password: string) => {
   const response = await axios.post('/auth/register', { username, password });
   return response.data;
 };
 
-const logout = () => {
-  localStorage.removeItem('token');
-};
-
-const getUserProfile = async () => {
-  const response = await axios.get('/profile/me');
+export const getUserProfile = async () => {
+  const response = await axios.get('/auth/profile');
   return response.data;
 };
 
-const updateUserProfile = async (newProfile: any) => {
-  const response = await axios.put('/profile/update', newProfile);
+export const updateUserProfile = async (newProfile: any) => {
+  const response = await axios.put('/auth/profile', newProfile);
   return response.data;
 };
 
-const updatePassword = async (newPassword: string) => {
-  const response = await axios.post('/auth/change-password', { password: newPassword });
+export const updatePassword = async (newPassword: string) => {
+  const response = await axios.put('/auth/password', { newPassword });
   return response.data;
 };
 
-const getResources = async () => {
-  const response = await axios.get('/resources');
-  return response.data;
+export default {
+  login,
+  register,
+  getUserProfile,
+  updateUserProfile,
+  updatePassword,
 };
-
-const getResourceById = async (id: string) => {
-  const response = await axios.get(`/resources/${id}`);
-  return response.data;
-};
-
-export default { getUser, login, register, logout, getUserProfile, updateUserProfile, updatePassword, getResources, getResourceById };
