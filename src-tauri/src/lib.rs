@@ -3,6 +3,8 @@ mod services;
 mod state;
 mod utils;
 
+use tauri::Manager;
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
@@ -14,10 +16,22 @@ fn main() {
             commands::auth::register,
             commands::auth::logout,
             commands::auth::get_user_info,
-            commands::profile::get_user_profile,
-            commands::profile::update_user_profile,
-            commands::profile::update_user_password,
+            commands::auth::get_user_profile,
+            commands::auth::update_user_profile,
+            commands::auth::update_user_password,
+            commands::resource::create_resource,
+            commands::resource::get_resources,
+            commands::resource::get_resource,
+            commands::resource::update_resource,
+            commands::resource::delete_resource,
         ])
-        .run(Context::default())
+        .setup(|app| {
+            #[cfg(debug_assertions)] // only include this code on debug builds
+            {
+                app.handle().plugin(tauri_plugin_devtools::init())?;
+            }
+            Ok(())
+        })
+        .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
