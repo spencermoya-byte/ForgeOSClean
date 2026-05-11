@@ -105,5 +105,64 @@ async fn init_schema(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     
     sqlx::execute(create_resource_tags_table).execute(pool).await?;
     
+    // Create AI models table
+    let create_ai_models_table = r#"
+        CREATE TABLE IF NOT EXISTS ai_models (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            provider TEXT NOT NULL,
+            description TEXT,
+            is_active INTEGER DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_ai_models_table).execute(pool).await?;
+    
+    // Create AI providers table
+    let create_ai_providers_table = r#"
+        CREATE TABLE IF NOT EXISTS ai_providers (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            type TEXT NOT NULL,
+            base_url TEXT,
+            api_key TEXT,
+            is_active INTEGER DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_ai_providers_table).execute(pool).await?;
+    
+    // Create AI chat sessions table
+    let create_ai_chat_sessions_table = r#"
+        CREATE TABLE IF NOT EXISTS ai_chat_sessions (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_ai_chat_sessions_table).execute(pool).await?;
+    
+    // Create AI chat messages table
+    let create_ai_chat_messages_table = r#"
+        CREATE TABLE IF NOT EXISTS ai_chat_messages (
+            id TEXT PRIMARY KEY,
+            session_id TEXT,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            model_id TEXT,
+            provider_id TEXT,
+            FOREIGN KEY (session_id) REFERENCES ai_chat_sessions (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_ai_chat_messages_table).execute(pool).await?;
+    
     Ok(())
 }

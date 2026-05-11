@@ -3,6 +3,7 @@ mod services;
 mod state;
 mod utils;
 mod database;
+mod ai;
 
 use tauri::Manager;
 use database::init::init_database;
@@ -40,6 +41,14 @@ fn main() {
             commands::project::delete_project,
             commands::project::set_active_project,
             commands::project::get_active_project,
+            commands::ai::get_ai_models,
+            commands::ai::get_ai_providers,
+            commands::ai::get_ai_model_status,
+            commands::ai::get_ai_provider_status,
+            commands::ai::send_ai_request,
+            commands::ai::create_ai_chat_session,
+            commands::ai::send_ai_chat_message,
+            commands::ai::get_ai_chat_history,
         ])
         .setup(|app| {
             #[cfg(debug_assertions)] // only include this code on debug builds

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/authContext';
 import { getWorkspaces, getActiveWorkspace } from '../../api/workspace';
 import { getProjects, getActiveProject } from '../../api/project';
+import { getAiModels, getAiProviders } from '../../api/ai';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +12,8 @@ const Dashboard: React.FC = () => {
   const [activeWorkspace, setActiveWorkspace] = useState<any>(null);
   const [projects, setProjects] = useState<any[]>([]);
   const [activeProject, setActiveProject] = useState<any>(null);
+  const [aiModels, setAiModels] = useState<any[]>([]);
+  const [aiProviders, setAiProviders] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -28,6 +31,13 @@ const Dashboard: React.FC = () => {
           const activeProject = await getActiveProject();
           setActiveProject(activeProject);
         }
+        
+        // Fetch AI data
+        const fetchedModels = await getAiModels();
+        setAiModels(fetchedModels);
+        
+        const fetchedProviders = await getAiProviders();
+        setAiProviders(fetchedProviders);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
       }
@@ -82,6 +92,24 @@ const Dashboard: React.FC = () => {
           >
             <h2 className="text-xl font-bold mb-2">Settings</h2>
             <p className="text-gray-300">Configure application settings</p>
+          </div>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div 
+            className="bg-gray-800 p-6 rounded-lg shadow-lg cursor-pointer hover:bg-gray-700 transition duration-200"
+            onClick={() => navigate('/ai/settings')}
+          >
+            <h2 className="text-xl font-bold mb-2">AI Settings</h2>
+            <p className="text-gray-300">Configure AI providers and models</p>
+          </div>
+          
+          <div 
+            className="bg-gray-800 p-6 rounded-lg shadow-lg cursor-pointer hover:bg-gray-700 transition duration-200"
+            onClick={() => navigate('/ai/chat')}
+          >
+            <h2 className="text-xl font-bold mb-2">AI Assistant</h2>
+            <p className="text-gray-300">Chat with your AI assistant</p>
           </div>
         </div>
       </main>
