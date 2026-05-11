@@ -6,41 +6,44 @@ export interface Resource {
   description: string;
   createdAt: string;
   updatedAt: string;
-  // Add other fields as needed
 }
 
 export interface CreateResourceData {
   name: string;
   description: string;
-  // Add other fields as needed
 }
 
 export interface UpdateResourceData {
   name?: string;
   description?: string;
-  // Add other fields as needed
 }
 
+// For Tauri integration, we'll use window.__TAURI__.invoke directly
 export const getResource = async (id: string): Promise<Resource> => {
-  const response = await axios.get(`/resources/${id}`);
-  return response.data;
+  // For Tauri, we'll use the Tauri invoke API
+  const response = await window.__TAURI__.invoke('get_resource', { id });
+  return response as Resource;
 };
 
 export const getResources = async (): Promise<Resource[]> => {
-  const response = await axios.get('/resources');
-  return response.data;
+  // For Tauri, we'll use the Tauri invoke API
+  const response = await window.__TAURI__.invoke('get_resources');
+  return response as Resource[];
 };
 
 export const createResource = async (data: CreateResourceData): Promise<Resource> => {
-  const response = await axios.post('/resources', data);
-  return response.data;
+  // For Tauri, we'll use the Tauri invoke API
+  const response = await window.__TAURI__.invoke('create_resource', { request: data });
+  return response as Resource;
 };
 
 export const updateResource = async (id: string, data: UpdateResourceData): Promise<Resource> => {
-  const response = await axios.put(`/resources/${id}`, data);
-  return response.data;
+  // For Tauri, we'll use the Tauri invoke API
+  const response = await window.__TAURI__.invoke('update_resource', { id, request: data });
+  return response as Resource;
 };
 
 export const deleteResource = async (id: string): Promise<void> => {
-  await axios.delete(`/resources/${id}`);
+  // For Tauri, we'll use the Tauri invoke API
+  await window.__TAURI__.invoke('delete_resource', { id });
 };

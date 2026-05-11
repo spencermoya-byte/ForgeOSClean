@@ -81,6 +81,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     await axios.updatePassword(newPassword);
   };
 
+  const getUser = async () => {
+    try {
+      const userData = await axios.getUserProfile();
+      return userData;
+    } catch (error) {
+      console.error('Failed to get user:', error);
+      return null;
+    }
+  };
+
   return (
     <AuthContext.Provider value={{ isAuthenticated, user, login, register, logout, getUserProfile, updateUserProfile, updatePassword }}>
       {children}
