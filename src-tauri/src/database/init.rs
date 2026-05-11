@@ -15,10 +15,43 @@ pub async fn init_database() -> Result<SqlitePool, sqlx::Error> {
 }
 
 async fn init_schema(pool: &SqlitePool) -> Result<(), sqlx::Error> {
-    // Create resources table with advanced fields
+    // Create workspaces table
+    let create_workspaces_table = r#"
+        CREATE TABLE IF NOT EXISTS workspaces (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            path TEXT,
+            is_active INTEGER DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_workspaces_table).execute(pool).await?;
+    
+    // Create projects table
+    let create_projects_table = r#"
+        CREATE TABLE IF NOT EXISTS projects (
+            id TEXT PRIMARY KEY,
+            workspace_id TEXT,
+            name TEXT NOT NULL,
+            description TEXT,
+            is_active INTEGER DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (workspace_id) REFERENCES workspaces (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_projects_table).execute(pool).await?;
+    
+    // Create resources table with workspace and project references
     let create_resources_table = r#"
         CREATE TABLE IF NOT EXISTS resources (
             id TEXT PRIMARY KEY,
+            workspace_id TEXT,
+            project_id TEXT,
             name TEXT NOT NULL,
             description TEXT,
             category TEXT,
@@ -27,7 +60,9 @@ async fn init_schema(pool: &SqlitePool) -> Result<(), sqlx::Error> {
             is_pinned INTEGER DEFAULT 0,
             is_archived INTEGER DEFAULT 0,
             created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (workspace_id) REFERENCES workspaces (id) ON DELETE CASCADE,
+            FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
         );
     "#;
     

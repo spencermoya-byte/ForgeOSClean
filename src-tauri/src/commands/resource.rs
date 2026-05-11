@@ -63,9 +63,9 @@ pub async fn get_resources(
     let limit = limit.unwrap_or(20);
     let offset = offset.unwrap_or(0);
     
-    match resource_db.get_resources_with_filters(&filters, &sort_by, &sort_order, limit, offset).await {
+    match resource_db.get_resources_with_filters(None, None, &filters, &sort_by, &sort_order, limit, offset).await {
         Ok(resources) => {
-            let total = resource_db.get_resource_count(&filters).await.unwrap_or(0);
+            let total = resource_db.get_resource_count(None, None, &filters).await.unwrap_or(0);
             Ok(ResourcesResponse { resources, total })
         }
         Err(e) => Err(format!("Failed to get resources: {}", e)),

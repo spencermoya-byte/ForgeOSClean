@@ -131,8 +131,8 @@ impl ResourceDatabase {
         Ok(())
     }
     
-    // Advanced resource operations
-    pub async fn get_resources_with_filters(&self, filters: &str, sort_by: &str, sort_order: &str, limit: i32, offset: i32) -> Result<Vec<Resource>, sqlx::Error> {
+    // Advanced resource operations with workspace/project filtering
+    pub async fn get_resources_with_filters(&self, workspace_id: Option<&str>, project_id: Option<&str>, filters: &str, sort_by: &str, sort_order: &str, limit: i32, offset: i32) -> Result<Vec<Resource>, sqlx::Error> {
         let mut query = r#"
             SELECT id, name, description, created_at, updated_at
             FROM resources
@@ -140,6 +140,16 @@ impl ResourceDatabase {
         "#.to_string();
         
         let mut binds: Vec<&dyn sqlx::Encode<sqlx::Sqlite> + Sync> = vec![];
+        
+        if let Some(workspace_id) = workspace_id {
+            query.push_str(" AND workspace_id = ?");
+            binds.push(workspace_id);
+        }
+        
+        if let Some(project_id) = project_id {
+            query.push_str(" AND project_id = ?");
+            binds.push(project_id);
+        }
         
         if !filters.is_empty() {
             query.push_str(" AND (name LIKE ? OR description LIKE ?)");
@@ -173,7 +183,7 @@ impl ResourceDatabase {
         Ok(resources)
     }
     
-    pub async fn get_resource_count(&self, filters: &str) -> Result<i64, sqlx::Error> {
+    pub async fn get_resource_count(&self, workspace_id: Option<&str>, project_id: Option<&str>, filters: &str) -> Result<i64, sqlx::Error> {
         let mut query = r#"
             SELECT COUNT(*) as count
             FROM resources
@@ -181,6 +191,16 @@ impl ResourceDatabase {
         "#.to_string();
         
         let mut binds: Vec<&dyn sqlx::Encode<sqlx::Sqlite> + Sync> = vec![];
+        
+        if let Some(workspace_id) = workspace_id {
+            query.push_str(" AND workspace_id = ?");
+            binds.push(workspace_id);
+        }
+        
+        if let Some(project_id) = project_id {
+            query.push_str(" AND project_id = ?");
+            binds.push(project_id);
+        }
         
         if !filters.is_empty() {
             query.push_str(" AND (name LIKE ? OR description LIKE ?)");

@@ -26,6 +26,20 @@ fn main() {
             commands::resource::get_resource,
             commands::resource::update_resource,
             commands::resource::delete_resource,
+            commands::workspace::create_workspace,
+            commands::workspace::get_workspaces,
+            commands::workspace::get_workspace,
+            commands::workspace::update_workspace,
+            commands::workspace::delete_workspace,
+            commands::workspace::set_active_workspace,
+            commands::workspace::get_active_workspace,
+            commands::project::create_project,
+            commands::project::get_projects,
+            commands::project::get_project,
+            commands::project::update_project,
+            commands::project::delete_project,
+            commands::project::set_active_project,
+            commands::project::get_active_project,
         ])
         .setup(|app| {
             #[cfg(debug_assertions)] // only include this code on debug builds

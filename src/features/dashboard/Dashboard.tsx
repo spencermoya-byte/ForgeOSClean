@@ -1,10 +1,40 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/authContext';
+import { getWorkspaces, getActiveWorkspace } from '../../api/workspace';
+import { getProjects, getActiveProject } from '../../api/project';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [workspaces, setWorkspaces] = useState<any[]>([]);
+  const [activeWorkspace, setActiveWorkspace] = useState<any>(null);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [activeProject, setActiveProject] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const fetchedWorkspaces = await getWorkspaces();
+        setWorkspaces(fetchedWorkspaces);
+        
+        const activeWorkspace = await getActiveWorkspace();
+        setActiveWorkspace(activeWorkspace);
+        
+        if (activeWorkspace) {
+          const fetchedProjects = await getProjects(activeWorkspace.id);
+          setProjects(fetchedProjects);
+          
+          const activeProject = await getActiveProject();
+          setActiveProject(activeProject);
+        }
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -24,6 +54,11 @@ const Dashboard: React.FC = () => {
       </header>
 
       <main className="container mx-auto p-4">
+        <div className="mb-6">
+          <h2 className="text-xl font-bold mb-2">Active Workspace: {activeWorkspace?.name || 'None'}</h2>
+          <p className="text-gray-400 mb-4">Active Project: {activeProject?.name || 'None'}</p>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div 
             className="bg-gray-800 p-6 rounded-lg shadow-lg cursor-pointer hover:bg-gray-700 transition duration-200"

@@ -10,6 +10,8 @@ import CreateResource from './features/resources/CreateResource';
 import EditResource from './features/resources/EditResource';
 import ProfilePage from './features/profile/ProfilePage';
 import SettingsPage from './features/settings/SettingsPage';
+import WorkspaceList from './features/workspace/WorkspaceList';
+import CreateWorkspace from './features/workspace/CreateWorkspace';
 
 const App: React.FC = () => {
   return (
@@ -20,12 +22,15 @@ const App: React.FC = () => {
             <Route path="/login" element={<Login />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/resources" element={<ResourceList />} />
               <Route path="/resources/:id" element={<ResourceDetail />} />
               <Route path="/resources/new" element={<CreateResource />} />
               <Route path="/resources/:id/edit" element={<EditResource />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/workspaces" element={<WorkspaceList />} />
+              <Route path="/workspaces/new" element={<CreateWorkspace />} />
             </Route>
           </Routes>
         </div>
