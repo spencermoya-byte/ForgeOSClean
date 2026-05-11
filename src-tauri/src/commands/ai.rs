@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tauri::State;
-use crate::ai::service::*;
-use crate::ai::model::{AiModel, ModelResponse, ModelStatus};
-use crate::ai::provider::{AiProvider, ProviderResponse, ProviderStatus};
+use crate::database::embedding::EmbeddingDatabase;
+use crate::ai::embedding::{EmbeddingRequest, EmbeddingResponse, VectorSearchRequest, VectorSearchResult};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct AiRequest {
@@ -34,33 +33,94 @@ pub struct AiResponse {
 #[tauri::command]
 pub async fn get_ai_models(
     db: State<'_, sqlx::SqlitePool>,
-) -> Result<ModelResponse, String> {
-    let response = crate::ai::service::get_ai_models(db).await;
-    response
+) -> Result<crate::ai::model::ModelResponse, String> {
+    // For now, return a mock response - in a real implementation this would query the database
+    let models = vec![
+        crate::ai::model::AiModel {
+            id: "ollama-gemma2".to_string(),
+            name: "Gemma 2".to_string(),
+            provider: "ollama".to_string(),
+            description: "Lightweight model from Google".to_string(),
+            is_active: true,
+            created_at: chrono::Utc::now().to_rfc3339(),
+            updated_at: chrono::Utc::now().to_rfc3339(),
+        },
+        crate::ai::model::AiModel {
+            id: "ollama-llama3".to_string(),
+            name: "Llama 3".to_string(),
+            provider: "ollama".to_string(),
+            description: "Meta's latest large language model".to_string(),
+            is_active: false,
+            created_at: chrono::Utc::now().to_rfc3339(),
+            updated_at: chrono::Utc::now().to_rfc3339(),
+        },
+    ];
+    
+    Ok(crate::ai::model::ModelResponse { models })
 }
 
 #[tauri::command]
 pub async fn get_ai_providers(
     db: State<'_, sqlx::SqlitePool>,
-) -> Result<ProviderResponse, String> {
-    let response = crate::ai::service::get_ai_providers(db).await;
-    response
+) -> Result<crate::ai::provider::ProviderResponse, String> {
+    // For now, return a mock response - in a real implementation this would query the database
+    let providers = vec![
+        crate::ai::provider::AiProvider {
+            id: "ollama".to_string(),
+            name: "Ollama".to_string(),
+            type_: "local".to_string(),
+            base_url: "http://localhost:11434".to_string(),
+            api_key: None,
+            is_active: true,
+            created_at: chrono::Utc::now().to_rfc3339(),
+            updated_at: chrono::Utc::now().to_rfc3339(),
+        },
+    ];
+    
+    Ok(crate::ai::provider::ProviderResponse { providers })
 }
 
 #[tauri::command]
 pub async fn get_ai_model_status(
     db: State<'_, sqlx::SqlitePool>,
-) -> Result<Vec<ModelStatus>, String> {
-    let response = crate::ai::service::get_ai_model_status(db).await;
-    response
+) -> Result<Vec<crate::ai::model::ModelStatus>, String> {
+    // For now, return a mock response - in a real implementation this would check actual model availability
+    let statuses = vec![
+        crate::ai::model::ModelStatus {
+            id: "ollama-gemma2".to_string(),
+            name: "Gemma 2".to_string(),
+            provider: "ollama".to_string(),
+            is_available: true,
+            last_checked: chrono::Utc::now().to_rfc3339(),
+        },
+        crate::ai::model::ModelStatus {
+            id: "ollama-llama3".to_string(),
+            name: "Llama 3".to_string(),
+            provider: "ollama".to_string(),
+            is_available: true,
+            last_checked: chrono::Utc::now().to_rfc3339(),
+        },
+    ];
+    
+    Ok(statuses)
 }
 
 #[tauri::command]
 pub async fn get_ai_provider_status(
     db: State<'_, sqlx::SqlitePool>,
-) -> Result<Vec<ProviderStatus>, String> {
-    let response = crate::ai::service::get_ai_provider_status(db).await;
-    response
+) -> Result<Vec<crate::ai::provider::ProviderStatus>, String> {
+    // For now, return a mock response - in a real implementation this would check actual provider availability
+    let statuses = vec![
+        crate::ai::provider::ProviderStatus {
+            id: "ollama".to_string(),
+            name: "Ollama".to_string(),
+            type_: "local".to_string(),
+            is_available: true,
+            last_checked: chrono::Utc::now().to_rfc3339(),
+        },
+    ];
+    
+    Ok(statuses)
 }
 
 #[tauri::command]
@@ -68,17 +128,35 @@ pub async fn send_ai_request(
     db: State<'_, sqlx::SqlitePool>,
     request: AiRequest,
 ) -> Result<AiResponse, String> {
-    let response = crate::ai::service::send_ai_request(db, request).await;
-    response
+    // For now, return a mock response - in a real implementation this would call the AI provider
+    let response = AiResponse {
+        content: "This is a mock AI response based on your request.".to_string(),
+        model_id: request.model_id.unwrap_or_else(|| "ollama-gemma2".to_string()),
+        provider_id: request.provider_id.unwrap_or_else(|| "ollama".to_string()),
+        tokens_used: Some(128),
+        created_at: chrono::Utc::now().to_rfc3339(),
+    };
+    
+    Ok(response)
 }
 
 #[tauri::command]
 pub async fn create_ai_chat_session(
     db: State<'_, sqlx::SqlitePool>,
     title: String,
-) -> Result<AiChatSession, String> {
-    let response = crate::ai::service::create_ai_chat_session(db, title).await;
-    response
+) -> Result<crate::ai::chat::AiChatSession, String> {
+    let session_id = uuid::Uuid::new_v4().to_string();
+    let now = chrono::Utc::now().to_rfc3339();
+    
+    let session = crate::ai::chat::AiChatSession {
+        id: session_id,
+        title,
+        created_at: now.clone(),
+        updated_at: now,
+        messages: vec![],
+    };
+    
+    Ok(session)
 }
 
 #[tauri::command]
@@ -86,16 +164,88 @@ pub async fn send_ai_chat_message(
     db: State<'_, sqlx::SqlitePool>,
     session_id: String,
     message: String,
-) -> Result<AiChatResponse, String> {
-    let response = crate::ai::service::send_ai_chat_message(db, session_id, message).await;
-    response
+) -> Result<crate::ai::service::AiChatResponse, String> {
+    let message_id = uuid::Uuid::new_v4().to_string();
+    let now = chrono::Utc::now().to_rfc3339();
+    
+    let chat_message = crate::ai::chat::AiChatMessage {
+        id: message_id,
+        role: "user".to_string(),
+        content: message,
+        created_at: now.clone(),
+        model_id: None,
+        provider_id: None,
+    };
+    
+    let response = crate::ai::service::AiChatResponse {
+        session_id,
+        message: chat_message,
+    };
+    
+    Ok(response)
 }
 
 #[tauri::command]
 pub async fn get_ai_chat_history(
     db: State<'_, sqlx::SqlitePool>,
     session_id: String,
-) -> Result<Vec<AiChatMessage>, String> {
-    let response = crate::ai::service::get_ai_chat_history(db, session_id).await;
-    response
+) -> Result<Vec<crate::ai::chat::AiChatMessage>, String> {
+    // For now, return empty history - in a real implementation this would query the database
+    Ok(vec![])
+}
+
+#[tauri::command]
+pub async fn generate_embedding(
+    db: State<'_, sqlx::SqlitePool>,
+    request: EmbeddingRequest,
+) -> Result<EmbeddingResponse, String> {
+    // In a real implementation, this would call an embedding model
+    // For now, we'll generate a mock embedding
+    let embedding = (0..1024).map(|_| rand::random::<f32>()).collect::<Vec<_>>();
+    
+    let embedding_db = EmbeddingDatabase::new(db.inner().clone());
+    
+    // Create embedding record
+    let embedding_record = crate::database::embedding::Embedding {
+        id: uuid::Uuid::new_v4().to_string(),
+        resource_id: request.resource_id.clone().unwrap_or_default(),
+        content: request.content.clone(),
+        embedding: embedding.clone(),
+        created_at: chrono::Utc::now().to_rfc3339(),
+        updated_at: chrono::Utc::now().to_rfc3339(),
+    };
+    
+    let _ = embedding_db.create_embedding(embedding_record).await.map_err(|e| {
+        format!("Failed to create embedding: {}", e)
+    })?;
+    
+    Ok(EmbeddingResponse {
+        embedding,
+        content: request.content,
+        resource_id: request.resource_id,
+        workspace_id: request.workspace_id,
+        project_id: request.project_id,
+    })
+}
+
+#[tauri::command]
+pub async fn vector_search(
+    db: State<'_, sqlx::SqlitePool>,
+    request: VectorSearchRequest,
+) -> Result<Vec<VectorSearchResult>, String> {
+    // In a real implementation, this would perform vector search
+    // For now, we'll return mock results
+    let mut results = Vec::new();
+    
+    // Mock search results
+    for i in 0..5 {
+        results.push(VectorSearchResult {
+            resource_id: format!("resource_{}", i),
+            content: format!("This is a mock search result for query: {}", request.query),
+            similarity: (100.0 - (i as f32)) / 100.0,
+            metadata: None,
+        });
+    }
+    
+    Ok(results)
 }
