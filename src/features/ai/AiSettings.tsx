@@ -168,6 +168,30 @@ const AiSettings: React.FC = () => {
               <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
             </div>
           </div>
+          
+          <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+            <div>
+              <h4 className="font-semibold text-white">Semantic Search</h4>
+              <p className="text-sm text-gray-300">Vector-based semantic search across your workspace</p>
+            </div>
+            <div className="relative inline-block w-12 h-6">
+              <input type="checkbox" className="sr-only" defaultChecked />
+              <div className="block w-12 h-6 rounded-full bg-blue-600"></div>
+              <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition transform translate-x-6"></div>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between p-3 bg-gray-700 rounded-lg">
+            <div>
+              <h4 className="font-semibold text-white">Workflow Automation</h4>
+              <p className="text-sm text-gray-300">AI-assisted workflow creation and execution</p>
+            </div>
+            <div className="relative inline-block w-12 h-6">
+              <input type="checkbox" className="sr-only" defaultChecked />
+              <div className="block w-12 h-6 rounded-full bg-blue-600"></div>
+              <div className="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition transform translate-x-6"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

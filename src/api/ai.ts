@@ -62,6 +62,43 @@ export interface AiChatSession {
   messages: AiChatMessage[];
 }
 
+export interface WorkflowSuggestion {
+  id: string;
+  name: string;
+  description: string;
+  steps: WorkflowStep[];
+  confidence: number;
+  createdAt: string;
+}
+
+export interface WorkflowStep {
+  id: string;
+  name: string;
+  description: string;
+  stepType: string;
+  config: any;
+  position: number;
+}
+
+export interface WorkflowContext {
+  workspaceId?: string;
+  projectId?: string;
+  resourceId?: string;
+  tags?: string[];
+  content?: string;
+}
+
+export interface WorkflowGenerationRequest {
+  prompt: string;
+  context: WorkflowContext;
+  maxSteps?: number;
+}
+
+export interface WorkflowGenerationResponse {
+  workflow: WorkflowSuggestion;
+  generatedAt: string;
+}
+
 export const getAiModels = async (): Promise<AiModel[]> => {
   const response = await window.__TAURI__.invoke('get_ai_models');
   return response as AiModel[];
@@ -100,4 +137,14 @@ export const sendAiChatMessage = async (sessionId: string, message: string): Pro
 export const getAiChatHistory = async (sessionId: string): Promise<AiChatMessage[]> => {
   const response = await window.__TAURI__.invoke('get_ai_chat_history', { sessionId });
   return response as AiChatMessage[];
+};
+
+export const generateWorkflowSuggestions = async (request: WorkflowGenerationRequest): Promise<WorkflowSuggestion[]> => {
+  const response = await window.__TAURI__.invoke('generate_workflow_suggestions', { request });
+  return response as WorkflowSuggestion[];
+};
+
+export const getWorkflowContext = async (workspaceId?: string, projectId?: string, resourceId?: string): Promise<WorkflowContext> => {
+  const response = await window.__TAURI__.invoke('get_workflow_context', { workspaceId, projectId, resourceId });
+  return response as WorkflowContext;
 };

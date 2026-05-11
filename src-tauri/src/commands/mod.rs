@@ -6,6 +6,7 @@ mod resource;
 mod workspace;
 mod project;
 mod ai;
+mod workflow;
 
 pub use app_info::*;
 pub use system_info::*;
@@ -15,3 +16,4 @@ pub use resource::*;
 pub use workspace::*;
 pub use project::*;
 pub use ai::*;
+pub use workflow::*;

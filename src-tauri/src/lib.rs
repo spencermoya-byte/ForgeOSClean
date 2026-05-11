@@ -49,6 +49,20 @@ fn main() {
             commands::ai::create_ai_chat_session,
             commands::ai::send_ai_chat_message,
             commands::ai::get_ai_chat_history,
+            commands::ai::generate_embedding,
+            commands::ai::vector_search,
+            commands::ai::generate_workflow_suggestions,
+            commands::ai::get_workflow_context,
+            commands::workflow::create_workflow,
+            commands::workflow::get_workflows,
+            commands::workflow::get_workflow,
+            commands::workflow::update_workflow,
+            commands::workflow::delete_workflow,
+            commands::workflow::create_workflow_step,
+            commands::workflow::get_workflow_steps,
+            commands::workflow::update_workflow_step,
+            commands::workflow::create_workflow_execution,
+            commands::workflow::get_workflow_executions,
         ])
         .setup(|app| {
             #[cfg(debug_assertions)] // only include this code on debug builds
