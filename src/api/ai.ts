@@ -99,6 +99,21 @@ export interface WorkflowGenerationResponse {
   generatedAt: string;
 }
 
+export interface PluginCapability {
+  id: string;
+  pluginId: string;
+  capability: string;
+  isEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PluginContext {
+  pluginId: string;
+  capabilities: PluginCapability[];
+  settings: any[];
+}
+
 export const getAiModels = async (): Promise<AiModel[]> => {
   const response = await window.__TAURI__.invoke('get_ai_models');
   return response as AiModel[];
@@ -147,4 +162,19 @@ export const generateWorkflowSuggestions = async (request: WorkflowGenerationReq
 export const getWorkflowContext = async (workspaceId?: string, projectId?: string, resourceId?: string): Promise<WorkflowContext> => {
   const response = await window.__TAURI__.invoke('get_workflow_context', { workspaceId, projectId, resourceId });
   return response as WorkflowContext;
+};
+
+export const getPluginContext = async (pluginId: string): Promise<PluginContext> => {
+  const response = await window.__TAURI__.invoke('get_plugin_context', { pluginId });
+  return response as PluginContext;
+};
+
+export const updatePluginCapability = async (request: PluginCapability): Promise<PluginCapability> => {
+  const response = await window.__TAURI__.invoke('update_plugin_capability', { request });
+  return response as PluginCapability;
+};
+
+export const updatePluginSetting = async (request: any): Promise<any> => {
+  const response = await window.__TAURI__.invoke('update_plugin_setting', { request });
+  return response as any;
 };

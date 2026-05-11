@@ -332,5 +332,54 @@ async fn init_schema(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     
     sqlx::execute(create_automation_executions_table).execute(pool).await?;
     
+    // Create plugins table
+    let create_plugins_table = r#"
+        CREATE TABLE IF NOT EXISTS plugins (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            version TEXT NOT NULL,
+            description TEXT,
+            author TEXT,
+            is_active INTEGER DEFAULT 0,
+            is_system INTEGER DEFAULT 0,
+            capabilities TEXT,
+            config TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_plugins_table).execute(pool).await?;
+    
+    // Create plugin settings table
+    let create_plugin_settings_table = r#"
+        CREATE TABLE IF NOT EXISTS plugin_settings (
+            id TEXT PRIMARY KEY,
+            plugin_id TEXT,
+            key TEXT NOT NULL,
+            value TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (plugin_id) REFERENCES plugins (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_plugin_settings_table).execute(pool).await?;
+    
+    // Create plugin capabilities table
+    let create_plugin_capabilities_table = r#"
+        CREATE TABLE IF NOT EXISTS plugin_capabilities (
+            id TEXT PRIMARY KEY,
+            plugin_id TEXT,
+            capability TEXT NOT NULL,
+            is_enabled INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (plugin_id) REFERENCES plugins (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_plugin_capabilities_table).execute(pool).await?;
+    
     Ok(())
 }

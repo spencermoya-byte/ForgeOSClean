@@ -7,6 +7,7 @@ mod workspace;
 mod project;
 mod ai;
 mod workflow;
+mod plugin;
 
 pub use app_info::*;
 pub use system_info::*;
@@ -17,3 +18,4 @@ pub use workspace::*;
 pub use project::*;
 pub use ai::*;
 pub use workflow::*;
+pub use plugin::*;

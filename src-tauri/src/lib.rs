@@ -63,6 +63,19 @@ fn main() {
             commands::workflow::update_workflow_step,
             commands::workflow::create_workflow_execution,
             commands::workflow::get_workflow_executions,
+            commands::plugin::get_plugins,
+            commands::plugin::get_plugin,
+            commands::plugin::create_plugin,
+            commands::plugin::update_plugin,
+            commands::plugin::delete_plugin,
+            commands::plugin::get_plugin_settings,
+            commands::plugin::get_plugin_setting,
+            commands::plugin::update_plugin_setting,
+            commands::plugin::get_plugin_capabilities,
+            commands::plugin::update_plugin_capability,
+            commands::ai::plugin::get_plugin_context,
+            commands::ai::plugin::update_plugin_capability,
+            commands::ai::plugin::update_plugin_setting,
         ])
         .setup(|app| {
             #[cfg(debug_assertions)] // only include this code on debug builds
