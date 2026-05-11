@@ -31,6 +31,7 @@ pub struct ResourceResponse {
 #[derive(Serialize, Deserialize)]
 pub struct ResourcesResponse {
     pub resources: Vec<Resource>,
+    pub total: i64,
 }
 
 #[tauri::command]
@@ -48,10 +49,25 @@ pub async fn create_resource(
 #[tauri::command]
 pub async fn get_resources(
     db: State<'_, sqlx::SqlitePool>,
+    filters: Option<String>,
+    sort_by: Option<String>,
+    sort_order: Option<String>,
+    limit: Option<i32>,
+    offset: Option<i32>,
 ) -> Result<ResourcesResponse, String> {
     let resource_db = ResourceDatabase::new(db.inner().clone());
-    match resource_db.get_resources().await {
-        Ok(resources) => Ok(ResourcesResponse { resources }),
+    
+    let filters = filters.unwrap_or_default();
+    let sort_by = sort_by.unwrap_or_else(|| "created_at".to_string());
+    let sort_order = sort_order.unwrap_or_else(|| "DESC".to_string());
+    let limit = limit.unwrap_or(20);
+    let offset = offset.unwrap_or(0);
+    
+    match resource_db.get_resources_with_filters(&filters, &sort_by, &sort_order, limit, offset).await {
+        Ok(resources) => {
+            let total = resource_db.get_resource_count(&filters).await.unwrap_or(0);
+            Ok(ResourcesResponse { resources, total })
+        }
         Err(e) => Err(format!("Failed to get resources: {}", e)),
     }
 }

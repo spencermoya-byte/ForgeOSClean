@@ -130,4 +130,69 @@ impl ResourceDatabase {
             
         Ok(())
     }
+    
+    // Advanced resource operations
+    pub async fn get_resources_with_filters(&self, filters: &str, sort_by: &str, sort_order: &str, limit: i32, offset: i32) -> Result<Vec<Resource>, sqlx::Error> {
+        let mut query = r#"
+            SELECT id, name, description, created_at, updated_at
+            FROM resources
+            WHERE 1=1
+        "#.to_string();
+        
+        let mut binds: Vec<&dyn sqlx::Encode<sqlx::Sqlite> + Sync> = vec![];
+        
+        if !filters.is_empty() {
+            query.push_str(" AND (name LIKE ? OR description LIKE ?)");
+            binds.push(&format!("%{}%", filters));
+            binds.push(&format!("%{}%", filters));
+        }
+        
+        query.push_str(&format!(" ORDER BY {} {}", sort_by, sort_order));
+        query.push_str(" LIMIT ? OFFSET ?");
+        
+        binds.push(&limit);
+        binds.push(&offset);
+        
+        let rows = sqlx::query(&query)
+            .bind(&binds)
+            .fetch_all(&self.pool)
+            .await?;
+            
+        let mut resources = Vec::new();
+        for row in rows {
+            let resource = Resource {
+                id: row.get("id"),
+                name: row.get("name"),
+                description: row.get("description"),
+                created_at: row.get("created_at"),
+                updated_at: row.get("updated_at"),
+            };
+            resources.push(resource);
+        }
+        
+        Ok(resources)
+    }
+    
+    pub async fn get_resource_count(&self, filters: &str) -> Result<i64, sqlx::Error> {
+        let mut query = r#"
+            SELECT COUNT(*) as count
+            FROM resources
+            WHERE 1=1
+        "#.to_string();
+        
+        let mut binds: Vec<&dyn sqlx::Encode<sqlx::Sqlite> + Sync> = vec![];
+        
+        if !filters.is_empty() {
+            query.push_str(" AND (name LIKE ? OR description LIKE ?)");
+            binds.push(&format!("%{}%", filters));
+            binds.push(&format!("%{}%", filters));
+        }
+        
+        let row = sqlx::query(&query)
+            .bind(&binds)
+            .fetch_one(&self.pool)
+            .await?;
+            
+        Ok(row.get("count"))
+    }
 }

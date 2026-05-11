@@ -15,17 +15,60 @@ pub async fn init_database() -> Result<SqlitePool, sqlx::Error> {
 }
 
 async fn init_schema(pool: &SqlitePool) -> Result<(), sqlx::Error> {
+    // Create resources table with advanced fields
     let create_resources_table = r#"
         CREATE TABLE IF NOT EXISTS resources (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             description TEXT,
+            category TEXT,
+            tags TEXT,
+            status TEXT DEFAULT 'active',
+            is_pinned INTEGER DEFAULT 0,
+            is_archived INTEGER DEFAULT 0,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
         );
     "#;
     
     sqlx::execute(create_resources_table).execute(pool).await?;
+    
+    // Create categories table
+    let create_categories_table = r#"
+        CREATE TABLE IF NOT EXISTS categories (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            description TEXT,
+            created_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_categories_table).execute(pool).await?;
+    
+    // Create tags table
+    let create_tags_table = r#"
+        CREATE TABLE IF NOT EXISTS tags (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            color TEXT,
+            created_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_tags_table).execute(pool).await?;
+    
+    // Create resource_tags junction table for many-to-many relationship
+    let create_resource_tags_table = r#"
+        CREATE TABLE IF NOT EXISTS resource_tags (
+            resource_id TEXT,
+            tag_id TEXT,
+            PRIMARY KEY (resource_id, tag_id),
+            FOREIGN KEY (resource_id) REFERENCES resources (id) ON DELETE CASCADE,
+            FOREIGN KEY (tag_id) REFERENCES tags (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_resource_tags_table).execute(pool).await?;
     
     Ok(())
 }

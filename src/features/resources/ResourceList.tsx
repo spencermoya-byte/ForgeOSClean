@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { useNavigate } from 'react-router-dom';
 import { getResource, getResources, deleteResource } from '../../api/resource';
@@ -6,19 +6,59 @@ import ResourceCard from './ResourceCard';
 import { useAuth } from '../../auth/authContext';
 import { toast } from 'react-toastify';
 
-const fetchResources = async () => {
-  const resources = await getResources();
-  return resources;
+// Debounce function for search
+const debounce = (func: Function, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+};
+
+const fetchResources = async (filters: any) => {
+  const response = await getResources(filters);
+  return response;
 };
 
 const ResourceList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: string } | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [resourceToDelete, setResourceToDelete] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(12);
+  const [totalResources, setTotalResources] = useState(0);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { data: resources, isLoading, isError, error } = useQuery('resources', fetchResources);
+  const { data: resources, isLoading, isError, error } = useQuery(
+    ['resources', searchTerm, sortConfig, currentPage, pageSize],
+    () => fetchResources({
+      filters: searchTerm,
+      sortBy: sortConfig?.key || 'created_at',
+      sortOrder: sortConfig?.direction || 'DESC',
+      limit: pageSize,
+      offset: currentPage * pageSize
+    })
+  );
   const { isAuthenticated, user } = useAuth();
+
+  // Debounced search
+  const debouncedSearch = debounce((term: string) => {
+    setCurrentPage(0);
+    setSearchTerm(term);
+  }, 300);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    debouncedSearch(e.target.value);
+  };
+
+  const handleSort = (key: string) => {
+    let direction = 'ASC';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ASC') {
+      direction = 'DESC';
+    }
+    setSortConfig({ key, direction });
+  };
 
   const handleDelete = async () => {
     if (!resourceToDelete) return;
@@ -44,6 +84,21 @@ const ResourceList: React.FC = () => {
     setIsDeleteModalOpen(false);
     setResourceToDelete(null);
   };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(0);
+  };
+
+  useEffect(() => {
+    if (resources) {
+      setTotalResources(resources.total);
+    }
+  }, [resources]);
 
   if (isLoading) {
     return (
@@ -75,40 +130,93 @@ const ResourceList: React.FC = () => {
     );
   }
 
-  const filteredResources = resources?.filter((resource: any) =>
-    resource.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    resource.description.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const totalPages = Math.ceil(totalResources / pageSize);
 
   return (
     <div className="p-4">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h2 className="text-2xl font-bold text-white">Resources</h2>
-        <button
-          onClick={() => navigate('/resources/new')}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
-        >
-          Create Resource
-        </button>
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <button
+            onClick={() => navigate('/resources/new')}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+          >
+            Create Resource
+          </button>
+          <div className="relative w-full md:w-auto">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              placeholder="Search resources..."
+              className="w-full p-3 border rounded-lg bg-gray-800 text-white border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
       </div>
 
-      <input
-        type="text"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        placeholder="Search resources..."
-        className="w-full p-3 mb-6 border rounded-lg bg-gray-800 text-white border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-
-      {filteredResources.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredResources.map((resource: any) => (
-            <ResourceCard 
-              key={resource.id} 
-              resource={resource} 
-            />
-          ))}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+        <div className="text-gray-400">
+          Showing {Math.min(pageSize, totalResources)} of {totalResources} resources
         </div>
+        <div className="flex items-center gap-2">
+          <span className="text-gray-400">Items per page:</span>
+          <select
+            value={pageSize}
+            onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+            className="bg-gray-800 text-white border border-gray-700 rounded px-2 py-1"
+          >
+            <option value={12}>12</option>
+            <option value={24}>24</option>
+            <option value={48}>48</option>
+          </select>
+        </div>
+      </div>
+
+      {resources?.resources && resources.resources.length > 0 ? (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {resources.resources.map((resource: any) => (
+              <ResourceCard 
+                key={resource.id} 
+                resource={resource} 
+              />
+            ))}
+          </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-6">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handlePageChange(Math.max(0, currentPage - 1))}
+                  disabled={currentPage === 0}
+                  className={`px-3 py-1 rounded ${currentPage === 0 ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
+                >
+                  Previous
+                </button>
+                
+                {[...Array(totalPages)].map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handlePageChange(i)}
+                    className={`px-3 py-1 rounded ${currentPage === i ? 'bg-blue-600 text-white' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                
+                <button
+                  onClick={() => handlePageChange(Math.min(totalPages - 1, currentPage + 1))}
+                  disabled={currentPage === totalPages - 1}
+                  className={`px-3 py-1 rounded ${currentPage === totalPages - 1 ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-800 text-white hover:bg-gray-700'}`}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       ) : (
         <div className="text-center py-12">
           <div className="text-gray-400 mb-4">No resources found</div>

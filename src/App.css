@@ -63,3 +63,11 @@ code {
 .Toastify__toast--info {
   border-left: 4px solid #3b82f6;
 }
+
+/* Line clamp for description */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

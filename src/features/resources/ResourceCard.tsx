@@ -13,7 +13,7 @@ const ResourceCard: React.FC<ResourceProps> = ({ resource }) => {
       <div className="flex justify-between items-start">
         <h3 className="text-xl font-bold mb-2 text-white">{resource.name}</h3>
       </div>
-      <p className="text-gray-300 mb-4">{resource.description}</p>
+      <p className="text-gray-300 mb-4 line-clamp-2">{resource.description}</p>
       <div className="flex justify-between items-center">
         <span className="text-sm text-gray-400">
           {new Date(resource.createdAt).toLocaleDateString()}
