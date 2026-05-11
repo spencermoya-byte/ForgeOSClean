@@ -35,4 +35,14 @@ const updatePassword = async (newPassword: string) => {
   return response.data;
 };
 
-export default { getUser, login, register, logout, getUserProfile, updateUserProfile, updatePassword };
+const getResources = async () => {
+  const response = await axios.get('/resources');
+  return response.data;
+};
+
+const getResourceById = async (id: string) => {
+  const response = await axios.get(`/resources/${id}`);
+  return response.data;
+};
+
+export default { getUser, login, register, logout, getUserProfile, updateUserProfile, updatePassword, getResources, getResourceById };
