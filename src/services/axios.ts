@@ -9,6 +9,10 @@ const instance: AxiosInstance = axios.create({
 instance.interceptors.request.use(
   (config) => {
     // Add any request headers here
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {
@@ -18,7 +22,26 @@ instance.interceptors.request.use(
 
 instance.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        // Refresh token logic here
+        const refreshResponse = await axios.post('/auth/refresh', { refreshToken: localStorage.getItem('refresh_token') });
+        const newAccessToken = refreshResponse.data.accessToken;
+        localStorage.setItem('access_token', newAccessToken);
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return instance(originalRequest);
+      } catch (refreshError) {
+        toast.error('Session expired. Please log in again.');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        window.location.href = '/login';
+      }
+    }
+
     if (error.response) {
       toast.error(`Error: ${error.response.status}`);
     } else if (error.request) {
