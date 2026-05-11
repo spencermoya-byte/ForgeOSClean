@@ -7,6 +7,9 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, password: string) => Promise<void>;
   logout: () => void;
+  getUserProfile: () => Promise<any>;
+  updateUserProfile: (newProfile: any) => Promise<any>;
+  updatePassword: (newPassword: string) => Promise<any>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -15,6 +18,9 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   register: async () => {},
   logout: () => {},
+  getUserProfile: async () => {},
+  updateUserProfile: async () => {},
+  updatePassword: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -59,8 +65,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsAuthenticated(false);
   };
 
+  const getUserProfile = async () => {
+    const profileData = await axios.getUserProfile();
+    setUser(profileData);
+    return profileData;
+  };
+
+  const updateUserProfile = async (newProfile: any) => {
+    const updatedProfile = await axios.updateUserProfile(newProfile);
+    setUser(updatedProfile);
+    return updatedProfile;
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    await axios.updatePassword(newPassword);
+  };
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, register, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, register, logout, getUserProfile, updateUserProfile, updatePassword }}>
       {children}
     </AuthContext.Provider>
   );

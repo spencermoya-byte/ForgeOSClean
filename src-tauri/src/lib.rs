@@ -14,6 +14,9 @@ fn main() {
             commands::auth::register,
             commands::auth::logout,
             commands::auth::get_user_info,
+            commands::profile::get_user_profile,
+            commands::profile::update_user_profile,
+            commands::profile::update_user_password,
         ])
         .run(Context::default())
         .expect("error while running tauri application");

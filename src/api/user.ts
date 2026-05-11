@@ -20,4 +20,19 @@ const logout = () => {
   localStorage.removeItem('token');
 };
 
-export default { getUser, login, register, logout };
+const getUserProfile = async () => {
+  const response = await axios.get('/profile/me');
+  return response.data;
+};
+
+const updateUserProfile = async (newProfile: any) => {
+  const response = await axios.put('/profile/update', newProfile);
+  return response.data;
+};
+
+const updatePassword = async (newPassword: string) => {
+  const response = await axios.post('/auth/change-password', { password: newPassword });
+  return response.data;
+};
+
+export default { getUser, login, register, logout, getUserProfile, updateUserProfile, updatePassword };
