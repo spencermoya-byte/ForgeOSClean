@@ -248,6 +248,103 @@ export interface GraphUpdateResponse {
   context: GraphContext;
 }
 
+// Filesystem Intelligence interfaces
+export interface IndexedFile {
+  id: string;
+  workspaceId: string;
+  projectId: string | null;
+  path: string;
+  name: string;
+  size: number;
+  fileType: string;
+  createdAt: string;
+  modifiedAt: string;
+  metadata: any;
+}
+
+export interface ProjectMetadata {
+  id: string;
+  projectId: string;
+  fileCount: number;
+  totalSize: number;
+  lastIndexed: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FileRelationship {
+  id: string;
+  sourceFileId: string;
+  targetFileId: string;
+  relationshipType: string;
+  weight: number;
+  createdAt: string;
+}
+
+export interface IndexingStatus {
+  id: string;
+  workspaceId: string;
+  projectId: string | null;
+  status: string;
+  progress: number;
+  totalFiles: number;
+  processedFiles: number;
+  lastUpdated: string;
+  errorMessage: string | null;
+}
+
+export interface FilesystemIndexingRequest {
+  workspaceId: string;
+  projectId: string | null;
+  recursive: boolean;
+  includeHidden: boolean;
+  ignorePatterns: string[];
+}
+
+export interface FilesystemIndexingResponse {
+  indexedFiles: IndexedFile[];
+  status: IndexingStatus;
+  totalFiles: number;
+  processedFiles: number;
+  createdAt: string;
+}
+
+export interface FilesystemSearchRequest {
+  workspaceId: string;
+  projectId: string | null;
+  query: string;
+  fileTypes: string[] | null;
+  includeContent: boolean;
+  limit: number | null;
+}
+
+export interface FilesystemSearchResult {
+  files: IndexedFile[];
+  relationships: FileRelationship[];
+  totalMatches: number;
+  context: string;
+}
+
+export interface FilesystemContext {
+  workspaceId: string;
+  projectId: string | null;
+  files: IndexedFile[];
+  relationships: FileRelationship[];
+  metadata: ProjectMetadata;
+  indexingStatus: IndexingStatus;
+}
+
+export interface FilesystemIndexingStatus {
+  workspaceId: string;
+  projectId: string | null;
+  status: string;
+  progress: number;
+  totalFiles: number;
+  processedFiles: number;
+  lastUpdated: string;
+  errorMessage: string | null;
+}
+
 export const getAiModels = async (): Promise<AiModel[]> => {
   const response = await window.__TAURI__.invoke('get_ai_models');
   return response as AiModel[];
@@ -362,4 +459,25 @@ export const traverseGraph = async (request: GraphTraversalRequest): Promise<Gra
 export const updateGraph = async (request: GraphUpdateRequest): Promise<GraphUpdateResponse> => {
   const response = await window.__TAURI__.invoke('update_graph', { request });
   return response as GraphUpdateResponse;
+};
+
+// Filesystem Intelligence API functions
+export const startFilesystemIndexing = async (request: FilesystemIndexingRequest): Promise<FilesystemIndexingResponse> => {
+  const response = await window.__TAURI__.invoke('start_filesystem_indexing', { request });
+  return response as FilesystemIndexingResponse;
+};
+
+export const searchFilesystem = async (request: FilesystemSearchRequest): Promise<FilesystemSearchResult> => {
+  const response = await window.__TAURI__.invoke('search_filesystem', { request });
+  return response as FilesystemSearchResult;
+};
+
+export const getFilesystemContext = async (workspaceId: string, projectId?: string): Promise<FilesystemContext> => {
+  const response = await window.__TAURI__.invoke('get_filesystem_context', { workspaceId, projectId });
+  return response as FilesystemContext;
+};
+
+export const getFilesystemIndexingStatus = async (workspaceId: string, projectId?: string): Promise<FilesystemIndexingStatus> => {
+  const response = await window.__TAURI__.invoke('get_filesystem_indexing_status', { workspaceId, projectId });
+  return response as FilesystemIndexingStatus;
 };

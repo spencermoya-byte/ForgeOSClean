@@ -8,4 +8,5 @@ pub mod plugin;
 pub mod collaboration;
 pub mod sync;
 pub mod agent;
-pub mod knowledge_graph; // New knowledge graph module
+pub mod knowledge_graph;
+pub mod filesystem; // New filesystem module

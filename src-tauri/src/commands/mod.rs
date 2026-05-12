@@ -10,7 +10,8 @@ mod workflow;
 mod plugin;
 mod sync;
 mod agent;
-mod knowledge_graph; // New knowledge graph module
+mod knowledge_graph;
+mod filesystem; // New filesystem module
 
 pub use app_info::*;
 pub use system_info::*;
@@ -24,4 +25,5 @@ pub use workflow::*;
 pub use plugin::*;
 pub use sync::*;
 pub use agent::*;
-pub use knowledge_graph::*; // Export knowledge graph commands
+pub use knowledge_graph::*;
+pub use filesystem::*; // Export filesystem commands

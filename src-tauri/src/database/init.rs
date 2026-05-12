@@ -372,5 +372,68 @@ async fn init_schema(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     
     sqlx::execute(create_embeddings_table).execute(pool).await?;
     
+    // Create filesystem tables
+    let create_indexed_files_table = r#"
+        CREATE TABLE IF NOT EXISTS indexed_files (
+            id TEXT PRIMARY KEY,
+            workspace_id TEXT NOT NULL,
+            project_id TEXT,
+            path TEXT NOT NULL,
+            name TEXT NOT NULL,
+            size INTEGER NOT NULL,
+            file_type TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            modified_at TEXT NOT NULL,
+            metadata TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_indexed_files_table).execute(pool).await?;
+    
+    let create_project_metadata_table = r#"
+        CREATE TABLE IF NOT EXISTS project_metadata (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL UNIQUE,
+            file_count INTEGER NOT NULL,
+            total_size INTEGER NOT NULL,
+            last_indexed TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_project_metadata_table).execute(pool).await?;
+    
+    let create_file_relationships_table = r#"
+        CREATE TABLE IF NOT EXISTS file_relationships (
+            id TEXT PRIMARY KEY,
+            source_file_id TEXT NOT NULL,
+            target_file_id TEXT NOT NULL,
+            relationship_type TEXT NOT NULL,
+            weight REAL DEFAULT 1.0,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (source_file_id) REFERENCES indexed_files (id) ON DELETE CASCADE,
+            FOREIGN KEY (target_file_id) REFERENCES indexed_files (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_file_relationships_table).execute(pool).await?;
+    
+    let create_indexing_status_table = r#"
+        CREATE TABLE IF NOT EXISTS indexing_status (
+            id TEXT PRIMARY KEY,
+            workspace_id TEXT NOT NULL,
+            project_id TEXT,
+            status TEXT NOT NULL,
+            progress REAL DEFAULT 0.0,
+            total_files INTEGER DEFAULT 0,
+            processed_files INTEGER DEFAULT 0,
+            last_updated TEXT NOT NULL,
+            error_message TEXT
+        );
+    "#;
+    
+    sqlx::execute(create_indexing_status_table).execute(pool).await?;
+    
     Ok(())
 }
