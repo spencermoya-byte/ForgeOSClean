@@ -13,3 +13,6 @@ pub mod collaborative_ai;
 pub mod engineering_operations;
 pub mod execution_pipelines;
 pub mod contextual_operations;
+pub mod platform_lifecycle;
+pub mod deployment_management;
+pub mod resilience_systems;

@@ -208,6 +208,30 @@ pub fn run() {
             ai::contextual_operations::get_contextual_operation,
             ai::contextual_operations::get_contextual_metrics,
             ai::contextual_operations::get_contextual_retrieval,
+            
+            // Platform lifecycle commands
+            ai::platform_lifecycle::initialize_platform,
+            ai::platform_lifecycle::update_platform,
+            ai::platform_lifecycle::get_platform_status,
+            ai::platform_lifecycle::rollback_platform,
+            
+            // Deployment management commands
+            ai::deployment_management::create_deployment,
+            ai::deployment_management::get_deployment,
+            ai::deployment_management::get_deployments,
+            ai::deployment_management::start_deployment,
+            ai::deployment_management::cancel_deployment,
+            ai::deployment_management::rollback_deployment,
+            ai::deployment_management::get_deployment_metrics,
+            
+            // Resilience system commands
+            ai::resilience_systems::create_resilience_system,
+            ai::resilience_systems::get_resilience_system,
+            ai::resilience_systems::get_resilience_systems,
+            ai::resilience_systems::trigger_recovery,
+            ai::resilience_systems::update_system_health,
+            ai::resilience_systems::get_system_health,
+            ai::resilience_systems::get_resilience_metrics,
         ])
         .setup(|app| {
             // Initialize app state
