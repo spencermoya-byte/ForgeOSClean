@@ -22,6 +22,10 @@ pub struct Extension {
     pub dependencies: Vec<String>,
     pub compatibility: ExtensionCompatibility,
     pub metadata: serde_json::Value,
+    pub download_url: Option<String>,
+    pub size: Option<u64>,
+    pub rating: Option<f32>,
+    pub review_count: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -46,6 +50,8 @@ pub struct Capability {
     pub created_at: String,
     pub updated_at: String,
     pub metadata: serde_json::Value,
+    pub is_public: bool,
+    pub visibility: String, // public, private, restricted
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -59,6 +65,8 @@ pub struct ExtensionInstallation {
     pub updated_at: String,
     pub version: String,
     pub metadata: serde_json::Value,
+    pub install_path: Option<String>,
+    pub is_system: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -69,6 +77,8 @@ pub struct ExtensionUpdate {
     pub status: UpdateStatus,
     pub updated_at: String,
     pub metadata: serde_json::Value,
+    pub update_notes: Option<String>,
+    pub release_notes: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -77,6 +87,7 @@ pub enum InstallationStatus {
     Updated,
     Failed,
     Cancelled,
+    Uninstalled,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -84,6 +95,7 @@ pub enum UpdateStatus {
     Updated,
     UpToDate,
     Failed,
+    Pending,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -92,8 +104,12 @@ pub struct ExtensionSearchRequest {
     pub category: Option<String>,
     pub tags: Option<Vec<String>>,
     pub author: Option<String>,
+    pub is_active: Option<bool>,
+    pub is_system: Option<bool>,
     pub limit: Option<u32>,
     pub offset: Option<u32>,
+    pub sort_by: Option<String>,
+    pub sort_order: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -101,6 +117,7 @@ pub struct ExtensionInstallationRequest {
     pub extension_id: String,
     pub workspace_id: String,
     pub version: Option<String>,
+    pub is_system: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -108,6 +125,7 @@ pub struct ExtensionUpdateRequest {
     pub extension_id: String,
     pub workspace_id: String,
     pub version: Option<String>,
+    pub force_update: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -121,18 +139,21 @@ pub struct ExtensionSearchResponse {
     pub total: u64,
     pub limit: u32,
     pub offset: u32,
+    pub has_more: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExtensionInstallationResponse {
     pub installation_id: String,
     pub status: InstallationStatus,
+    pub install_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExtensionUpdateResponse {
     pub update_id: String,
     pub status: UpdateStatus,
+    pub updated_version: Option<String>,
 }
 
 // Marketplace database structure
@@ -147,8 +168,8 @@ impl MarketplaceDatabase {
 
     pub async fn create_extension(&self, extension: Extension) -> Result<Extension, sqlx::Error> {
         let query = r#"
-            INSERT INTO extensions (id, name, version, description, author, author_id, category, tags, is_active, is_system, created_at, updated_at, installed_at, updated_at_version, dependencies, compatibility, metadata)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO extensions (id, name, version, description, author, author_id, category, tags, is_active, is_system, created_at, updated_at, installed_at, updated_at_version, dependencies, compatibility, metadata, download_url, size, rating, review_count)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING *
         "#;
         
@@ -170,6 +191,10 @@ impl MarketplaceDatabase {
             .bind(serde_json::to_string(&extension.dependencies).unwrap_or_default())
             .bind(serde_json::to_string(&extension.compatibility).unwrap_or_default())
             .bind(&extension.metadata)
+            .bind(&extension.download_url)
+            .bind(&extension.size)
+            .bind(&extension.rating)
+            .bind(&extension.review_count)
             .fetch_one(&self.pool)
             .await?;
 
@@ -191,6 +216,10 @@ impl MarketplaceDatabase {
             dependencies: serde_json::from_str(&row.get::<String, _>("dependencies")).unwrap_or_default(),
             compatibility: serde_json::from_str(&row.get::<String, _>("compatibility")).unwrap_or_default(),
             metadata: row.get("metadata"),
+            download_url: row.get("download_url"),
+            size: row.get("size"),
+            rating: row.get("rating"),
+            review_count: row.get("review_count"),
         })
     }
 
@@ -222,13 +251,17 @@ impl MarketplaceDatabase {
             dependencies: serde_json::from_str(&row.get::<String, _>("dependencies")).unwrap_or_default(),
             compatibility: serde_json::from_str(&row.get::<String, _>("compatibility")).unwrap_or_default(),
             metadata: row.get("metadata"),
+            download_url: row.get("download_url"),
+            size: row.get("size"),
+            rating: row.get("rating"),
+            review_count: row.get("review_count"),
         })
     }
 
     pub async fn update_extension(&self, id: &str, extension: Extension) -> Result<Extension, sqlx::Error> {
         let query = r#"
             UPDATE extensions 
-            SET name = ?, version = ?, description = ?, author = ?, author_id = ?, category = ?, tags = ?, is_active = ?, is_system = ?, updated_at = ?, installed_at = ?, updated_at_version = ?, dependencies = ?, compatibility = ?, metadata = ?
+            SET name = ?, version = ?, description = ?, author = ?, author_id = ?, category = ?, tags = ?, is_active = ?, is_system = ?, updated_at = ?, installed_at = ?, updated_at_version = ?, dependencies = ?, compatibility = ?, metadata = ?, download_url = ?, size = ?, rating = ?, review_count = ?
             WHERE id = ?
             RETURNING *
         "#;
@@ -249,6 +282,10 @@ impl MarketplaceDatabase {
             .bind(serde_json::to_string(&extension.dependencies).unwrap_or_default())
             .bind(serde_json::to_string(&extension.compatibility).unwrap_or_default())
             .bind(&extension.metadata)
+            .bind(&extension.download_url)
+            .bind(&extension.size)
+            .bind(&extension.rating)
+            .bind(&extension.review_count)
             .bind(id)
             .fetch_one(&self.pool)
             .await?;
@@ -271,6 +308,10 @@ impl MarketplaceDatabase {
             dependencies: serde_json::from_str(&row.get::<String, _>("dependencies")).unwrap_or_default(),
             compatibility: serde_json::from_str(&row.get::<String, _>("compatibility")).unwrap_or_default(),
             metadata: row.get("metadata"),
+            download_url: row.get("download_url"),
+            size: row.get("size"),
+            rating: row.get("rating"),
+            review_count: row.get("review_count"),
         })
     }
 
@@ -316,17 +357,27 @@ impl MarketplaceDatabase {
             binds.push(author);
         }
         
-        query.push_str(" ORDER BY created_at DESC");
-        
-        if let Some(limit) = request.limit {
-            query.push_str(" LIMIT ?");
-            binds.push(&limit);
+        if let Some(is_active) = request.is_active {
+            query.push_str(" AND is_active = ?");
+            binds.push(&is_active);
         }
         
-        if let Some(offset) = request.offset {
-            query.push_str(" OFFSET ?");
-            binds.push(&offset);
+        if let Some(is_system) = request.is_system {
+            query.push_str(" AND is_system = ?");
+            binds.push(&is_system);
         }
+        
+        // Add sorting
+        let sort_by = request.sort_by.unwrap_or_else(|| "created_at".to_string());
+        let sort_order = request.sort_order.unwrap_or_else(|| "desc".to_string());
+        
+        query.push_str(&format!(" ORDER BY {} {}", sort_by, sort_order));
+        
+        // Add pagination
+        let limit = request.limit.unwrap_or(20);
+        let offset = request.offset.unwrap_or(0);
+        
+        query.push_str(&format!(" LIMIT {} OFFSET {}", limit, offset));
         
         let rows = sqlx::query(&query)
             .bind(&binds)
@@ -353,36 +404,50 @@ impl MarketplaceDatabase {
                 dependencies: serde_json::from_str(&row.get::<String, _>("dependencies")).unwrap_or_default(),
                 compatibility: serde_json::from_str(&row.get::<String, _>("compatibility")).unwrap_or_default(),
                 metadata: row.get("metadata"),
+                download_url: row.get("download_url"),
+                size: row.get("size"),
+                rating: row.get("rating"),
+                review_count: row.get("review_count"),
             })
             .collect::<Vec<_>>();
             
         // Get total count
-        let count_query = r#"
+        let mut count_query = r#"
             SELECT COUNT(*) as total FROM extensions WHERE 1=1
         "#.to_string();
         
         let mut count_binds: Vec<&dyn sqlx::Encode<sqlx::Sqlite> + Sync> = vec![];
         
         if let Some(query_str) = &request.query {
-            query.push_str(" AND (name LIKE ? OR description LIKE ? OR tags LIKE ?)");
+            count_query.push_str(" AND (name LIKE ? OR description LIKE ? OR tags LIKE ?)");
             count_binds.push(&format!("%{}%", query_str));
             count_binds.push(&format!("%{}%", query_str));
             count_binds.push(&format!("%{}%", query_str));
         }
         
         if let Some(category) = &request.category {
-            query.push_str(" AND category = ?");
+            count_query.push_str(" AND category = ?");
             count_binds.push(category);
         }
         
         if let Some(tags) = &request.tags {
-            query.push_str(" AND tags LIKE ?");
+            count_query.push_str(" AND tags LIKE ?");
             count_binds.push(&format!("%{}%", tags.join("%")));
         }
         
         if let Some(author) = &request.author {
-            query.push_str(" AND author = ?");
+            count_query.push_str(" AND author = ?");
             count_binds.push(author);
+        }
+        
+        if let Some(is_active) = request.is_active {
+            count_query.push_str(" AND is_active = ?");
+            count_binds.push(&is_active);
+        }
+        
+        if let Some(is_system) = request.is_system {
+            count_query.push_str(" AND is_system = ?");
+            count_binds.push(&is_system);
         }
         
         let count_row = sqlx::query(&count_query)
@@ -391,12 +456,14 @@ impl MarketplaceDatabase {
             .await?;
             
         let total: u64 = count_row.get("total");
+        let has_more = total > (offset + limit) as u64;
         
         Ok(ExtensionSearchResponse {
             extensions,
             total,
-            limit: request.limit.unwrap_or(20),
-            offset: request.offset.unwrap_or(0),
+            limit,
+            offset,
+            has_more,
         })
     }
 
@@ -405,8 +472,8 @@ impl MarketplaceDatabase {
         let now = chrono::Utc::now().to_rfc3339();
         
         let query = r#"
-            INSERT INTO extension_installations (id, extension_id, workspace_id, installation_status, update_status, installed_at, updated_at, version, metadata)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO extension_installations (id, extension_id, workspace_id, installation_status, update_status, installed_at, updated_at, version, metadata, install_path, is_system)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING *
         "#;
         
@@ -420,12 +487,15 @@ impl MarketplaceDatabase {
             .bind(&now)
             .bind(&request.version.unwrap_or("1.0.0".to_string()))
             .bind(serde_json::Value::Object(serde_json::Map::new()))
+            .bind(None::<String>)
+            .bind(request.is_system.unwrap_or(false))
             .fetch_one(&self.pool)
             .await?;
 
         Ok(ExtensionInstallationResponse {
             installation_id: row.get("id"),
             status: InstallationStatus::Installed,
+            install_path: row.get("install_path"),
         })
     }
 
@@ -450,6 +520,7 @@ impl MarketplaceDatabase {
         Ok(ExtensionUpdateResponse {
             update_id: row.get("id"),
             status: UpdateStatus::Updated,
+            updated_version: Some(row.get("version")),
         })
     }
 
@@ -472,25 +543,29 @@ impl MarketplaceDatabase {
                 "Updated" => InstallationStatus::Updated,
                 "Failed" => InstallationStatus::Failed,
                 "Cancelled" => InstallationStatus::Cancelled,
+                "Uninstalled" => InstallationStatus::Uninstalled,
                 _ => InstallationStatus::Failed,
             },
             update_status: match row.get::<String, _>("update_status").as_str() {
                 "Updated" => UpdateStatus::Updated,
                 "UpToDate" => UpdateStatus::UpToDate,
                 "Failed" => UpdateStatus::Failed,
+                "Pending" => UpdateStatus::Pending,
                 _ => UpdateStatus::Failed,
             },
             installed_at: row.get("installed_at"),
             updated_at: row.get("updated_at"),
             version: row.get("version"),
             metadata: row.get("metadata"),
+            install_path: row.get("install_path"),
+            is_system: row.get("is_system"),
         })
     }
 
     pub async fn register_capability(&self, capability: Capability) -> Result<Capability, sqlx::Error> {
         let query = r#"
-            INSERT INTO capabilities (id, name, description, category, version, provider, is_active, is_system, dependencies, created_at, updated_at, metadata)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO capabilities (id, name, description, category, version, provider, is_active, is_system, dependencies, created_at, updated_at, metadata, is_public, visibility)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING *
         "#;
         
@@ -507,6 +582,8 @@ impl MarketplaceDatabase {
             .bind(&capability.created_at)
             .bind(&capability.updated_at)
             .bind(&capability.metadata)
+            .bind(capability.is_public)
+            .bind(&capability.visibility)
             .fetch_one(&self.pool)
             .await?;
 
@@ -523,6 +600,8 @@ impl MarketplaceDatabase {
             created_at: row.get("created_at"),
             updated_at: row.get("updated_at"),
             metadata: row.get("metadata"),
+            is_public: row.get("is_public"),
+            visibility: row.get("visibility"),
         })
     }
 
@@ -549,6 +628,8 @@ impl MarketplaceDatabase {
             created_at: row.get("created_at"),
             updated_at: row.get("updated_at"),
             metadata: row.get("metadata"),
+            is_public: row.get("is_public"),
+            visibility: row.get("visibility"),
         })
     }
 
@@ -593,6 +674,49 @@ impl MarketplaceDatabase {
             last_updated: chrono::Utc::now().to_rfc3339(),
         })
     }
+    
+    pub async fn get_extension_installations_by_workspace(&self, workspace_id: &str) -> Result<Vec<ExtensionInstallation>, sqlx::Error> {
+        let query = r#"
+            SELECT * FROM extension_installations WHERE workspace_id = ?
+        "#;
+        
+        let rows = sqlx::query(query)
+            .bind(workspace_id)
+            .fetch_all(&self.pool)
+            .await?;
+            
+        let installations = rows
+            .into_iter()
+            .map(|row| ExtensionInstallation {
+                id: row.get("id"),
+                extension_id: row.get("extension_id"),
+                workspace_id: row.get("workspace_id"),
+                installation_status: match row.get::<String, _>("installation_status").as_str() {
+                    "Installed" => InstallationStatus::Installed,
+                    "Updated" => InstallationStatus::Updated,
+                    "Failed" => InstallationStatus::Failed,
+                    "Cancelled" => InstallationStatus::Cancelled,
+                    "Uninstalled" => InstallationStatus::Uninstalled,
+                    _ => InstallationStatus::Failed,
+                },
+                update_status: match row.get::<String, _>("update_status").as_str() {
+                    "Updated" => UpdateStatus::Updated,
+                    "UpToDate" => UpdateStatus::UpToDate,
+                    "Failed" => UpdateStatus::Failed,
+                    "Pending" => UpdateStatus::Pending,
+                    _ => UpdateStatus::Failed,
+                },
+                installed_at: row.get("installed_at"),
+                updated_at: row.get("updated_at"),
+                version: row.get("version"),
+                metadata: row.get("metadata"),
+                install_path: row.get("install_path"),
+                is_system: row.get("is_system"),
+            })
+            .collect::<Vec<_>>();
+            
+        Ok(installations)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -623,7 +747,11 @@ pub async fn init_marketplace_schema(pool: &SqlitePool) -> Result<(), sqlx::Erro
             updated_at_version TEXT,
             dependencies TEXT,
             compatibility TEXT,
-            metadata TEXT
+            metadata TEXT,
+            download_url TEXT,
+            size INTEGER,
+            rating REAL,
+            review_count INTEGER
         )
     "#;
 
@@ -640,7 +768,9 @@ pub async fn init_marketplace_schema(pool: &SqlitePool) -> Result<(), sqlx::Erro
             dependencies TEXT,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
-            metadata TEXT
+            metadata TEXT,
+            is_public INTEGER DEFAULT 1,
+            visibility TEXT DEFAULT 'public'
         )
     "#;
 
@@ -654,7 +784,9 @@ pub async fn init_marketplace_schema(pool: &SqlitePool) -> Result<(), sqlx::Erro
             installed_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
             version TEXT NOT NULL,
-            metadata TEXT
+            metadata TEXT,
+            install_path TEXT,
+            is_system INTEGER DEFAULT 0
         )
     "#;
 
@@ -665,7 +797,9 @@ pub async fn init_marketplace_schema(pool: &SqlitePool) -> Result<(), sqlx::Erro
             version TEXT NOT NULL,
             status TEXT NOT NULL,
             updated_at TEXT NOT NULL,
-            metadata TEXT
+            metadata TEXT,
+            update_notes TEXT,
+            release_notes TEXT
         )
     "#;
 
