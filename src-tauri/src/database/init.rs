@@ -595,5 +595,110 @@ async fn init_schema(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     
     sqlx::execute(create_sandbox_configurations_table).execute(pool).await?;
     
+    // Create observability tables
+    let create_telemetry_events_table = r#"
+        CREATE TABLE IF NOT EXISTS telemetry_events (
+            id TEXT PRIMARY KEY,
+            event_type TEXT NOT NULL,
+            source TEXT NOT NULL,
+            level TEXT NOT NULL,
+            message TEXT NOT NULL,
+            details TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            workspace_id TEXT,
+            project_id TEXT,
+            user_id TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_telemetry_events_table).execute(pool).await?;
+    
+    let create_system_health_metrics_table = r#"
+        CREATE TABLE IF NOT EXISTS system_health_metrics (
+            id TEXT PRIMARY KEY,
+            metric_type TEXT NOT NULL,
+            value REAL NOT NULL,
+            unit TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            workspace_id TEXT,
+            project_id TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_system_health_metrics_table).execute(pool).await?;
+    
+    let create_subsystem_health_table = r#"
+        CREATE TABLE IF NOT EXISTS subsystem_health (
+            id TEXT PRIMARY KEY,
+            subsystem TEXT NOT NULL,
+            status TEXT NOT NULL,
+            health_score REAL NOT NULL,
+            last_updated TEXT NOT NULL,
+            workspace_id TEXT,
+            project_id TEXT,
+            details TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_subsystem_health_table).execute(pool).await?;
+    
+    let create_diagnostic_reports_table = r#"
+        CREATE TABLE IF NOT EXISTS diagnostic_reports (
+            id TEXT PRIMARY KEY,
+            report_type TEXT NOT NULL,
+            source TEXT NOT NULL,
+            status TEXT NOT NULL,
+            severity TEXT NOT NULL,
+            description TEXT NOT NULL,
+            details TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            workspace_id TEXT,
+            project_id TEXT,
+            user_id TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_diagnostic_reports_table).execute(pool).await?;
+    
+    let create_health_aggregations_table = r#"
+        CREATE TABLE IF NOT EXISTS health_aggregations (
+            id TEXT PRIMARY KEY,
+            aggregation_type TEXT NOT NULL,
+            period TEXT NOT NULL,
+            metrics TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            workspace_id TEXT,
+            project_id TEXT,
+            user_id TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_health_aggregations_table).execute(pool).await?;
+    
+    let create_monitoring_configurations_table = r#"
+        CREATE TABLE IF NOT EXISTS monitoring_configurations (
+            id TEXT PRIMARY KEY,
+            subsystem TEXT NOT NULL UNIQUE,
+            is_enabled INTEGER DEFAULT 1,
+            monitoring_level TEXT NOT NULL,
+            alert_threshold REAL DEFAULT 0.0,
+            alert_enabled INTEGER DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_monitoring_configurations_table).execute(pool).await?;
+    
     Ok(())
 }

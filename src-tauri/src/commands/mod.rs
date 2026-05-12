@@ -6,3 +6,4 @@ pub mod agent;
 pub mod embedding;
 pub mod code_intelligence;
 pub mod execution; // New execution module
+pub mod observability; // New observability module

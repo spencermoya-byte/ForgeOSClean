@@ -11,3 +11,4 @@ pub mod agent;
 pub mod knowledge_graph;
 pub mod filesystem; // New filesystem module
 pub mod execution; // New execution module
+pub mod observability; // New observability module
