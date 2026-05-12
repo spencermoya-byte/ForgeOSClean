@@ -5,3 +5,4 @@ pub mod workflow;
 pub mod agent;
 pub mod embedding;
 pub mod code_intelligence;
+pub mod execution; // New execution module

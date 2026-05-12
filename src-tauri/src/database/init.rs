@@ -499,5 +499,101 @@ async fn init_schema(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     
     sqlx::execute(create_project_code_intelligence_table).execute(pool).await?;
     
+    // Create execution tables
+    let create_execution_requests_table = r#"
+        CREATE TABLE IF NOT EXISTS execution_requests (
+            id TEXT PRIMARY KEY,
+            workspace_id TEXT NOT NULL,
+            project_id TEXT,
+            tool_id TEXT NOT NULL,
+            command TEXT NOT NULL,
+            arguments TEXT NOT NULL,
+            working_directory TEXT NOT NULL,
+            environment TEXT NOT NULL,
+            timeout INTEGER NOT NULL,
+            is_sandboxed INTEGER DEFAULT 1,
+            is_restricted INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_execution_requests_table).execute(pool).await?;
+    
+    let create_execution_status_table = r#"
+        CREATE TABLE IF NOT EXISTS execution_status (
+            id TEXT PRIMARY KEY,
+            execution_id TEXT NOT NULL,
+            status TEXT NOT NULL,
+            progress REAL DEFAULT 0.0,
+            output TEXT NOT NULL,
+            error TEXT,
+            started_at TEXT,
+            completed_at TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (execution_id) REFERENCES execution_requests (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_execution_status_table).execute(pool).await?;
+    
+    let create_tools_table = r#"
+        CREATE TABLE IF NOT EXISTS tools (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            version TEXT NOT NULL,
+            executable TEXT NOT NULL,
+            arguments TEXT NOT NULL,
+            capabilities TEXT NOT NULL,
+            is_system INTEGER DEFAULT 0,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_tools_table).execute(pool).await?;
+    
+    let create_execution_history_table = r#"
+        CREATE TABLE IF NOT EXISTS execution_history (
+            id TEXT PRIMARY KEY,
+            execution_id TEXT NOT NULL,
+            workspace_id TEXT NOT NULL,
+            project_id TEXT,
+            tool_id TEXT NOT NULL,
+            command TEXT NOT NULL,
+            status TEXT NOT NULL,
+            exit_code INTEGER,
+            duration INTEGER,
+            started_at TEXT NOT NULL,
+            completed_at TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (execution_id) REFERENCES execution_requests (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_execution_history_table).execute(pool).await?;
+    
+    let create_sandbox_configurations_table = r#"
+        CREATE TABLE IF NOT EXISTS sandbox_configurations (
+            id TEXT PRIMARY KEY,
+            workspace_id TEXT NOT NULL,
+            project_id TEXT,
+            is_enabled INTEGER DEFAULT 1,
+            allowed_commands TEXT NOT NULL,
+            allowed_paths TEXT NOT NULL,
+            max_memory INTEGER NOT NULL,
+            max_cpu REAL DEFAULT 1.0,
+            timeout INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_sandbox_configurations_table).execute(pool).await?;
+    
     Ok(())
 }
