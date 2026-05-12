@@ -22,3 +22,5 @@ pub mod resilience_systems;
 pub mod intelligence_evolution;
 pub mod analytics_engine;
 pub mod adaptive_optimization;
+pub mod client;
+pub mod marketplace;

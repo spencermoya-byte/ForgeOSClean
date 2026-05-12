@@ -2,6 +2,8 @@ use tauri::Manager;
 use crate::state::app_config::AppConfig;
 use crate::state::workspace::WorkspaceState;
 use crate::state::runtime_metadata::RuntimeMetadata;
+use crate::state::client::ClientContext;
+use crate::state::marketplace::MarketplaceState;
 
 pub fn run() {
     tauri::Builder::default()
@@ -58,6 +60,12 @@ pub fn run() {
             
             // Workspace commands
             commands::workspace::get_workspace,
+            commands::workspace::get_workspaces,
+            commands::workspace::create_workspace,
+            commands::workspace::update_workspace,
+            commands::workspace::delete_workspace,
+            commands::workspace::set_active_workspace,
+            commands::workspace::get_active_workspace,
             
             // AI commands
             ai::filesystem::start_filesystem_indexing,
@@ -261,19 +269,87 @@ pub fn run() {
             ai::adaptive_optimization::get_optimization_results,
             ai::adaptive_optimization::get_optimization_metrics,
             ai::adaptive_optimization::apply_feedback,
+            
+            // Client context commands
+            get_client_context,
+            update_client_context,
+            get_platform_capabilities,
+            get_client_type,
+            get_active_clients,
+            
+            // Marketplace commands
+            commands::marketplace::search_extensions,
+            commands::marketplace::install_extension,
+            commands::marketplace::update_extension,
+            commands::marketplace::register_capability,
+            commands::marketplace::search_assets,
+            commands::marketplace::download_asset,
+            commands::marketplace::get_marketplace_status,
+            
+            // AI Marketplace commands
+            ai::marketplace::search_extensions,
+            ai::marketplace::install_extension,
+            ai::marketplace::update_extension,
+            ai::marketplace::register_capability,
+            ai::marketplace::search_assets,
+            ai::marketplace::download_asset,
+            ai::marketplace::get_marketplace_status,
         ])
         .setup(|app| {
             // Initialize app state
             let app_config = AppConfig::default();
             let workspace_state = WorkspaceState::default();
             let runtime_metadata = RuntimeMetadata::default();
+            let client_context = ClientContext::default();
+            let marketplace_state = MarketplaceState::default();
             
             app.manage(app_config);
             app.manage(workspace_state);
             app.manage(runtime_metadata);
+            app.manage(client_context);
+            app.manage(marketplace_state);
             
             Ok(())
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+// Client context commands
+#[tauri::command]
+pub fn get_client_context() -> ClientContext {
+    // This would be managed by the app state
+    ClientContext::default()
+}
+
+#[tauri::command]
+pub fn update_client_context(context: ClientContext) -> Result<ClientContext, String> {
+    // This would update the app state
+    Ok(context)
+}
+
+#[tauri::command]
+pub fn get_platform_capabilities() -> Vec<String> {
+    vec![
+        "filesystem_indexing".to_string(),
+        "code_intelligence".to_string(),
+        "workflow_execution".to_string(),
+        "collaboration".to_string(),
+        "ai_assisted".to_string(),
+        "synchronization".to_string(),
+        "observability".to_string(),
+        "plugin_support".to_string(),
+        "distributed_engineering".to_string(),
+        "security".to_string(),
+    ]
+}
+
+#[tauri::command]
+pub fn get_client_type() -> String {
+    "desktop".to_string()
+}
+
+#[tauri::command]
+pub fn get_active_clients() -> Vec<String> {
+    vec![]
 }
