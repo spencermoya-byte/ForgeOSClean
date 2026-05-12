@@ -1,21 +1,10 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from './authContext';
+import { useContext } from 'react';
+import { AuthContext } from './authContext';
 
-const useAuthFlow = () => {
-  const { isAuthenticated, login, logout } = useAuth();
-  const [isInitializing, setIsInitializing] = useState(true);
-
-  useEffect(() => {
-    // Simulate session check
-    setTimeout(() => {
-      if (!isAuthenticated) {
-        logout();
-      }
-      setIsInitializing(false);
-    }, 1000);
-  }, [isAuthenticated, login, logout]);
-
-  return { isAuthenticated, isInitializing };
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
-
-export default useAuthFlow;

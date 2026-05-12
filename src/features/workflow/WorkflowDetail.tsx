@@ -112,22 +112,22 @@ const WorkflowDetail: React.FC = () => {
       </div>
 
       <div className="bg-gray-800 rounded-lg p-6">
-        <h3 className="text-xl font-bold text-white mb-4">Steps</h3>
+        <h3 className="text-xl font-bold text-white mb-4">Workflow Steps</h3>
         {steps.length > 0 ? (
           <div className="space-y-3">
-            {steps.map((step, index) => (
+            {steps.map((step) => (
               <div key={step.id} className="p-4 bg-gray-700 rounded-lg">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-semibold text-white">{step.name}</h4>
-                    <p className="text-gray-300 text-sm">{step.description}</p>
-                  </div>
-                  <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">
-                    Step {index + 1}
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-semibold text-white">{step.name}</h4>
+                  <span className={`px-2 py-1 rounded text-xs ${
+                    step.isActive ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
+                  }`}>
+                    {step.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </div>
-                <div className="mt-2 text-sm text-gray-400">
-                  Type: {step.stepType}
+                <p className="text-gray-300 mb-2">{step.description}</p>
+                <div className="text-sm text-gray-400">
+                  Type: {step.stepType} | Position: {step.position}
                 </div>
               </div>
             ))}

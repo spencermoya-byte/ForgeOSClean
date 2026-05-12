@@ -15,17 +15,12 @@ const CreateWorkspace: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await createWorkspace({
-        name,
-        description,
-        path
-      });
-      
+      await createWorkspace({ name, description, path });
       toast.success('Workspace created successfully');
       navigate('/workspaces');
-    } catch (err) {
+    } catch (error) {
       toast.error('Failed to create workspace');
-      console.error('Create workspace error:', err);
+      console.error('Create workspace error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -33,7 +28,7 @@ const CreateWorkspace: React.FC = () => {
 
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-bold text-white mb-6">Create New Workspace</h2>
+      <h2 className="text-2xl font-bold text-white mb-6">Create Workspace</h2>
       
       <form onSubmit={handleSubmit} className="bg-gray-800 rounded-lg p-6">
         <div className="mb-4">
@@ -54,7 +49,7 @@ const CreateWorkspace: React.FC = () => {
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            rows={3}
+            rows={4}
             className="w-full p-3 border rounded-lg bg-gray-700 text-white border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>

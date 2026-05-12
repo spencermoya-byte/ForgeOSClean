@@ -14,6 +14,7 @@ import WorkspaceList from './features/workspace/WorkspaceList';
 import CreateWorkspace from './features/workspace/CreateWorkspace';
 import AiChat from './features/ai/AiChat';
 import AiSettings from './features/ai/AiSettings';
+import MarketplaceDashboard from './features/marketplace/MarketplaceDashboard';
 
 const App: React.FC = () => {
   return (
@@ -35,6 +36,7 @@ const App: React.FC = () => {
               <Route path="/workspaces/new" element={<CreateWorkspace />} />
               <Route path="/ai/chat" element={<AiChat />} />
               <Route path="/ai/settings" element={<AiSettings />} />
+              <Route path="/marketplace" element={<MarketplaceDashboard />} />
             </Route>
           </Routes>
         </div>
@@ -44,4 +46,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-`

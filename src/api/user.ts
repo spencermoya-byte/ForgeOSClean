@@ -1,35 +1,34 @@
 import axios from './axios';
 
-export const login = async (username: string, password: string) => {
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const login = async (username: string, password: string): Promise<void> => {
   const response = await axios.post('/auth/login', { username, password });
-  localStorage.setItem('token', response.data.token);
-  return response.data;
+  const { token } = response.data;
+  localStorage.setItem('token', token);
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 };
 
-export const register = async (username: string, password: string) => {
-  const response = await axios.post('/auth/register', { username, password });
-  return response.data;
+export const register = async (username: string, password: string): Promise<void> => {
+  await axios.post('/auth/register', { username, password });
 };
 
-export const getUserProfile = async () => {
+export const getUserProfile = async (): Promise<User> => {
   const response = await axios.get('/auth/profile');
   return response.data;
 };
 
-export const updateUserProfile = async (newProfile: any) => {
-  const response = await axios.put('/auth/profile', newProfile);
+export const updateUserProfile = async (profile: Partial<User>): Promise<User> => {
+  const response = await axios.put('/auth/profile', profile);
   return response.data;
 };
 
-export const updatePassword = async (newPassword: string) => {
-  const response = await axios.put('/auth/password', { newPassword });
-  return response.data;
-};
-
-export default {
-  login,
-  register,
-  getUserProfile,
-  updateUserProfile,
-  updatePassword,
+export const updatePassword = async (newPassword: string): Promise<void> => {
+  await axios.put('/auth/password', { newPassword });
 };

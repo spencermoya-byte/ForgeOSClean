@@ -106,10 +106,10 @@ const Dashboard: React.FC = () => {
           
           <div 
             className="bg-gray-800 p-6 rounded-lg shadow-lg cursor-pointer hover:bg-gray-700 transition duration-200"
-            onClick={() => navigate('/ai/chat')}
+            onClick={() => navigate('/marketplace')}
           >
-            <h2 className="text-xl font-bold mb-2">AI Assistant</h2>
-            <p className="text-gray-300">Chat with your AI assistant</p>
+            <h2 className="text-xl font-bold mb-2">Marketplace</h2>
+            <p className="text-gray-300">Browse and manage extensions</p>
           </div>
         </div>
       </main>
