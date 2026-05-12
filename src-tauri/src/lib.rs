@@ -232,6 +232,35 @@ pub fn run() {
             ai::resilience_systems::update_system_health,
             ai::resilience_systems::get_system_health,
             ai::resilience_systems::get_resilience_metrics,
+            
+            // Intelligence evolution commands
+            ai::intelligence_evolution::create_evolution,
+            ai::intelligence_evolution::get_evolution,
+            ai::intelligence_evolution::get_evolution_history,
+            ai::intelligence_evolution::start_evolution,
+            ai::intelligence_evolution::cancel_evolution,
+            ai::intelligence_evolution::get_evolution_insights,
+            ai::intelligence_evolution::get_evolution_metrics,
+            
+            // Analytics engine commands
+            ai::analytics_engine::start_analytics_engine,
+            ai::analytics_engine::stop_analytics_engine,
+            ai::analytics_engine::pause_analytics_engine,
+            ai::analytics_engine::resume_analytics_engine,
+            ai::analytics_engine::run_analysis,
+            ai::analytics_engine::get_analytics_metrics,
+            ai::analytics_engine::get_insights,
+            ai::analytics_engine::get_analytics_report,
+            
+            // Adaptive optimization commands
+            ai::adaptive_optimization::create_optimization,
+            ai::adaptive_optimization::get_optimization,
+            ai::adaptive_optimization::get_optimizations,
+            ai::adaptive_optimization::start_optimization,
+            ai::adaptive_optimization::cancel_optimization,
+            ai::adaptive_optimization::get_optimization_results,
+            ai::adaptive_optimization::get_optimization_metrics,
+            ai::adaptive_optimization::apply_feedback,
         ])
         .setup(|app| {
             // Initialize app state

@@ -19,3 +19,6 @@ pub mod contextual_operations;
 pub mod platform_lifecycle;
 pub mod deployment_management;
 pub mod resilience_systems;
+pub mod intelligence_evolution;
+pub mod analytics_engine;
+pub mod adaptive_optimization;
