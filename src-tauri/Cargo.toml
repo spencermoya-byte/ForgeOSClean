@@ -29,10 +29,3 @@ tokio-util = { version = "0.7", features = ["io"] }
 [features]
 # this feature is used for the devtools plugin
 devtools = ["tauri/devtools"]
-
-[profile.release]
-panic = "abort"
-codegen-units = 1
-lto = true
-incremental = false
-opt-level = "s"
