@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tauri::State;
 use crate::database::workspace::WorkspaceDatabase;
+use crate::database::collaboration::{CollaborationDatabase, WorkspaceMember};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Workspace {
@@ -36,6 +37,16 @@ pub struct WorkspaceResponse {
 #[derive(Serialize, Deserialize)]
 pub struct WorkspacesResponse {
     pub workspaces: Vec<Workspace>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct WorkspaceMemberResponse {
+    pub member: WorkspaceMember,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct WorkspaceMembersResponse {
+    pub members: Vec<WorkspaceMember>,
 }
 
 #[tauri::command]
@@ -119,5 +130,68 @@ pub async fn get_active_workspace(
         Ok(Some(workspace)) => Ok(Some(WorkspaceResponse { workspace })),
         Ok(None) => Ok(None),
         Err(e) => Err(format!("Failed to get active workspace: {}", e)),
+    }
+}
+
+// Collaboration commands
+#[tauri::command]
+pub async fn get_workspace_members(
+    db: State<'_, sqlx::SqlitePool>,
+    workspace_id: String,
+) -> Result<WorkspaceMembersResponse, String> {
+    let collaboration_db = CollaborationDatabase::new(db.inner().clone());
+    match collaboration_db.get_workspace_members(&workspace_id).await {
+        Ok(members) => Ok(WorkspaceMembersResponse { members }),
+        Err(e) => Err(format!("Failed to get workspace members: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn add_workspace_member(
+    db: State<'_, sqlx::SqlitePool>,
+    workspace_id: String,
+    user_id: String,
+    role: String,
+) -> Result<WorkspaceMemberResponse, String> {
+    let collaboration_db = CollaborationDatabase::new(db.inner().clone());
+    
+    let member = WorkspaceMember {
+        id: uuid::Uuid::new_v4().to_string(),
+        workspace_id,
+        user_id,
+        role,
+        is_active: true,
+        created_at: chrono::Utc::now().to_rfc3339(),
+        updated_at: chrono::Utc::now().to_rfc3339(),
+    };
+    
+    match collaboration_db.add_workspace_member(member).await {
+        Ok(member) => Ok(WorkspaceMemberResponse { member }),
+        Err(e) => Err(format!("Failed to add workspace member: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn update_workspace_member(
+    db: State<'_, sqlx::SqlitePool>,
+    member_id: String,
+    role: String,
+) -> Result<WorkspaceMemberResponse, String> {
+    let collaboration_db = CollaborationDatabase::new(db.inner().clone());
+    match collaboration_db.update_workspace_member(&member_id, &role).await {
+        Ok(member) => Ok(WorkspaceMemberResponse { member }),
+        Err(e) => Err(format!("Failed to update workspace member: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn remove_workspace_member(
+    db: State<'_, sqlx::SqlitePool>,
+    member_id: String,
+) -> Result<(), String> {
+    let collaboration_db = CollaborationDatabase::new(db.inner().clone());
+    match collaboration_db.remove_workspace_member(&member_id).await {
+        Ok(_) => Ok(()),
+        Err(e) => Err(format!("Failed to remove workspace member: {}", e)),
     }
 }

@@ -5,3 +5,4 @@ pub mod chat;
 pub mod embedding;
 pub mod workflow;
 pub mod plugin;
+pub mod collaboration;

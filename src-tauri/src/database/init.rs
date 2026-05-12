@@ -381,5 +381,76 @@ async fn init_schema(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     
     sqlx::execute(create_plugin_capabilities_table).execute(pool).await?;
     
+    // Create collaboration tables
+    let create_workspace_members_table = r#"
+        CREATE TABLE IF NOT EXISTS workspace_members (
+            id TEXT PRIMARY KEY,
+            workspace_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            role TEXT NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (workspace_id) REFERENCES workspaces (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_workspace_members_table).execute(pool).await?;
+    
+    // Create activity log table
+    let create_activity_log_table = r#"
+        CREATE TABLE IF NOT EXISTS activity_log (
+            id TEXT PRIMARY KEY,
+            workspace_id TEXT,
+            project_id TEXT,
+            resource_id TEXT,
+            user_id TEXT,
+            action TEXT NOT NULL,
+            details TEXT,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (workspace_id) REFERENCES workspaces (id) ON DELETE CASCADE,
+            FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE,
+            FOREIGN KEY (resource_id) REFERENCES resources (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_activity_log_table).execute(pool).await?;
+    
+    // Create synchronization metadata table
+    let create_sync_metadata_table = r#"
+        CREATE TABLE IF NOT EXISTS sync_metadata (
+            id TEXT PRIMARY KEY,
+            resource_id TEXT,
+            workspace_id TEXT,
+            project_id TEXT,
+            last_synced TEXT,
+            sync_status TEXT DEFAULT 'synced',
+            version INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (resource_id) REFERENCES resources (id) ON DELETE CASCADE,
+            FOREIGN KEY (workspace_id) REFERENCES workspaces (id) ON DELETE CASCADE,
+            FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_sync_metadata_table).execute(pool).await?;
+    
+    // Create presence table for real-time status
+    let create_presence_table = r#"
+        CREATE TABLE IF NOT EXISTS presence (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            workspace_id TEXT,
+            status TEXT DEFAULT 'offline',
+            last_seen TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (workspace_id) REFERENCES workspaces (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_presence_table).execute(pool).await?;
+    
     Ok(())
 }
