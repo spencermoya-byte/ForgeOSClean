@@ -156,6 +156,24 @@ pub struct ExtensionUpdateResponse {
     pub updated_version: Option<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExtensionLifecycleEvent {
+    pub extension_id: String,
+    pub event_type: ExtensionLifecycleEventType,
+    pub timestamp: String,
+    pub metadata: serde_json::Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ExtensionLifecycleEventType {
+    Installed,
+    Updated,
+    Uninstalled,
+    Enabled,
+    Disabled,
+    Failed,
+}
+
 // Marketplace database structure
 pub struct MarketplaceDatabase {
     pool: SqlitePool,
@@ -717,6 +735,68 @@ impl MarketplaceDatabase {
             
         Ok(installations)
     }
+    
+    pub async fn update_extension_status(&self, extension_id: &str, is_active: bool) -> Result<(), sqlx::Error> {
+        let query = r#"
+            UPDATE extensions SET is_active = ?, updated_at = ? WHERE id = ?
+        "#;
+        
+        let now = chrono::Utc::now().to_rfc3339();
+        
+        sqlx::query(query)
+            .bind(is_active)
+            .bind(&now)
+            .bind(extension_id)
+            .execute(&self.pool)
+            .await?;
+            
+        Ok(())
+    }
+    
+    pub async fn get_extension_installation_by_workspace_and_extension(&self, workspace_id: &str, extension_id: &str) -> Result<Option<ExtensionInstallation>, sqlx::Error> {
+        let query = r#"
+            SELECT * FROM extension_installations WHERE workspace_id = ? AND extension_id = ?
+        "#;
+        
+        let row = sqlx::query(query)
+            .bind(workspace_id)
+            .bind(extension_id)
+            .fetch_one(&self.pool)
+            .await;
+            
+        match row {
+            Ok(row) => {
+                Ok(Some(ExtensionInstallation {
+                    id: row.get("id"),
+                    extension_id: row.get("extension_id"),
+                    workspace_id: row.get("workspace_id"),
+                    installation_status: match row.get::<String, _>("installation_status").as_str() {
+                        "Installed" => InstallationStatus::Installed,
+                        "Updated" => InstallationStatus::Updated,
+                        "Failed" => InstallationStatus::Failed,
+                        "Cancelled" => InstallationStatus::Cancelled,
+                        "Uninstalled" => InstallationStatus::Uninstalled,
+                        _ => InstallationStatus::Failed,
+                    },
+                    update_status: match row.get::<String, _>("update_status").as_str() {
+                        "Updated" => UpdateStatus::Updated,
+                        "UpToDate" => UpdateStatus::UpToDate,
+                        "Failed" => UpdateStatus::Failed,
+                        "Pending" => UpdateStatus::Pending,
+                        _ => UpdateStatus::Failed,
+                    },
+                    installed_at: row.get("installed_at"),
+                    updated_at: row.get("updated_at"),
+                    version: row.get("version"),
+                    metadata: row.get("metadata"),
+                    install_path: row.get("install_path"),
+                    is_system: row.get("is_system"),
+                }))
+            }
+            Err(sqlx::Error::RowNotFound) => Ok(None),
+            Err(e) => Err(e),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -725,6 +805,169 @@ pub struct MarketplaceStatus {
     pub total_capabilities: u64,
     pub total_installations: u64,
     pub last_updated: String,
+}
+
+// Marketplace orchestration service
+pub struct MarketplaceOrchestrationService {
+    db: MarketplaceDatabase,
+}
+
+impl MarketplaceOrchestrationService {
+    pub fn new(db: MarketplaceDatabase) -> Self {
+        MarketplaceOrchestrationService { db }
+    }
+
+    pub async fn install_extension(&self, request: ExtensionInstallationRequest) -> Result<ExtensionInstallationResponse, Box<dyn std::error::Error>> {
+        // Validate that the extension exists
+        let extension = self.db.get_extension(&request.extension_id).await?;
+        
+        // Check if extension is already installed in this workspace
+        let existing_installation = self.db.get_extension_installation_by_workspace_and_extension(&request.workspace_id, &request.extension_id).await?;
+        
+        if let Some(_) = existing_installation {
+            // Extension already installed, update it instead
+            return self.update_extension_installation(request).await;
+        }
+        
+        // Create installation record
+        let response = self.db.install_extension(request).await?;
+        
+        // Log lifecycle event
+        self.log_lifecycle_event(&extension.id, ExtensionLifecycleEventType::Installed, serde_json::json!({
+            "workspace_id": response.installation_id,
+            "status": "installed"
+        })).await?;
+        
+        Ok(response)
+    }
+
+    pub async fn update_extension(&self, request: ExtensionUpdateRequest) -> Result<ExtensionUpdateResponse, Box<dyn std::error::Error>> {
+        // Validate that the extension exists
+        let extension = self.db.get_extension(&request.extension_id).await?;
+        
+        // Get current installation
+        let installation = self.db.get_extension_installation_by_workspace_and_extension(&request.workspace_id, &request.extension_id).await?;
+        
+        if installation.is_none() {
+            return Err("Extension not installed in this workspace".into());
+        }
+        
+        // Perform update
+        let response = self.db.update_extension_installation(&installation.unwrap().id, request).await?;
+        
+        // Log lifecycle event
+        self.log_lifecycle_event(&extension.id, ExtensionLifecycleEventType::Updated, serde_json::json!({
+            "workspace_id": request.workspace_id,
+            "status": "updated",
+            "version": response.updated_version
+        })).await?;
+        
+        Ok(response)
+    }
+
+    pub async fn uninstall_extension(&self, workspace_id: &str, extension_id: &str) -> Result<(), Box<dyn std::error::Error>> {
+        // Get current installation
+        let installation = self.db.get_extension_installation_by_workspace_and_extension(workspace_id, extension_id).await?;
+        
+        if let Some(installation) = installation {
+            // Update installation status to uninstalled
+            let query = r#"
+                UPDATE extension_installations 
+                SET installation_status = ?, updated_at = ?
+                WHERE id = ?
+            "#;
+            
+            let now = chrono::Utc::now().to_rfc3339();
+            
+            sqlx::query(query)
+                .bind("Uninstalled")
+                .bind(&now)
+                .bind(&installation.id)
+                .execute(&self.db.pool)
+                .await?;
+                
+            // Log lifecycle event
+            self.log_lifecycle_event(extension_id, ExtensionLifecycleEventType::Uninstalled, serde_json::json!({
+                "workspace_id": workspace_id,
+                "status": "uninstalled"
+            })).await?;
+        }
+        
+        Ok(())
+    }
+
+    pub async fn enable_extension(&self, extension_id: &str) -> Result<(), Box<dyn std::error::Error>> {
+        // Update extension status to active
+        self.db.update_extension_status(extension_id, true).await?;
+        
+        // Log lifecycle event
+        self.log_lifecycle_event(extension_id, ExtensionLifecycleEventType::Enabled, serde_json::json!({
+            "status": "enabled"
+        })).await?;
+        
+        Ok(())
+    }
+
+    pub async fn disable_extension(&self, extension_id: &str) -> Result<(), Box<dyn std::error::Error>> {
+        // Update extension status to inactive
+        self.db.update_extension_status(extension_id, false).await?;
+        
+        // Log lifecycle event
+        self.log_lifecycle_event(extension_id, ExtensionLifecycleEventType::Disabled, serde_json::json!({
+            "status": "disabled"
+        })).await?;
+        
+        Ok(())
+    }
+
+    pub async fn validate_extension_dependencies(&self, extension_id: &str) -> Result<bool, Box<dyn std::error::Error>> {
+        // Get the extension
+        let extension = self.db.get_extension(extension_id).await?;
+        
+        // Check if all dependencies are satisfied
+        for dep in &extension.dependencies {
+            // Check if dependency exists and is active
+            if let Ok(dep_extension) = self.db.get_extension(dep).await {
+                if !dep_extension.is_active {
+                    return Ok(false);
+                }
+            } else {
+                // Dependency not found
+                return Ok(false);
+            }
+        }
+        
+        Ok(true)
+    }
+
+    pub async fn validate_extension_compatibility(&self, extension_id: &str, platform: &str, version: &str) -> Result<bool, Box<dyn std::error::Error>> {
+        // Get the extension
+        let extension = self.db.get_extension(extension_id).await?;
+        
+        // Check compatibility
+        if extension.compatibility.platform != platform {
+            return Ok(false);
+        }
+        
+        // Check version compatibility
+        if extension.compatibility.min_version > version {
+            return Ok(false);
+        }
+        
+        if let Some(max_version) = &extension.compatibility.max_version {
+            if max_version < version {
+                return Ok(false);
+            }
+        }
+        
+        Ok(true)
+    }
+
+    async fn log_lifecycle_event(&self, extension_id: &str, event_type: ExtensionLifecycleEventType, metadata: serde_json::Value) -> Result<(), sqlx::Error> {
+        // In a real implementation, this would log to a dedicated events table
+        // For now, we'll just return Ok(())
+        Ok(())
+    }
 }
 
 // Initialize marketplace schema
