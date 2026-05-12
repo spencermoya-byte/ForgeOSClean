@@ -183,6 +183,31 @@ pub fn run() {
             ai::collaborative_ai::update_collaborative_context,
             ai::collaborative_ai::get_collaboration_rules,
             ai::collaborative_ai::validate_collaboration_request,
+            
+            // Engineering operations commands
+            ai::engineering_operations::submit_operation,
+            ai::engineering_operations::get_operation,
+            ai::engineering_operations::get_operations,
+            ai::engineering_operations::update_operation_status,
+            ai::engineering_operations::cancel_operation,
+            ai::engineering_operations::get_operation_history,
+            ai::engineering_operations::get_operation_metrics,
+            
+            // Execution pipeline commands
+            ai::execution_pipelines::create_pipeline,
+            ai::execution_pipelines::get_pipeline,
+            ai::execution_pipelines::get_pipelines,
+            ai::execution_pipelines::start_pipeline,
+            ai::execution_pipelines::cancel_pipeline,
+            ai::execution_pipelines::update_step_status,
+            ai::execution_pipelines::get_pipeline_metrics,
+            
+            // Contextual operations commands
+            ai::contextual_operations::execute_contextual_operation,
+            ai::contextual_operations::get_contextual_operations,
+            ai::contextual_operations::get_contextual_operation,
+            ai::contextual_operations::get_contextual_metrics,
+            ai::contextual_operations::get_contextual_retrieval,
         ])
         .setup(|app| {
             // Initialize app state

@@ -13,3 +13,6 @@ pub mod contextual_intelligence;
 pub mod distributed_engineering;
 pub mod sync_engine;
 pub mod collaborative_ai;
+pub mod engineering_operations;
+pub mod execution_pipelines;
+pub mod contextual_operations;
