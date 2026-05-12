@@ -9,6 +9,7 @@ mod ai;
 mod workflow;
 mod plugin;
 mod sync;
+mod agent; // New agent module
 
 pub use app_info::*;
 pub use system_info::*;
@@ -21,3 +22,4 @@ pub use ai::*;
 pub use workflow::*;
 pub use plugin::*;
 pub use sync::*;
+pub use agent::*; // Export agent commands

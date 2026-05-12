@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use tauri::State;
 use crate::database::embedding::EmbeddingDatabase;
 use crate::ai::embedding::{EmbeddingRequest, EmbeddingResponse, VectorSearchRequest, VectorSearchResult};
+use crate::ai::agent::{AgentExecutionRequest, AgentExecutionResponse};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct AiRequest {
@@ -248,4 +249,123 @@ pub async fn vector_search(
     }
     
     Ok(results)
+}
+
+// Agent orchestration commands
+#[tauri::command]
+pub async fn get_agents(
+    db: State<'_, sqlx::SqlitePool>,
+) -> Result<crate::ai::agent::AgentsResponse, String> {
+    let agent_db = crate::database::agent::AgentDatabase::new(db.inner().clone());
+    match agent_db.get_agents().await {
+        Ok(agents) => Ok(crate::ai::agent::AgentsResponse { agents }),
+        Err(e) => Err(format!("Failed to get agents: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn get_agent(
+    db: State<'_, sqlx::SqlitePool>,
+    id: String,
+) -> Result<crate::ai::agent::AgentResponse, String> {
+    let agent_db = crate::database::agent::AgentDatabase::new(db.inner().clone());
+    match agent_db.get_agent(&id).await {
+        Ok(agent) => Ok(crate::ai::agent::AgentResponse { agent }),
+        Err(e) => Err(format!("Failed to get agent: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn create_agent(
+    db: State<'_, sqlx::SqlitePool>,
+    agent: crate::ai::agent::Agent,
+) -> Result<crate::ai::agent::AgentResponse, String> {
+    let agent_db = crate::database::agent::AgentDatabase::new(db.inner().clone());
+    match agent_db.create_agent(agent).await {
+        Ok(agent) => Ok(crate::ai::agent::AgentResponse { agent }),
+        Err(e) => Err(format!("Failed to create agent: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn update_agent(
+    db: State<'_, sqlx::SqlitePool>,
+    id: String,
+    agent: crate::ai::agent::Agent,
+) -> Result<crate::ai::agent::AgentResponse, String> {
+    let agent_db = crate::database::agent::AgentDatabase::new(db.inner().clone());
+    match agent_db.update_agent(&id, agent).await {
+        Ok(agent) => Ok(crate::ai::agent::AgentResponse { agent }),
+        Err(e) => Err(format!("Failed to update agent: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn delete_agent(
+    db: State<'_, sqlx::SqlitePool>,
+    id: String,
+) -> Result<(), String> {
+    let agent_db = crate::database::agent::AgentDatabase::new(db.inner().clone());
+    match agent_db.delete_agent(&id).await {
+        Ok(_) => Ok(()),
+        Err(e) => Err(format!("Failed to delete agent: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn get_agent_capabilities(
+    db: State<'_, sqlx::SqlitePool>,
+    agent_id: String,
+) -> Result<crate::ai::agent::AgentCapabilitiesResponse, String> {
+    let agent_db = crate::database::agent::AgentDatabase::new(db.inner().clone());
+    match agent_db.get_agent_capabilities(&agent_id).await {
+        Ok(capabilities) => Ok(crate::ai::agent::AgentCapabilitiesResponse { capabilities }),
+        Err(e) => Err(format!("Failed to get agent capabilities: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn execute_agent_task(
+    db: State<'_, sqlx::SqlitePool>,
+    request: AgentExecutionRequest,
+) -> Result<AgentExecutionResponse, String> {
+    let agent_db = crate::database::agent::AgentDatabase::new(db.inner().clone());
+    
+    // Create the execution record
+    let execution = crate::ai::agent::AgentExecution {
+        id: uuid::Uuid::new_v4().to_string(),
+        agent_id: request.agent_id.clone(),
+        task_id: request.task.id.clone(),
+        status: "pending".to_string(),
+        result: None,
+        error_message: None,
+        started_at: Some(chrono::Utc::now().to_rfc3339()),
+        completed_at: None,
+        created_at: chrono::Utc::now().to_rfc3339(),
+        updated_at: chrono::Utc::now().to_rfc3339(),
+    };
+    
+    // Save execution to database
+    match agent_db.create_agent_execution(execution).await {
+        Ok(_) => {
+            // In a real implementation, this would actually execute the agent task
+            // For now, we'll just return a mock response
+            let response = AgentExecutionResponse {
+                execution: crate::ai::agent::AgentExecution {
+                    id: uuid::Uuid::new_v4().to_string(),
+                    agent_id: request.agent_id,
+                    task_id: request.task.id,
+                    status: "completed".to_string(),
+                    result: Some("Task executed successfully".to_string()),
+                    error_message: None,
+                    started_at: Some(chrono::Utc::now().to_rfc3339()),
+                    completed_at: Some(chrono::Utc::now().to_rfc3339()),
+                    created_at: chrono::Utc::now().to_rfc3339(),
+                    updated_at: chrono::Utc::now().to_rfc3339(),
+                }
+            };
+            Ok(response)
+        }
+        Err(e) => Err(format!("Failed to execute agent task: {}", e)),
+    }
 }

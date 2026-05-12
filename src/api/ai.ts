@@ -114,6 +114,63 @@ export interface PluginContext {
   settings: any[];
 }
 
+// Agent-related interfaces
+export interface Agent {
+  id: string;
+  name: string;
+  description: string;
+  type: string;
+  capabilities: string[];
+  isActive: boolean;
+  config: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AgentCapability {
+  id: string;
+  agentId: string;
+  capability: string;
+  isEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AgentExecution {
+  id: string;
+  agentId: string;
+  taskId: string;
+  status: string;
+  result?: string;
+  errorMessage?: string;
+  startedAt?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AgentTask {
+  id: string;
+  agentId: string;
+  name: string;
+  description: string;
+  context: string;
+  priority: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AgentExecutionRequest {
+  agentId: string;
+  task: AgentTask;
+  context?: string;
+}
+
+export interface AgentExecutionResponse {
+  execution: AgentExecution;
+}
+
 export const getAiModels = async (): Promise<AiModel[]> => {
   const response = await window.__TAURI__.invoke('get_ai_models');
   return response as AiModel[];
@@ -177,4 +234,39 @@ export const updatePluginCapability = async (request: PluginCapability): Promise
 export const updatePluginSetting = async (request: any): Promise<any> => {
   const response = await window.__TAURI__.invoke('update_plugin_setting', { request });
   return response as any;
+};
+
+// Agent-related API functions
+export const getAgents = async (): Promise<Agent[]> => {
+  const response = await window.__TAURI__.invoke('get_agents');
+  return response as Agent[];
+};
+
+export const getAgent = async (id: string): Promise<Agent> => {
+  const response = await window.__TAURI__.invoke('get_agent', { id });
+  return response as Agent;
+};
+
+export const createAgent = async (agent: Agent): Promise<Agent> => {
+  const response = await window.__TAURI__.invoke('create_agent', { agent });
+  return response as Agent;
+};
+
+export const updateAgent = async (id: string, agent: Agent): Promise<Agent> => {
+  const response = await window.__TAURI__.invoke('update_agent', { id, agent });
+  return response as Agent;
+};
+
+export const deleteAgent = async (id: string): Promise<void> => {
+  await window.__TAURI__.invoke('delete_agent', { id });
+};
+
+export const getAgentCapabilities = async (agentId: string): Promise<AgentCapability[]> => {
+  const response = await window.__TAURI__.invoke('get_agent_capabilities', { agentId });
+  return response as AgentCapability[];
+};
+
+export const executeAgentTask = async (request: AgentExecutionRequest): Promise<AgentExecutionResponse> => {
+  const response = await window.__TAURI__.invoke('execute_agent_task', { request });
+  return response as AgentExecutionResponse;
 };
