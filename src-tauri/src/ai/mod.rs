@@ -7,3 +7,6 @@ pub mod embedding;
 pub mod code_intelligence;
 pub mod execution;
 pub mod observability;
+pub mod engineering_workspace;
+pub mod code_operations;
+pub mod contextual_intelligence;
