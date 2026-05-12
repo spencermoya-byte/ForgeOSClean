@@ -48,6 +48,54 @@ pub struct IndexingStatus {
     pub error_message: Option<String>,
 }
 
+// Code intelligence specific structures
+#[derive(Debug, Clone)]
+pub struct CodeSymbol {
+    pub id: String,
+    pub file_id: String,
+    pub name: String,
+    pub symbol_type: String, // "function", "class", "method", "variable", "constant", "module"
+    pub start_line: u32,
+    pub end_line: u32,
+    pub signature: String,
+    pub documentation: String,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct CodeRelationship {
+    pub id: String,
+    pub source_symbol_id: String,
+    pub target_symbol_id: String,
+    pub relationship_type: String, // "calls", "uses", "inherits", "imports", "references"
+    pub weight: f32,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct CodeAnalysis {
+    pub id: String,
+    pub file_id: String,
+    pub project_id: String,
+    pub analysis_type: String, // "syntax", "semantic", "dependency", "complexity"
+    pub result: String, // JSON string with analysis results
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct ProjectCodeIntelligence {
+    pub id: String,
+    pub project_id: String,
+    pub symbol_count: u32,
+    pub file_count: u32,
+    pub average_complexity: f32,
+    pub last_analyzed: String,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
 pub struct FilesystemDatabase {
     pool: SqlitePool,
 }
@@ -57,6 +105,8 @@ impl FilesystemDatabase {
         FilesystemDatabase { pool }
     }
 
+    // Existing methods remain unchanged...
+    
     pub async fn create_indexed_file(&self, file: IndexedFile) -> Result<IndexedFile, sqlx::Error> {
         let query = r#"
             INSERT INTO indexed_files (id, workspace_id, project_id, path, name, size, file_type, created_at, modified_at, metadata)
@@ -499,5 +549,272 @@ impl FilesystemDatabase {
         }
         
         Ok(files)
+    }
+
+    // New code intelligence methods
+    pub async fn create_code_symbol(&self, symbol: CodeSymbol) -> Result<CodeSymbol, sqlx::Error> {
+        let query = r#"
+            INSERT INTO code_symbols (id, file_id, name, symbol_type, start_line, end_line, signature, documentation, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            RETURNING *
+        "#;
+        
+        let row = sqlx::query(query)
+            .bind(&symbol.id)
+            .bind(&symbol.file_id)
+            .bind(&symbol.name)
+            .bind(&symbol.symbol_type)
+            .bind(&symbol.start_line)
+            .bind(&symbol.end_line)
+            .bind(&symbol.signature)
+            .bind(&symbol.documentation)
+            .bind(&symbol.created_at)
+            .bind(&symbol.updated_at)
+            .fetch_one(&self.pool)
+            .await?;
+            
+        Ok(CodeSymbol {
+            id: row.get("id"),
+            file_id: row.get("file_id"),
+            name: row.get("name"),
+            symbol_type: row.get("symbol_type"),
+            start_line: row.get("start_line"),
+            end_line: row.get("end_line"),
+            signature: row.get("signature"),
+            documentation: row.get("documentation"),
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
+        })
+    }
+
+    pub async fn get_code_symbol(&self, id: &str) -> Result<CodeSymbol, sqlx::Error> {
+        let query = r#"
+            SELECT * FROM code_symbols WHERE id = ?
+        "#;
+        
+        let row = sqlx::query(query)
+            .bind(id)
+            .fetch_one(&self.pool)
+            .await?;
+            
+        Ok(CodeSymbol {
+            id: row.get("id"),
+            file_id: row.get("file_id"),
+            name: row.get("name"),
+            symbol_type: row.get("symbol_type"),
+            start_line: row.get("start_line"),
+            end_line: row.get("end_line"),
+            signature: row.get("signature"),
+            documentation: row.get("documentation"),
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
+        })
+    }
+
+    pub async fn get_code_symbols(&self, file_id: &str) -> Result<Vec<CodeSymbol>, sqlx::Error> {
+        let query = r#"
+            SELECT * FROM code_symbols WHERE file_id = ? ORDER BY start_line
+        "#;
+        
+        let rows = sqlx::query(query)
+            .bind(file_id)
+            .fetch_all(&self.pool)
+            .await?;
+            
+        let mut symbols = Vec::new();
+        for row in rows {
+            symbols.push(CodeSymbol {
+                id: row.get("id"),
+                file_id: row.get("file_id"),
+                name: row.get("name"),
+                symbol_type: row.get("symbol_type"),
+                start_line: row.get("start_line"),
+                end_line: row.get("end_line"),
+                signature: row.get("signature"),
+                documentation: row.get("documentation"),
+                created_at: row.get("created_at"),
+                updated_at: row.get("updated_at"),
+            });
+        }
+        
+        Ok(symbols)
+    }
+
+    pub async fn create_code_relationship(&self, relationship: CodeRelationship) -> Result<CodeRelationship, sqlx::Error> {
+        let query = r#"
+            INSERT INTO code_relationships (id, source_symbol_id, target_symbol_id, relationship_type, weight, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            RETURNING *
+        "#;
+        
+        let row = sqlx::query(query)
+            .bind(&relationship.id)
+            .bind(&relationship.source_symbol_id)
+            .bind(&relationship.target_symbol_id)
+            .bind(&relationship.relationship_type)
+            .bind(&relationship.weight)
+            .bind(&relationship.created_at)
+            .fetch_one(&self.pool)
+            .await?;
+            
+        Ok(CodeRelationship {
+            id: row.get("id"),
+            source_symbol_id: row.get("source_symbol_id"),
+            target_symbol_id: row.get("target_symbol_id"),
+            relationship_type: row.get("relationship_type"),
+            weight: row.get("weight"),
+            created_at: row.get("created_at"),
+        })
+    }
+
+    pub async fn get_code_relationships(&self, source_symbol_id: Option<&str>, target_symbol_id: Option<&str>, relationship_types: Option<&[String]>) -> Result<Vec<CodeRelationship>, sqlx::Error> {
+        let mut query = r#"
+            SELECT * FROM code_relationships WHERE 1=1
+        "#.to_string();
+        
+        let mut binds: Vec<&dyn sqlx::Encode<sqlx::Sqlite> + Sync> = vec![];
+        
+        if let Some(source_symbol_id) = source_symbol_id {
+            query.push_str(" AND source_symbol_id = ?");
+            binds.push(source_symbol_id);
+        }
+        
+        if let Some(target_symbol_id) = target_symbol_id {
+            query.push_str(" AND target_symbol_id = ?");
+            binds.push(target_symbol_id);
+        }
+        
+        if let Some(types) = relationship_types {
+            if !types.is_empty() {
+                query.push_str(" AND relationship_type IN (");
+                query.push_str(&types.iter().map(|_| "?").collect::<Vec<_>>().join(", "));
+                query.push(')');
+                binds.extend(types.iter().map(|s| s as &dyn sqlx::Encode<sqlx::Sqlite> + Sync));
+            }
+        }
+        
+        query.push_str(" ORDER BY created_at DESC");
+        
+        let rows = sqlx::query(&query)
+            .bind(&binds)
+            .fetch_all(&self.pool)
+            .await?;
+            
+        let mut relationships = Vec::new();
+        for row in rows {
+            relationships.push(CodeRelationship {
+                id: row.get("id"),
+                source_symbol_id: row.get("source_symbol_id"),
+                target_symbol_id: row.get("target_symbol_id"),
+                relationship_type: row.get("relationship_type"),
+                weight: row.get("weight"),
+                created_at: row.get("created_at"),
+            });
+        }
+        
+        Ok(relationships)
+    }
+
+    pub async fn create_code_analysis(&self, analysis: CodeAnalysis) -> Result<CodeAnalysis, sqlx::Error> {
+        let query = r#"
+            INSERT INTO code_analysis (id, file_id, project_id, analysis_type, result, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            RETURNING *
+        "#;
+        
+        let row = sqlx::query(query)
+            .bind(&analysis.id)
+            .bind(&analysis.file_id)
+            .bind(&analysis.project_id)
+            .bind(&analysis.analysis_type)
+            .bind(&analysis.result)
+            .bind(&analysis.created_at)
+            .bind(&analysis.updated_at)
+            .fetch_one(&self.pool)
+            .await?;
+            
+        Ok(CodeAnalysis {
+            id: row.get("id"),
+            file_id: row.get("file_id"),
+            project_id: row.get("project_id"),
+            analysis_type: row.get("analysis_type"),
+            result: row.get("result"),
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
+        })
+    }
+
+    pub async fn get_code_analysis(&self, file_id: &str, analysis_type: &str) -> Result<CodeAnalysis, sqlx::Error> {
+        let query = r#"
+            SELECT * FROM code_analysis WHERE file_id = ? AND analysis_type = ?
+        "#;
+        
+        let row = sqlx::query(query)
+            .bind(file_id)
+            .bind(analysis_type)
+            .fetch_one(&self.pool)
+            .await?;
+            
+        Ok(CodeAnalysis {
+            id: row.get("id"),
+            file_id: row.get("file_id"),
+            project_id: row.get("project_id"),
+            analysis_type: row.get("analysis_type"),
+            result: row.get("result"),
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
+        })
+    }
+
+    pub async fn get_project_code_intelligence(&self, project_id: &str) -> Result<ProjectCodeIntelligence, sqlx::Error> {
+        let query = r#"
+            SELECT * FROM project_code_intelligence WHERE project_id = ?
+        "#;
+        
+        let row = sqlx::query(query)
+            .bind(project_id)
+            .fetch_one(&self.pool)
+            .await?;
+            
+        Ok(ProjectCodeIntelligence {
+            id: row.get("id"),
+            project_id: row.get("project_id"),
+            symbol_count: row.get("symbol_count"),
+            file_count: row.get("file_count"),
+            average_complexity: row.get("average_complexity"),
+            last_analyzed: row.get("last_analyzed"),
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
+        })
+    }
+
+    pub async fn update_project_code_intelligence(&self, project_id: &str, intelligence: ProjectCodeIntelligence) -> Result<ProjectCodeIntelligence, sqlx::Error> {
+        let query = r#"
+            UPDATE project_code_intelligence 
+            SET symbol_count = ?, file_count = ?, average_complexity = ?, last_analyzed = ?, updated_at = ?
+            WHERE project_id = ?
+            RETURNING *
+        "#;
+        
+        let row = sqlx::query(query)
+            .bind(&intelligence.symbol_count)
+            .bind(&intelligence.file_count)
+            .bind(&intelligence.average_complexity)
+            .bind(&intelligence.last_analyzed)
+            .bind(&intelligence.updated_at)
+            .bind(project_id)
+            .fetch_one(&self.pool)
+            .await?;
+            
+        Ok(ProjectCodeIntelligence {
+            id: row.get("id"),
+            project_id: row.get("project_id"),
+            symbol_count: row.get("symbol_count"),
+            file_count: row.get("file_count"),
+            average_complexity: row.get("average_complexity"),
+            last_analyzed: row.get("last_analyzed"),
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
+        })
     }
 }

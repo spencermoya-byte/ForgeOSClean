@@ -435,5 +435,69 @@ async fn init_schema(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     
     sqlx::execute(create_indexing_status_table).execute(pool).await?;
     
+    // Create code intelligence tables
+    let create_code_symbols_table = r#"
+        CREATE TABLE IF NOT EXISTS code_symbols (
+            id TEXT PRIMARY KEY,
+            file_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            symbol_type TEXT NOT NULL,
+            start_line INTEGER NOT NULL,
+            end_line INTEGER NOT NULL,
+            signature TEXT NOT NULL,
+            documentation TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (file_id) REFERENCES indexed_files (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_code_symbols_table).execute(pool).await?;
+    
+    let create_code_relationships_table = r#"
+        CREATE TABLE IF NOT EXISTS code_relationships (
+            id TEXT PRIMARY KEY,
+            source_symbol_id TEXT NOT NULL,
+            target_symbol_id TEXT NOT NULL,
+            relationship_type TEXT NOT NULL,
+            weight REAL DEFAULT 1.0,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (source_symbol_id) REFERENCES code_symbols (id) ON DELETE CASCADE,
+            FOREIGN KEY (target_symbol_id) REFERENCES code_symbols (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_code_relationships_table).execute(pool).await?;
+    
+    let create_code_analysis_table = r#"
+        CREATE TABLE IF NOT EXISTS code_analysis (
+            id TEXT PRIMARY KEY,
+            file_id TEXT NOT NULL,
+            project_id TEXT NOT NULL,
+            analysis_type TEXT NOT NULL,
+            result TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (file_id) REFERENCES indexed_files (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_code_analysis_table).execute(pool).await?;
+    
+    let create_project_code_intelligence_table = r#"
+        CREATE TABLE IF NOT EXISTS project_code_intelligence (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL UNIQUE,
+            symbol_count INTEGER NOT NULL,
+            file_count INTEGER NOT NULL,
+            average_complexity REAL DEFAULT 0.0,
+            last_analyzed TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_project_code_intelligence_table).execute(pool).await?;
+    
     Ok(())
 }

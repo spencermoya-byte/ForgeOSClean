@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use tauri::State;
-use crate::database::filesystem::{FilesystemDatabase, IndexedFile, ProjectMetadata, FileRelationship, IndexingStatus};
+use crate::database::filesystem::{FilesystemDatabase, IndexedFile, ProjectMetadata, FileRelationship, IndexingStatus, CodeSymbol, CodeRelationship, CodeAnalysis, ProjectCodeIntelligence};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct FilesystemIndexingRequest {
@@ -85,11 +85,50 @@ pub struct FilesystemIndexingStatus {
     pub error_message: Option<String>,
 }
 
+// Code intelligence specific structures
+#[derive(Serialize, Deserialize, Clone)]
+pub struct CodeSymbolRequest {
+    pub file_id: String,
+    pub symbols: Vec<CodeSymbol>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct CodeSymbolResponse {
+    pub symbols: Vec<CodeSymbol>,
+    pub created_at: String,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct CodeAnalysisRequest {
+    pub file_id: String,
+    pub analysis_type: String,
+    pub config: serde_json::Value,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct CodeAnalysisResponse {
+    pub analysis: CodeAnalysis,
+    pub created_at: String,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ProjectCodeIntelligenceRequest {
+    pub project_id: String,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ProjectCodeIntelligenceResponse {
+    pub intelligence: ProjectCodeIntelligence,
+    pub created_at: String,
+}
+
 #[tauri::command]
 pub async fn start_filesystem_indexing(
     db: State<'_, sqlx::SqlitePool>,
     request: FilesystemIndexingRequest,
 ) -> Result<FilesystemIndexingResponse, String> {
+    let filesystem_db = FilesystemDatabase::new(db.inner().clone());
+    
     // In a real implementation, this would start the filesystem indexing process
     // For now, we'll return a mock response
     
@@ -116,7 +155,7 @@ pub async fn start_filesystem_indexing(
             file_type: "text".to_string(),
             created_at: chrono::Utc::now().to_rfc3339(),
             modified_at: chrono::Utc::now().to_rfc3339(),
-            metadata: serde_json::json!({"tags": ["important"]}),
+            metadata: serde_json::json!({"tags": ["important"]}).to_string(),
         },
         IndexedFile {
             id: "file_2".to_string(),
@@ -128,7 +167,7 @@ pub async fn start_filesystem_indexing(
             file_type: "python".to_string(),
             created_at: chrono::Utc::now().to_rfc3339(),
             modified_at: chrono::Utc::now().to_rfc3339(),
-            metadata: serde_json::json!({"tags": ["code"]}),
+            metadata: serde_json::json!({"tags": ["code"]}).to_string(),
         }
     ];
     
@@ -146,6 +185,8 @@ pub async fn search_filesystem(
     db: State<'_, sqlx::SqlitePool>,
     request: FilesystemSearchRequest,
 ) -> Result<FilesystemSearchResult, String> {
+    let filesystem_db = FilesystemDatabase::new(db.inner().clone());
+    
     // In a real implementation, this would perform a filesystem search
     // For now, we'll return mock results
     
@@ -160,7 +201,7 @@ pub async fn search_filesystem(
             file_type: "text".to_string(),
             created_at: chrono::Utc::now().to_rfc3339(),
             modified_at: chrono::Utc::now().to_rfc3339(),
-            metadata: serde_json::json!({"tags": ["important"]}),
+            metadata: serde_json::json!({"tags": ["important"]}).to_string(),
         }
     ];
     
@@ -189,6 +230,8 @@ pub async fn get_filesystem_context(
     workspace_id: String,
     project_id: Option<String>,
 ) -> Result<FilesystemContext, String> {
+    let filesystem_db = FilesystemDatabase::new(db.inner().clone());
+    
     // In a real implementation, this would return the filesystem context
     // For now, we'll return a mock context
     
@@ -203,7 +246,7 @@ pub async fn get_filesystem_context(
             file_type: "text".to_string(),
             created_at: chrono::Utc::now().to_rfc3339(),
             modified_at: chrono::Utc::now().to_rfc3339(),
-            metadata: serde_json::json!({"tags": ["important"]}),
+            metadata: serde_json::json!({"tags": ["important"]}).to_string(),
         }
     ];
     
@@ -256,6 +299,8 @@ pub async fn get_filesystem_indexing_status(
     workspace_id: String,
     project_id: Option<String>,
 ) -> Result<FilesystemIndexingStatus, String> {
+    let filesystem_db = FilesystemDatabase::new(db.inner().clone());
+    
     // In a real implementation, this would return the indexing status
     // For now, we'll return a mock status
     
@@ -268,5 +313,99 @@ pub async fn get_filesystem_indexing_status(
         processed_files: 100,
         last_updated: chrono::Utc::now().to_rfc3339(),
         error_message: None,
+    })
+}
+
+// Code intelligence commands
+#[tauri::command]
+pub async fn index_code_symbols(
+    db: State<'_, sqlx::SqlitePool>,
+    request: CodeSymbolRequest,
+) -> Result<CodeSymbolResponse, String> {
+    let filesystem_db = FilesystemDatabase::new(db.inner().clone());
+    
+    // In a real implementation, this would parse the file and extract code symbols
+    // For now, we'll return a mock response
+    
+    let symbols = request.symbols;
+    
+    // Save symbols to database
+    for symbol in &symbols {
+        if let Err(e) = filesystem_db.create_code_symbol(symbol.clone()).await {
+            return Err(format!("Failed to save symbol: {}", e));
+        }
+    }
+    
+    Ok(CodeSymbolResponse {
+        symbols,
+        created_at: chrono::Utc::now().to_rfc3339(),
+    })
+}
+
+#[tauri::command]
+pub async fn analyze_code(
+    db: State<'_, sqlx::SqlitePool>,
+    request: CodeAnalysisRequest,
+) -> Result<CodeAnalysisResponse, String> {
+    let filesystem_db = FilesystemDatabase::new(db.inner().clone());
+    
+    // In a real implementation, this would perform code analysis
+    // For now, we'll return a mock response
+    
+    let analysis = CodeAnalysis {
+        id: uuid::Uuid::new_v4().to_string(),
+        file_id: request.file_id,
+        project_id: "project_1".to_string(), // This would be derived from file_id
+        analysis_type: request.analysis_type,
+        result: serde_json::json!({
+            "complexity": 5.2,
+            "cyclomatic_complexity": 3,
+            "maintainability": 0.8,
+            "issues": []
+        }).to_string(),
+        created_at: chrono::Utc::now().to_rfc3339(),
+        updated_at: chrono::Utc::now().to_rfc3339(),
+    };
+    
+    // Save analysis to database
+    if let Err(e) = filesystem_db.create_code_analysis(analysis.clone()).await {
+        return Err(format!("Failed to save analysis: {}", e));
+    }
+    
+    Ok(CodeAnalysisResponse {
+        analysis,
+        created_at: chrono::Utc::now().to_rfc3339(),
+    })
+}
+
+#[tauri::command]
+pub async fn get_project_code_intelligence(
+    db: State<'_, sqlx::SqlitePool>,
+    request: ProjectCodeIntelligenceRequest,
+) -> Result<ProjectCodeIntelligenceResponse, String> {
+    let filesystem_db = FilesystemDatabase::new(db.inner().clone());
+    
+    // In a real implementation, this would calculate project intelligence metrics
+    // For now, we'll return a mock response
+    
+    let intelligence = ProjectCodeIntelligence {
+        id: uuid::Uuid::new_v4().to_string(),
+        project_id: request.project_id,
+        symbol_count: 150,
+        file_count: 25,
+        average_complexity: 4.2,
+        last_analyzed: chrono::Utc::now().to_rfc3339(),
+        created_at: chrono::Utc::now().to_rfc3339(),
+        updated_at: chrono::Utc::now().to_rfc3339(),
+    };
+    
+    // Save intelligence to database
+    if let Err(e) = filesystem_db.update_project_code_intelligence(&intelligence.project_id, intelligence.clone()).await {
+        return Err(format!("Failed to save project intelligence: {}", e));
+    }
+    
+    Ok(ProjectCodeIntelligenceResponse {
+        intelligence,
+        created_at: chrono::Utc::now().to_rfc3339(),
     })
 }

@@ -1,12 +1,7 @@
-pub mod service;
-pub mod provider;
-pub mod model;
-pub mod chat;
-pub mod embedding;
-pub mod workflow;
-pub mod plugin;
-pub mod collaboration;
-pub mod sync;
-pub mod agent;
+pub mod filesystem;
 pub mod knowledge_graph;
-pub mod filesystem; // New filesystem intelligence module
+pub mod semantic_search;
+pub mod workflow;
+pub mod agent;
+pub mod embedding;
+pub mod code_intelligence;
