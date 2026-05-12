@@ -80,6 +80,11 @@ fn main() {
             commands::ai::plugin::get_plugin_context,
             commands::ai::plugin::update_plugin_capability,
             commands::ai::plugin::update_plugin_setting,
+            commands::sync::get_sync_status,
+            commands::sync::queue_sync_request,
+            commands::sync::get_sync_history,
+            commands::sync::get_device_info,
+            commands::sync::update_device_info,
         ])
         .setup(|app| {
             #[cfg(debug_assertions)] // only include this code on debug builds

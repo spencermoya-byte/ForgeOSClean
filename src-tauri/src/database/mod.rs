@@ -6,3 +6,4 @@ pub mod embedding;
 pub mod workflow;
 pub mod plugin;
 pub mod collaboration;
+pub mod sync;

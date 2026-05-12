@@ -8,6 +8,7 @@ mod project;
 mod ai;
 mod workflow;
 mod plugin;
+mod sync;
 
 pub use app_info::*;
 pub use system_info::*;
@@ -19,3 +20,4 @@ pub use project::*;
 pub use ai::*;
 pub use workflow::*;
 pub use plugin::*;
+pub use sync::*;

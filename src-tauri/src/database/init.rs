@@ -426,6 +426,7 @@ async fn init_schema(pool: &SqlitePool) -> Result<(), sqlx::Error> {
             last_synced TEXT,
             sync_status TEXT DEFAULT 'synced',
             version INTEGER DEFAULT 1,
+            remote_id TEXT,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
             FOREIGN KEY (resource_id) REFERENCES resources (id) ON DELETE CASCADE,
@@ -451,6 +452,64 @@ async fn init_schema(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     "#;
     
     sqlx::execute(create_presence_table).execute(pool).await?;
+    
+    // Create sync queue table
+    let create_sync_queue_table = r#"
+        CREATE TABLE IF NOT EXISTS sync_queue (
+            id TEXT PRIMARY KEY,
+            resource_id TEXT,
+            workspace_id TEXT,
+            project_id TEXT,
+            operation TEXT NOT NULL,
+            payload TEXT NOT NULL,
+            status TEXT DEFAULT 'pending',
+            priority INTEGER DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (resource_id) REFERENCES resources (id) ON DELETE CASCADE,
+            FOREIGN KEY (workspace_id) REFERENCES workspaces (id) ON DELETE CASCADE,
+            FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_sync_queue_table).execute(pool).await?;
+    
+    // Create devices table
+    let create_devices_table = r#"
+        CREATE TABLE IF NOT EXISTS devices (
+            id TEXT PRIMARY KEY,
+            device_name TEXT NOT NULL,
+            device_type TEXT NOT NULL,
+            platform TEXT NOT NULL,
+            last_seen TEXT NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_devices_table).execute(pool).await?;
+    
+    // Create sync history table
+    let create_sync_history_table = r#"
+        CREATE TABLE IF NOT EXISTS sync_history (
+            id TEXT PRIMARY KEY,
+            resource_id TEXT,
+            workspace_id TEXT,
+            project_id TEXT,
+            operation TEXT NOT NULL,
+            status TEXT NOT NULL,
+            sync_time TEXT NOT NULL,
+            version INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (resource_id) REFERENCES resources (id) ON DELETE CASCADE,
+            FOREIGN KEY (workspace_id) REFERENCES workspaces (id) ON DELETE CASCADE,
+            FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_sync_history_table).execute(pool).await?;
     
     Ok(())
 }
