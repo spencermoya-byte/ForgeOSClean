@@ -149,6 +149,40 @@ pub fn run() {
             ai::observability::get_health_aggregations,
             ai::observability::get_monitoring_configuration,
             ai::observability::update_monitoring_configuration,
+            
+            // Distributed engineering commands
+            ai::distributed_engineering::create_workspace,
+            ai::distributed_engineering::update_workspace,
+            ai::distributed_engineering::get_workspace,
+            ai::distributed_engineering::sync_workspace,
+            ai::distributed_engineering::add_member,
+            ai::distributed_engineering::remove_member,
+            ai::distributed_engineering::get_workspace_members,
+            ai::distributed_engineering::get_workspace_activities,
+            ai::distributed_engineering::get_notifications,
+            ai::distributed_engineering::mark_notification_read,
+            
+            // Sync engine commands
+            ai::sync_engine::start_sync_engine,
+            ai::sync_engine::stop_sync_engine,
+            ai::sync_engine::pause_sync_engine,
+            ai::sync_engine::resume_sync_engine,
+            ai::sync_engine::add_sync_target,
+            ai::sync_engine::remove_sync_target,
+            ai::sync_engine::sync_now,
+            ai::sync_engine::get_sync_queue,
+            ai::sync_engine::process_sync_queue,
+            ai::sync_engine::get_sync_metrics,
+            ai::sync_engine::get_sync_status,
+            
+            // Collaborative AI commands
+            ai::collaborative_ai::execute_collaborative_request,
+            ai::collaborative_ai::get_shared_memory,
+            ai::collaborative_ai::update_shared_memory,
+            ai::collaborative_ai::get_collaborative_context,
+            ai::collaborative_ai::update_collaborative_context,
+            ai::collaborative_ai::get_collaboration_rules,
+            ai::collaborative_ai::validate_collaboration_request,
         ])
         .setup(|app| {
             // Initialize app state

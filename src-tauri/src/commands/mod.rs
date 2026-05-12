@@ -7,3 +7,6 @@ pub mod embedding;
 pub mod code_intelligence;
 pub mod execution;
 pub mod observability;
+pub mod distributed_engineering;
+pub mod sync_engine;
+pub mod collaborative_ai;

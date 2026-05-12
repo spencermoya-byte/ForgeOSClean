@@ -12,3 +12,6 @@ pub mod knowledge_graph;
 pub mod filesystem;
 pub mod execution;
 pub mod observability;
+pub mod distributed_engineering;
+pub mod sync_engine;
+pub mod collaborative_ai;

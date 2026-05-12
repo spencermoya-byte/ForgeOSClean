@@ -10,3 +10,6 @@ pub mod observability;
 pub mod engineering_workspace;
 pub mod code_operations;
 pub mod contextual_intelligence;
+pub mod distributed_engineering;
+pub mod sync_engine;
+pub mod collaborative_ai;
