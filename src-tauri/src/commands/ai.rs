@@ -3,6 +3,7 @@ use tauri::State;
 use crate::database::embedding::EmbeddingDatabase;
 use crate::ai::embedding::{EmbeddingRequest, EmbeddingResponse, VectorSearchRequest, VectorSearchResult};
 use crate::ai::agent::{AgentExecutionRequest, AgentExecutionResponse};
+use crate::ai::knowledge_graph::{GraphSearchRequest, GraphSearchResult, GraphTraversalRequest, GraphTraversalResult, GraphUpdateRequest, GraphUpdateResponse};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct AiRequest {
@@ -368,4 +369,75 @@ pub async fn execute_agent_task(
         }
         Err(e) => Err(format!("Failed to execute agent task: {}", e)),
     }
+}
+
+// Knowledge graph commands
+#[tauri::command]
+pub async fn search_graph(
+    db: State<'_, sqlx::SqlitePool>,
+    request: GraphSearchRequest,
+) -> Result<GraphSearchResult, String> {
+    let graph_db = crate::database::knowledge_graph::KnowledgeGraphDatabase::new(db.inner().clone());
+    match graph_db.search_entities(&request.query, None, 20).await {
+        Ok(entities) => {
+            // In a real implementation, this would return a proper graph search result
+            // For now, we'll return a mock result
+            Ok(GraphSearchResult {
+                entities,
+                relationships: vec![],
+                context: crate::ai::knowledge_graph::GraphContext {
+                    entities: vec![],
+                    relationships: vec![],
+                    contextual_metadata: vec![],
+                    relevance_score: 0.0,
+                    created_at: chrono::Utc::now().to_rfc3339(),
+                },
+                relevance_scores: vec![],
+            })
+        }
+        Err(e) => Err(format!("Failed to search graph: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn traverse_graph(
+    db: State<'_, sqlx::SqlitePool>,
+    request: GraphTraversalRequest,
+) -> Result<GraphTraversalResult, String> {
+    let graph_db = crate::database::knowledge_graph::KnowledgeGraphDatabase::new(db.inner().clone());
+    // In a real implementation, this would traverse the graph
+    // For now, we'll return a mock result
+    Ok(GraphTraversalResult {
+        entities: vec![],
+        relationships: vec![],
+        path: vec![],
+        context: crate::ai::knowledge_graph::GraphContext {
+            entities: vec![],
+            relationships: vec![],
+            contextual_metadata: vec![],
+            relevance_score: 0.0,
+            created_at: chrono::Utc::now().to_rfc3339(),
+        },
+    })
+}
+
+#[tauri::command]
+pub async fn update_graph(
+    db: State<'_, sqlx::SqlitePool>,
+    request: GraphUpdateRequest,
+) -> Result<GraphUpdateResponse, String> {
+    let graph_db = crate::database::knowledge_graph::KnowledgeGraphDatabase::new(db.inner().clone());
+    // In a real implementation, this would update the graph
+    // For now, we'll return a mock result
+    Ok(GraphUpdateResponse {
+        updated_entities: vec![],
+        updated_relationships: vec![],
+        context: crate::ai::knowledge_graph::GraphContext {
+            entities: vec![],
+            relationships: vec![],
+            contextual_metadata: vec![],
+            relevance_score: 0.0,
+            created_at: chrono::Utc::now().to_rfc3339(),
+        },
+    })
 }

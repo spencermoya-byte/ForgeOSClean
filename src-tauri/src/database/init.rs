@@ -15,8 +15,6 @@ pub async fn init_database() -> Result<SqlitePool, sqlx::Error> {
 }
 
 async fn init_schema(pool: &SqlitePool) -> Result<(), sqlx::Error> {
-    // ... [existing schema code] ...
-    
     // Create agents table
     let create_agents_table = r#"
         CREATE TABLE IF NOT EXISTS agents (
@@ -87,7 +85,292 @@ async fn init_schema(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     
     sqlx::execute(create_agent_tasks_table).execute(pool).await?;
     
-    // ... [rest of existing schema code] ...
+    // Create graph entities table
+    let create_graph_entities_table = r#"
+        CREATE TABLE IF NOT EXISTS graph_entities (
+            id TEXT PRIMARY KEY,
+            entity_type TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            metadata TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_graph_entities_table).execute(pool).await?;
+    
+    // Create graph relationships table
+    let create_graph_relationships_table = r#"
+        CREATE TABLE IF NOT EXISTS graph_relationships (
+            id TEXT PRIMARY KEY,
+            source_id TEXT NOT NULL,
+            target_id TEXT NOT NULL,
+            relationship_type TEXT NOT NULL,
+            weight REAL DEFAULT 1.0,
+            metadata TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (source_id) REFERENCES graph_entities (id) ON DELETE CASCADE,
+            FOREIGN KEY (target_id) REFERENCES graph_entities (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_graph_relationships_table).execute(pool).await?;
+    
+    // Create contextual metadata table
+    let create_contextual_metadata_table = r#"
+        CREATE TABLE IF NOT EXISTS contextual_metadata (
+            id TEXT PRIMARY KEY,
+            entity_id TEXT NOT NULL,
+            key TEXT NOT NULL,
+            value TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (entity_id) REFERENCES graph_entities (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_contextual_metadata_table).execute(pool).await?;
+    
+    // Create workflow tables (existing)
+    let create_workflows_table = r#"
+        CREATE TABLE IF NOT EXISTS workflows (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            workspace_id TEXT,
+            project_id TEXT,
+            is_active INTEGER DEFAULT 1,
+            trigger_type TEXT NOT NULL,
+            trigger_config TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_workflows_table).execute(pool).await?;
+    
+    let create_workflow_steps_table = r#"
+        CREATE TABLE IF NOT EXISTS workflow_steps (
+            id TEXT PRIMARY KEY,
+            workflow_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            step_type TEXT NOT NULL,
+            config TEXT,
+            position INTEGER DEFAULT 0,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (workflow_id) REFERENCES workflows (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_workflow_steps_table).execute(pool).await?;
+    
+    let create_workflow_executions_table = r#"
+        CREATE TABLE IF NOT EXISTS workflow_executions (
+            id TEXT PRIMARY KEY,
+            workflow_id TEXT NOT NULL,
+            status TEXT NOT NULL,
+            started_at TEXT,
+            completed_at TEXT,
+            error_message TEXT,
+            result TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (workflow_id) REFERENCES workflows (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_workflow_executions_table).execute(pool).await?;
+    
+    // Create plugin tables (existing)
+    let create_plugins_table = r#"
+        CREATE TABLE IF NOT EXISTS plugins (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            version TEXT NOT NULL,
+            description TEXT,
+            author TEXT,
+            is_active INTEGER DEFAULT 1,
+            is_system INTEGER DEFAULT 0,
+            capabilities TEXT,
+            config TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_plugins_table).execute(pool).await?;
+    
+    let create_plugin_settings_table = r#"
+        CREATE TABLE IF NOT EXISTS plugin_settings (
+            id TEXT PRIMARY KEY,
+            plugin_id TEXT NOT NULL,
+            key TEXT NOT NULL,
+            value TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (plugin_id) REFERENCES plugins (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_plugin_settings_table).execute(pool).await?;
+    
+    let create_plugin_capabilities_table = r#"
+        CREATE TABLE IF NOT EXISTS plugin_capabilities (
+            id TEXT PRIMARY KEY,
+            plugin_id TEXT NOT NULL,
+            capability TEXT NOT NULL,
+            is_enabled INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (plugin_id) REFERENCES plugins (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_plugin_capabilities_table).execute(pool).await?;
+    
+    // Create resource tables (existing)
+    let create_resources_table = r#"
+        CREATE TABLE IF NOT EXISTS resources (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_resources_table).execute(pool).await?;
+    
+    // Create workspace tables (existing)
+    let create_workspaces_table = r#"
+        CREATE TABLE IF NOT EXISTS workspaces (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            path TEXT NOT NULL,
+            is_active INTEGER DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_workspaces_table).execute(pool).await?;
+    
+    // Create project tables (existing)
+    let create_projects_table = r#"
+        CREATE TABLE IF NOT EXISTS projects (
+            id TEXT PRIMARY KEY,
+            workspace_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            is_active INTEGER DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (workspace_id) REFERENCES workspaces (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_projects_table).execute(pool).await?;
+    
+    // Create collaboration tables (existing)
+    let create_workspace_members_table = r#"
+        CREATE TABLE IF NOT EXISTS workspace_members (
+            id TEXT PRIMARY KEY,
+            workspace_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            role TEXT NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (workspace_id) REFERENCES workspaces (id) ON DELETE CASCADE
+        );
+    "#;
+    
+    sqlx::execute(create_workspace_members_table).execute(pool).await?;
+    
+    let create_activity_log_table = r#"
+        CREATE TABLE IF NOT EXISTS activity_log (
+            id TEXT PRIMARY KEY,
+            workspace_id TEXT,
+            project_id TEXT,
+            resource_id TEXT,
+            user_id TEXT NOT NULL,
+            action TEXT NOT NULL,
+            details TEXT,
+            created_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_activity_log_table).execute(pool).await?;
+    
+    // Create sync tables (existing)
+    let create_sync_metadata_table = r#"
+        CREATE TABLE IF NOT EXISTS sync_metadata (
+            id TEXT PRIMARY KEY,
+            resource_id TEXT NOT NULL,
+            workspace_id TEXT NOT NULL,
+            project_id TEXT NOT NULL,
+            last_synced TEXT NOT NULL,
+            sync_status TEXT NOT NULL,
+            version INTEGER DEFAULT 1,
+            remote_id TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_sync_metadata_table).execute(pool).await?;
+    
+    let create_sync_queue_table = r#"
+        CREATE TABLE IF NOT EXISTS sync_queue (
+            id TEXT PRIMARY KEY,
+            resource_id TEXT NOT NULL,
+            workspace_id TEXT NOT NULL,
+            project_id TEXT NOT NULL,
+            operation TEXT NOT NULL,
+            payload TEXT NOT NULL,
+            status TEXT NOT NULL,
+            priority INTEGER DEFAULT 0,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_sync_queue_table).execute(pool).await?;
+    
+    let create_devices_table = r#"
+        CREATE TABLE IF NOT EXISTS devices (
+            id TEXT PRIMARY KEY,
+            device_name TEXT NOT NULL,
+            device_type TEXT NOT NULL,
+            platform TEXT NOT NULL,
+            last_seen TEXT NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_devices_table).execute(pool).await?;
+    
+    // Create embedding tables (existing)
+    let create_embeddings_table = r#"
+        CREATE TABLE IF NOT EXISTS embeddings (
+            id TEXT PRIMARY KEY,
+            resource_id TEXT NOT NULL,
+            content TEXT NOT NULL,
+            embedding TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    "#;
+    
+    sqlx::execute(create_embeddings_table).execute(pool).await?;
     
     Ok(())
 }

@@ -171,6 +171,83 @@ export interface AgentExecutionResponse {
   execution: AgentExecution;
 }
 
+// Knowledge Graph interfaces
+export interface GraphNode {
+  id: string;
+  nodeType: string;
+  name: string;
+  description: string;
+  metadata: any;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GraphEdge {
+  id: string;
+  sourceId: string;
+  targetId: string;
+  relationshipType: string;
+  weight: number;
+  metadata: any;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GraphContext {
+  entities: GraphNode[];
+  relationships: GraphEdge[];
+  contextualMetadata: any[];
+  relevanceScore: number;
+  createdAt: string;
+}
+
+export interface GraphQuery {
+  entityTypes: string[];
+  relationshipTypes: string[];
+  contextFilters: any;
+  limit: number;
+  offset: number;
+}
+
+export interface GraphSearchRequest {
+  query: string;
+  context?: GraphContext;
+  filters?: GraphQuery;
+}
+
+export interface GraphSearchResult {
+  entities: GraphNode[];
+  relationships: GraphEdge[];
+  context: GraphContext;
+  relevanceScores: number[];
+}
+
+export interface GraphTraversalRequest {
+  startEntityId: string;
+  relationshipTypes: string[];
+  maxDepth: number;
+  context?: GraphContext;
+}
+
+export interface GraphTraversalResult {
+  entities: GraphNode[];
+  relationships: GraphEdge[];
+  path: string[];
+  context: GraphContext;
+}
+
+export interface GraphUpdateRequest {
+  entities: GraphNode[];
+  relationships: GraphEdge[];
+  context?: GraphContext;
+}
+
+export interface GraphUpdateResponse {
+  updatedEntities: GraphNode[];
+  updatedRelationships: GraphEdge[];
+  context: GraphContext;
+}
+
 export const getAiModels = async (): Promise<AiModel[]> => {
   const response = await window.__TAURI__.invoke('get_ai_models');
   return response as AiModel[];
@@ -269,4 +346,20 @@ export const getAgentCapabilities = async (agentId: string): Promise<AgentCapabi
 export const executeAgentTask = async (request: AgentExecutionRequest): Promise<AgentExecutionResponse> => {
   const response = await window.__TAURI__.invoke('execute_agent_task', { request });
   return response as AgentExecutionResponse;
+};
+
+// Knowledge Graph API functions
+export const searchGraph = async (request: GraphSearchRequest): Promise<GraphSearchResult> => {
+  const response = await window.__TAURI__.invoke('search_graph', { request });
+  return response as GraphSearchResult;
+};
+
+export const traverseGraph = async (request: GraphTraversalRequest): Promise<GraphTraversalResult> => {
+  const response = await window.__TAURI__.invoke('traverse_graph', { request });
+  return response as GraphTraversalResult;
+};
+
+export const updateGraph = async (request: GraphUpdateRequest): Promise<GraphUpdateResponse> => {
+  const response = await window.__TAURI__.invoke('update_graph', { request });
+  return response as GraphUpdateResponse;
 };
