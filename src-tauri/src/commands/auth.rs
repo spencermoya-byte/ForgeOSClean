@@ -1,62 +1,71 @@
 use serde::{Deserialize, Serialize};
 use tauri::State;
-use jsonwebtoken::{encode, decode, Header, EncodingKey, DecodingKey, Validation};
-use chrono::{Utc, Duration};
 
-#[derive(Serialize, Deserialize)]
-struct Claims {
-    sub: String,
-    exp: usize,
+#[derive(Serialize, Deserialize, Clone)]
+pub struct LoginRequest {
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RegisterRequest {
+    pub username: String,
+    pub email: String,
+    pub password: String,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct LoginResponse {
+    pub token: String,
+    pub user_id: String,
+    pub username: String,
+    pub email: String,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RegisterResponse {
+    pub user_id: String,
+    pub username: String,
+    pub email: String,
 }
 
 #[tauri::command]
-fn login(username: &str, password: &str) -> Result<String, String> {
-    // Here you would typically validate the username and password against a database
-    if username == "admin" && password == "password" {
-        let claims = Claims {
-            sub: username.to_string(),
-            exp: (Utc::now() + Duration::hours(1)).timestamp() as usize,
-        };
-        let token = encode(&Header::default(), &claims, &EncodingKey::from_secret("secret".as_ref()))
-            .map_err(|_| "Failed to encode JWT")?;
-        Ok(token)
-    } else {
-        Err("Invalid credentials".to_string())
-    }
+pub async fn login(
+    _db: State<'_, sqlx::SqlitePool>,
+    request: LoginRequest,
+) -> Result<LoginResponse, String> {
+    // In a real implementation, this would authenticate the user
+    // For now, we'll return a mock response
+    
+    Ok(LoginResponse {
+        token: "mock_token_12345".to_string(),
+        user_id: "user_123".to_string(),
+        username: request.username,
+        email: "user@example.com".to_string(),
+    })
 }
 
 #[tauri::command]
-fn register(username: &str, password: &str) -> Result<String, String> {
-    // Here you would typically save the username and hashed password to a database
-    if username == "admin" && password == "password" {
-        Ok("User registered successfully".to_string())
-    } else {
-        Err("Failed to register user".to_string())
-    }
+pub async fn register(
+    _db: State<'_, sqlx::SqlitePool>,
+    request: RegisterRequest,
+) -> Result<RegisterResponse, String> {
+    // In a real implementation, this would register a new user
+    // For now, we'll return a mock response
+    
+    Ok(RegisterResponse {
+        user_id: "user_123".to_string(),
+        username: request.username,
+        email: request.email,
+    })
 }
 
 #[tauri::command]
-fn logout() -> Result<String, String> {
-    // Here you would typically clear the session or token
-    Ok("Logged out successfully".to_string())
+pub async fn logout(
+    _db: State<'_, sqlx::SqlitePool>,
+) -> Result<(), String> {
+    // In a real implementation, this would invalidate the session
+    // For now, we'll return success
+    
+    Ok(())
 }
-
-#[tauri::command]
-fn get_user_info(token: &str) -> Result<serde_json::Value, String> {
-    let validation = Validation::new(jsonwebtoken::Algorithm::HS256);
-    match decode::<Claims>(token, &DecodingKey::from_secret("secret".as_ref()), &validation) {
-        Ok(decoded) => {
-            Ok(serde_json::json!({
-                "username": decoded.claims.sub,
-            }))
-        }
-        Err(_) => Err("Invalid token".to_string()),
-    }
-}
-
-#[derive(Default)]
-struct AuthState {
-    // You can add more state here if needed
-}
-
-impl State<AuthState> for AuthState {}
