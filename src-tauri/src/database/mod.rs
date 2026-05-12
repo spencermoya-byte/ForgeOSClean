@@ -9,6 +9,6 @@ pub mod collaboration;
 pub mod sync;
 pub mod agent;
 pub mod knowledge_graph;
-pub mod filesystem; // New filesystem module
-pub mod execution; // New execution module
-pub mod observability; // New observability module
+pub mod filesystem;
+pub mod execution;
+pub mod observability;

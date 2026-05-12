@@ -5,5 +5,5 @@ pub mod workflow;
 pub mod agent;
 pub mod embedding;
 pub mod code_intelligence;
-pub mod execution; // New execution module
-pub mod observability; // New observability module
+pub mod execution;
+pub mod observability;

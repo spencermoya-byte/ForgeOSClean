@@ -132,7 +132,7 @@ pub fn run() {
             ai::code_intelligence::get_code_analysis,
             ai::code_intelligence::get_project_intelligence,
             
-            // Execution commands
+            // Execution commands (AI version)
             ai::execution::submit_execution_request,
             ai::execution::get_execution_status,
             ai::execution::get_tool_definitions,
@@ -140,7 +140,7 @@ pub fn run() {
             ai::execution::get_sandbox_configuration,
             ai::execution::update_sandbox_configuration,
             
-            // Observability commands
+            // Observability commands (AI version)
             ai::observability::log_telemetry_event,
             ai::observability::get_system_health_metrics,
             ai::observability::get_subsystem_health,
