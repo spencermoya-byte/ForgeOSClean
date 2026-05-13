@@ -142,6 +142,26 @@ pub enum AssetType {
     Other,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ExtensionConfigurationRequest {
+    pub extension_id: String,
+    pub configuration: serde_json::Value,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ExtensionConfigurationResponse {
+    pub extension_id: String,
+    pub status: ConfigurationStatus,
+    pub message: String,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub enum ConfigurationStatus {
+    Saved,
+    Failed,
+    Invalid,
+}
+
 #[tauri::command]
 pub async fn search_extensions(
     _db: State<'_, sqlx::SqlitePool>,
@@ -234,4 +254,45 @@ pub async fn get_marketplace_status(
 ) -> Result<MarketplaceState, String> {
     // In a real implementation, this would return current marketplace state
     Ok(MarketplaceState::default())
+}
+
+#[tauri::command]
+pub async fn get_extension_configuration(
+    db: State<'_, sqlx::SqlitePool>,
+    extension_id: String,
+) -> Result<serde_json::Value, String> {
+    // In a real implementation, this would fetch the extension configuration
+    match db.get_extension_configuration(&extension_id).await {
+        Ok(config) => Ok(config.configuration),
+        Err(_) => Ok(serde_json::json!({})),
+    }
+}
+
+#[tauri::command]
+pub async fn save_extension_configuration(
+    db: State<'_, sqlx::SqlitePool>,
+    request: ExtensionConfigurationRequest,
+) -> Result<ExtensionConfigurationResponse, String> {
+    // In a real implementation, this would save the extension configuration
+    let now = chrono::Utc::now().to_rfc3339();
+    
+    let config = crate::database::marketplace::ExtensionConfiguration {
+        extension_id: request.extension_id.clone(),
+        configuration: request.configuration,
+        created_at: now.clone(),
+        updated_at: now,
+    };
+    
+    match db.update_extension_configuration(&request.extension_id, config).await {
+        Ok(_) => Ok(ExtensionConfigurationResponse {
+            extension_id: request.extension_id,
+            status: ConfigurationStatus::Saved,
+            message: "Configuration saved successfully".to_string(),
+        }),
+        Err(_) => Ok(ExtensionConfigurationResponse {
+            extension_id: request.extension_id,
+            status: ConfigurationStatus::Failed,
+            message: "Failed to save configuration".to_string(),
+        }),
+    }
 }

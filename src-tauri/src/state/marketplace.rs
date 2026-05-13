@@ -10,6 +10,7 @@ pub struct MarketplaceState {
     pub active_extensions: Vec<String>,
     pub marketplace_config: MarketplaceConfig,
     pub ecosystem_health: EcosystemHealth,
+    pub extension_configurations: HashMap<String, serde_json::Value>, // New field for extension configurations
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,6 +40,8 @@ pub struct Extension {
     pub metadata: serde_json::Value,
     pub permissions: Vec<ExtensionPermission>, // New field for permissions
     pub compatibility: ExtensionCompatibility, // New field for compatibility
+    pub configuration_schema: Option<serde_json::Value>, // New field for configuration schema
+    pub default_configuration: Option<serde_json::Value>, // New field for default configuration
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -195,6 +198,7 @@ impl Default for MarketplaceState {
                 last_updated: chrono::Utc::now().to_rfc3339(),
                 health_status: HealthStatus::Healthy,
             },
+            extension_configurations: HashMap::new(), // Initialize the new field
         }
     }
 }

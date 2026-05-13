@@ -28,6 +28,8 @@ pub struct Extension {
     pub metadata: serde_json::Value,
     pub permissions: Vec<ExtensionPermission>, // New field for permissions
     pub compatibility: ExtensionCompatibility, // New field for compatibility
+    pub configuration_schema: Option<serde_json::Value>, // New field for configuration schema
+    pub default_configuration: Option<serde_json::Value>, // New field for default configuration
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -166,6 +168,14 @@ pub enum DownloadStatus {
     Cancelled,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExtensionConfiguration {
+    pub extension_id: String,
+    pub configuration: serde_json::Value,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
 pub struct MarketplaceDatabase {
     pool: SqlitePool,
 }
@@ -177,8 +187,8 @@ impl MarketplaceDatabase {
 
     pub async fn create_extension(&self, extension: Extension) -> Result<Extension, sqlx::Error> {
         let query = r#"
-            INSERT INTO extensions (id, name, version, description, author, author_id, category, tags, is_active, is_system, is_verified, rating, download_count, size, dependencies, capabilities, license, homepage, repository, created_at, updated_at, last_updated, metadata, permissions, compatibility)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO extensions (id, name, version, description, author, author_id, category, tags, is_active, is_system, is_verified, rating, download_count, size, dependencies, capabilities, license, homepage, repository, created_at, updated_at, last_updated, metadata, permissions, compatibility, configuration_schema, default_configuration)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING *
         "#;
         
@@ -208,6 +218,8 @@ impl MarketplaceDatabase {
             .bind(&extension.metadata.to_string())
             .bind(&serde_json::to_string(&extension.permissions).unwrap_or_default())
             .bind(&serde_json::to_string(&extension.compatibility).unwrap_or_default())
+            .bind(&extension.configuration_schema.as_ref().map(|v| v.to_string()).unwrap_or_default())
+            .bind(&extension.default_configuration.as_ref().map(|v| v.to_string()).unwrap_or_default())
             .fetch_one(&self.pool)
             .await?;
             
@@ -237,6 +249,8 @@ impl MarketplaceDatabase {
             metadata: serde_json::from_str(&row.get::<String, _>("metadata")).unwrap_or_default(),
             permissions: serde_json::from_str(&row.get::<String, _>("permissions")).unwrap_or_default(),
             compatibility: serde_json::from_str(&row.get::<String, _>("compatibility")).unwrap_or_default(),
+            configuration_schema: serde_json::from_str(&row.get::<String, _>("configuration_schema")).unwrap_or_default(),
+            default_configuration: serde_json::from_str(&row.get::<String, _>("default_configuration")).unwrap_or_default(),
         })
     }
 
@@ -276,6 +290,8 @@ impl MarketplaceDatabase {
             metadata: serde_json::from_str(&row.get::<String, _>("metadata")).unwrap_or_default(),
             permissions: serde_json::from_str(&row.get::<String, _>("permissions")).unwrap_or_default(),
             compatibility: serde_json::from_str(&row.get::<String, _>("compatibility")).unwrap_or_default(),
+            configuration_schema: serde_json::from_str(&row.get::<String, _>("configuration_schema")).unwrap_or_default(),
+            default_configuration: serde_json::from_str(&row.get::<String, _>("default_configuration")).unwrap_or_default(),
         })
     }
 
@@ -318,6 +334,8 @@ impl MarketplaceDatabase {
                 metadata: serde_json::from_str(&row.get::<String, _>("metadata")).unwrap_or_default(),
                 permissions: serde_json::from_str(&row.get::<String, _>("permissions")).unwrap_or_default(),
                 compatibility: serde_json::from_str(&row.get::<String, _>("compatibility")).unwrap_or_default(),
+                configuration_schema: serde_json::from_str(&row.get::<String, _>("configuration_schema")).unwrap_or_default(),
+                default_configuration: serde_json::from_str(&row.get::<String, _>("default_configuration")).unwrap_or_default(),
             });
         }
         
@@ -327,7 +345,7 @@ impl MarketplaceDatabase {
     pub async fn update_extension(&self, id: &str, extension: Extension) -> Result<Extension, sqlx::Error> {
         let query = r#"
             UPDATE extensions 
-            SET name = ?, version = ?, description = ?, author = ?, author_id = ?, category = ?, tags = ?, is_active = ?, is_system = ?, is_verified = ?, rating = ?, download_count = ?, size = ?, dependencies = ?, capabilities = ?, license = ?, homepage = ?, repository = ?, updated_at = ?, last_updated = ?, metadata = ?, permissions = ?, compatibility = ?
+            SET name = ?, version = ?, description = ?, author = ?, author_id = ?, category = ?, tags = ?, is_active = ?, is_system = ?, is_verified = ?, rating = ?, download_count = ?, size = ?, dependencies = ?, capabilities = ?, license = ?, homepage = ?, repository = ?, updated_at = ?, last_updated = ?, metadata = ?, permissions = ?, compatibility = ?, configuration_schema = ?, default_configuration = ?
             WHERE id = ?
             RETURNING *
         "#;
@@ -356,6 +374,8 @@ impl MarketplaceDatabase {
             .bind(&extension.metadata.to_string())
             .bind(&serde_json::to_string(&extension.permissions).unwrap_or_default())
             .bind(&serde_json::to_string(&extension.compatibility).unwrap_or_default())
+            .bind(&extension.configuration_schema.as_ref().map(|v| v.to_string()).unwrap_or_default())
+            .bind(&extension.default_configuration.as_ref().map(|v| v.to_string()).unwrap_or_default())
             .bind(id)
             .fetch_one(&self.pool)
             .await?;
@@ -386,6 +406,8 @@ impl MarketplaceDatabase {
             metadata: serde_json::from_str(&row.get::<String, _>("metadata")).unwrap_or_default(),
             permissions: serde_json::from_str(&row.get::<String, _>("permissions")).unwrap_or_default(),
             compatibility: serde_json::from_str(&row.get::<String, _>("compatibility")).unwrap_or_default(),
+            configuration_schema: serde_json::from_str(&row.get::<String, _>("configuration_schema")).unwrap_or_default(),
+            default_configuration: serde_json::from_str(&row.get::<String, _>("default_configuration")).unwrap_or_default(),
         })
     }
 
@@ -1028,5 +1050,82 @@ impl MarketplaceDatabase {
             downloaded_at: row.get("downloaded_at"),
             updated_at: row.get("updated_at"),
         })
+    }
+
+    pub async fn create_extension_configuration(&self, config: ExtensionConfiguration) -> Result<ExtensionConfiguration, sqlx::Error> {
+        let query = r#"
+            INSERT INTO extension_configurations (extension_id, configuration, created_at, updated_at)
+            VALUES (?, ?, ?, ?)
+            RETURNING *
+        "#;
+        
+        let row = sqlx::query(query)
+            .bind(&config.extension_id)
+            .bind(&config.configuration.to_string())
+            .bind(&config.created_at)
+            .bind(&config.updated_at)
+            .fetch_one(&self.pool)
+            .await?;
+            
+        Ok(ExtensionConfiguration {
+            extension_id: row.get("extension_id"),
+            configuration: serde_json::from_str(&row.get::<String, _>("configuration")).unwrap_or_default(),
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
+        })
+    }
+
+    pub async fn get_extension_configuration(&self, extension_id: &str) -> Result<ExtensionConfiguration, sqlx::Error> {
+        let query = r#"
+            SELECT * FROM extension_configurations WHERE extension_id = ?
+        "#;
+        
+        let row = sqlx::query(query)
+            .bind(extension_id)
+            .fetch_one(&self.pool)
+            .await?;
+            
+        Ok(ExtensionConfiguration {
+            extension_id: row.get("extension_id"),
+            configuration: serde_json::from_str(&row.get::<String, _>("configuration")).unwrap_or_default(),
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
+        })
+    }
+
+    pub async fn update_extension_configuration(&self, extension_id: &str, config: ExtensionConfiguration) -> Result<ExtensionConfiguration, sqlx::Error> {
+        let query = r#"
+            UPDATE extension_configurations 
+            SET configuration = ?, updated_at = ?
+            WHERE extension_id = ?
+            RETURNING *
+        "#;
+        
+        let row = sqlx::query(query)
+            .bind(&config.configuration.to_string())
+            .bind(&config.updated_at)
+            .bind(extension_id)
+            .fetch_one(&self.pool)
+            .await?;
+            
+        Ok(ExtensionConfiguration {
+            extension_id: row.get("extension_id"),
+            configuration: serde_json::from_str(&row.get::<String, _>("configuration")).unwrap_or_default(),
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
+        })
+    }
+
+    pub async fn delete_extension_configuration(&self, extension_id: &str) -> Result<(), sqlx::Error> {
+        let query = r#"
+            DELETE FROM extension_configurations WHERE extension_id = ?
+        "#;
+        
+        sqlx::query(query)
+            .bind(extension_id)
+            .execute(&self.pool)
+            .await?;
+            
+        Ok(())
     }
 }
