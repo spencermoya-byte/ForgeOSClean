@@ -595,6 +595,66 @@ const MarketplaceDashboard: React.FC = () => {
       },
       category: 'File Management',
       tags: ['file', 'explorer', 'manager']
+    },
+    {
+      id: '6',
+      name: 'AI Code Generator',
+      version: '1.0.0',
+      description: 'Generate code snippets using AI',
+      author: 'ForgeOS Team',
+      rating: 4.3,
+      downloads: 4200,
+      category: 'Development Tools',
+      tags: ['ai', 'code', 'generator'],
+      isInstalled: false,
+      compatibility: 'Compatible',
+      compatibilityDetails: {
+        forgeosVersion: '>=2.0.0',
+        nodeVersion: '>=14.0.0',
+        os: ['Windows', 'macOS', 'Linux']
+      },
+      category: 'Development Tools',
+      tags: ['ai', 'code', 'generator']
+    },
+    {
+      id: '7',
+      name: 'API Client',
+      version: '0.5.0',
+      description: 'REST API testing and debugging tool',
+      author: 'ForgeOS Team',
+      rating: 4.1,
+      downloads: 2800,
+      category: 'Development Tools',
+      tags: ['api', 'testing', 'debugging'],
+      isInstalled: false,
+      compatibility: 'Compatible',
+      compatibilityDetails: {
+        forgeosVersion: '>=2.0.0',
+        nodeVersion: '>=14.0.0',
+        os: ['Windows', 'macOS', 'Linux']
+      },
+      category: 'Development Tools',
+      tags: ['api', 'testing', 'debugging']
+    },
+    {
+      id: '8',
+      name: 'Markdown Editor',
+      version: '1.2.1',
+      description: 'Rich text editor for Markdown files',
+      author: 'ForgeOS Team',
+      rating: 4.4,
+      downloads: 5600,
+      category: 'Productivity',
+      tags: ['markdown', 'editor', 'writing'],
+      isInstalled: false,
+      compatibility: 'Compatible',
+      compatibilityDetails: {
+        forgeosVersion: '>=2.0.0',
+        nodeVersion: '>=14.0.0',
+        os: ['Windows', 'macOS', 'Linux']
+      },
+      category: 'Productivity',
+      tags: ['markdown', 'editor', 'writing']
     }
   ];
 
@@ -1018,6 +1078,111 @@ const MarketplaceDashboard: React.FC = () => {
     );
   };
 
+  // Category navigation component
+  const CategoryNavigation = () => {
+    return (
+      <div className="bg-gray-800 rounded-lg p-4 mb-6">
+        <h3 className="text-lg font-semibold mb-3">Browse by Category</h3>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => handleFilterChange('category', '')}
+            className={`px-3 py-1 rounded-full text-sm transition duration-200 ${
+              !selectedFilters.category 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            All Extensions
+          </button>
+          {categories.map((category) => (
+            <button
+              key={category}
+              onClick={() => handleFilterChange('category', category)}
+              className={`px-3 py-1 rounded-full text-sm transition duration-200 ${
+                selectedFilters.category === category 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Category filter dropdown component
+  const CategoryFilterDropdown = () => {
+    return (
+      <div className="mb-4">
+        <label className="block text-gray-300 mb-2">Filter by Category</label>
+        <select
+          value={selectedFilters.category || ''}
+          onChange={(e) => handleFilterChange('category', e.target.value)}
+          className="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">All Categories</option>
+          {categories.map((category) => (
+            <option key={category} value={category}>{category}</option>
+          ))}
+        </select>
+      </div>
+    );
+  };
+
+  // Tag filter component
+  const TagFilter = () => {
+    return (
+      <div className="mb-4">
+        <label className="block text-gray-300 mb-2">Filter by Tags</label>
+        <div className="flex flex-wrap gap-2">
+          {allTags.map((tag) => (
+            <button
+              key={tag}
+              onClick={() => handleFilterChange('tag', tag)}
+              className={`px-3 py-1 rounded-full text-sm transition duration-200 ${
+                selectedFilters.tag === tag 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Breadcrumb component
+  const Breadcrumb = () => {
+    const breadcrumbs = [
+      { name: 'Marketplace', path: '/marketplace' },
+      { name: activeTab === 'discover' ? 'Discover' : 
+        activeTab === 'installed' ? 'Installed' : 
+        activeTab === 'updates' ? 'Updates' : 
+        activeTab === 'favorites' ? 'Favorites' : 
+        activeTab === 'collections' ? 'Collections' : 
+        activeTab === 'import-export' ? 'Import/Export' : 
+        activeTab === 'recovery' ? 'Recovery' : 
+        activeTab === 'details' ? 'Details' : 'Marketplace' }
+    ];
+
+    return (
+      <div className="flex items-center text-sm text-gray-400 mb-4">
+        {breadcrumbs.map((crumb, index) => (
+          <React.Fragment key={index}>
+            {index > 0 && <span className="mx-2">/</span>}
+            <span className={index === breadcrumbs.length - 1 ? "text-white" : "hover:text-white cursor-pointer"}>
+              {crumb.name}
+            </span>
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Onboarding Overlay */}
@@ -1271,6 +1436,8 @@ const MarketplaceDashboard: React.FC = () => {
           {/* Main Content */}
           <div className="flex-1">
             <div className="bg-gray-800 rounded-lg p-6">
+              <Breadcrumb />
+              
               <h2 className="text-2xl font-bold mb-6">
                 {activeTab === 'discover' && 'Discover Extensions'}
                 {activeTab === 'installed' && 'Installed Extensions'}
@@ -1604,6 +1771,9 @@ const MarketplaceDashboard: React.FC = () => {
                     <p className="text-gray-300">Browse and install extensions to enhance your ForgeOS experience.</p>
                   </div>
                   
+                  {/* Category Navigation */}
+                  <CategoryNavigation />
+                  
                   {/* Safety Guidance for Discover Tab */}
                   <div className="space-y-4">
                     <SafetyGuidance 
@@ -1622,6 +1792,70 @@ const MarketplaceDashboard: React.FC = () => {
                       icon="⚙️"
                     />
                   </div>
+                  
+                  {/* Filters Section */}
+                  <div className="bg-gray-700 rounded-lg p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-gray-300 mb-2">Search Extensions</label>
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full p-3 bg-gray-600 text-white border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Search by name, description, author..."
+                        />
+                      </div>
+                      
+                      <CategoryFilterDropdown />
+                      
+                      <div>
+                        <label className="block text-gray-300 mb-2">Sort By</label>
+                        <select
+                          value={sortOption}
+                          onChange={(e) => setSortOption(e.target.value)}
+                          className="w-full p-3 bg-gray-600 text-white border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="name">Name</option>
+                          <option value="newest">Newest</option>
+                          <option value="rating">Rating</option>
+                          <option value="downloads">Downloads</option>
+                          <option value="compatibility">Compatibility</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    {/* Active Filters */}
+                    {activeFilters.length > 0 && (
+                      <div className="mt-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="text-gray-300">Active Filters</h4>
+                          <button 
+                            onClick={clearAllFilters}
+                            className="text-sm text-gray-400 hover:text-white"
+                          >
+                            Clear All
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {activeFilters.map((filter, index) => {
+                            const [filterType, filterValue] = filter.split(':');
+                            return (
+                              <FilterChip 
+                                key={index} 
+                                filter={filterType} 
+                                value={filterValue} 
+                                onRemove={() => handleFilterChange(filterType, '')} 
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Tag Filter */}
+                  <TagFilter />
                   
                   {sortedExtensions.length === 0 ? (
                     <div className="bg-gray-700 rounded-lg p-8 text-center">
@@ -1863,7 +2097,7 @@ const MarketplaceDashboard: React.FC = () => {
                 <div className="space-y-6">
                   <div className="p-4 bg-gray-700 rounded-lg">
                     <h3 className="text-xl font-semibold mb-2">Extension Details</h3>
-                    <p className="text-gray-300">View detailed information about an extension.</p>
+                    <p className="text-gray-300">View detailed information about this extension.</p>
                   </div>
                   
                   <div className="bg-gray-700 rounded-lg overflow-hidden">
