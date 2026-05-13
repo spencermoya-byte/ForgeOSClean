@@ -847,7 +847,7 @@ const MarketplaceDashboard: React.FC = () => {
     }
     
     return (
-      <span className={`${bgColor} ${textColor} px-2 py-1 rounded text-xs`}>
+      <span className={`${bgColor} ${textColor} px-2 py-1 rounded text-xs`} aria-label={`${label} status`}>
         {label}
       </span>
     );
@@ -877,7 +877,7 @@ const MarketplaceDashboard: React.FC = () => {
     }
     
     return (
-      <div className={`${bgColor} ${textColor} p-3 rounded-lg mb-4 flex items-center`}>
+      <div className={`${bgColor} ${textColor} p-3 rounded-lg mb-4 flex items-center`} role="alert">
         <span className="mr-2">⚠️</span>
         <span>{message}</span>
       </div>
@@ -908,7 +908,7 @@ const MarketplaceDashboard: React.FC = () => {
     }
     
     return (
-      <span className={`${bgColor} ${textColor} px-2 py-1 rounded text-xs`}>
+      <span className={`${bgColor} ${textColor} px-2 py-1 rounded text-xs`} aria-label={`${status} dependency status`}>
         {status}
       </span>
     );
@@ -946,7 +946,7 @@ const MarketplaceDashboard: React.FC = () => {
     }
     
     return (
-      <span className={`${bgColor} ${textColor} px-2 py-1 rounded text-xs`}>
+      <span className={`${bgColor} ${textColor} px-2 py-1 rounded text-xs`} aria-label={`${status.replace('_', ' ')} update status`}>
         {status.replace('_', ' ')}
       </span>
     );
@@ -961,13 +961,14 @@ const MarketplaceDashboard: React.FC = () => {
         onClick={() => toggleFavorite(extensionId)}
         className={`p-1 rounded-full ${isFavorite ? 'text-yellow-400' : 'text-gray-400 hover:text-yellow-300'}`}
         aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+        role="button"
       >
         {isFavorite ? (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
           </svg>
         ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
           </svg>
         )}
@@ -978,11 +979,12 @@ const MarketplaceDashboard: React.FC = () => {
   // Filter chips component
   const FilterChip = ({ filter, value, onRemove }: { filter: string; value: string; onRemove: () => void }) => {
     return (
-      <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm flex items-center">
+      <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm flex items-center" role="button" tabIndex={0} aria-label={`Filter by ${filter}: ${value}`}>
         {filter}: {value}
         <button 
           onClick={onRemove}
-          className="ml-2 text-white hover:text-gray-200 focus:outline-none"
+          className="ml-2 text-white hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-white rounded-full"
+          aria-label={`Remove ${filter} filter`}
         >
           ×
         </button>
@@ -1190,6 +1192,7 @@ const MarketplaceDashboard: React.FC = () => {
                 ? 'bg-blue-600 text-white' 
                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
             }`}
+            aria-label="Show all extensions"
           >
             All Extensions
           </button>
@@ -1202,6 +1205,7 @@ const MarketplaceDashboard: React.FC = () => {
                   ? 'bg-blue-600 text-white' 
                   : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
+              aria-label={`Filter by category: ${category}`}
             >
               {category}
             </button>
@@ -1215,11 +1219,13 @@ const MarketplaceDashboard: React.FC = () => {
   const CategoryFilterDropdown = () => {
     return (
       <div className="mb-4">
-        <label className="block text-gray-300 mb-2">Filter by Category</label>
+        <label className="block text-gray-300 mb-2" htmlFor="category-filter">Filter by Category</label>
         <select
+          id="category-filter"
           value={selectedFilters.category || ''}
           onChange={(e) => handleFilterChange('category', e.target.value)}
           className="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label="Filter extensions by category"
         >
           <option value="">All Categories</option>
           {categories.map((category) => (
@@ -1245,6 +1251,7 @@ const MarketplaceDashboard: React.FC = () => {
                   ? 'bg-blue-600 text-white' 
                   : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
+              aria-label={`Filter by tag: ${tag}`}
             >
               {tag}
             </button>
@@ -1269,11 +1276,11 @@ const MarketplaceDashboard: React.FC = () => {
     ];
 
     return (
-      <div className="flex items-center text-sm text-gray-400 mb-4">
+      <div className="flex items-center text-sm text-gray-400 mb-4" role="navigation" aria-label="Breadcrumb navigation">
         {breadcrumbs.map((crumb, index) => (
           <React.Fragment key={index}>
             {index > 0 && <span className="mx-2">/</span>}
-            <span className={index === breadcrumbs.length - 1 ? "text-white" : "hover:text-white cursor-pointer"}>
+            <span className={index === breadcrumbs.length - 1 ? "text-white" : "hover:text-white cursor-pointer"} aria-current={index === breadcrumbs.length - 1 ? "page" : undefined}>
               {crumb.name}
             </span>
           </React.Fragment>
@@ -1631,16 +1638,16 @@ const MarketplaceDashboard: React.FC = () => {
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Onboarding Overlay */}
       {showOnboarding && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
           <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold text-white">{onboardingSteps[onboardingStep].title}</h2>
+              <h2 id="onboarding-title" className="text-2xl font-bold text-white">{onboardingSteps[onboardingStep].title}</h2>
               <button 
                 onClick={closeOnboarding}
                 className="text-gray-400 hover:text-white"
                 aria-label="Close onboarding"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -1660,6 +1667,7 @@ const MarketplaceDashboard: React.FC = () => {
                     ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
                     : 'bg-gray-700 hover:bg-gray-600 text-white'
                 }`}
+                aria-label="Previous step"
               >
                 Back
               </button>
@@ -1671,6 +1679,7 @@ const MarketplaceDashboard: React.FC = () => {
                     className={`w-3 h-3 rounded-full ${
                       index === onboardingStep ? 'bg-blue-600' : 'bg-gray-600'
                     }`}
+                    aria-label={`Step ${index + 1} of ${onboardingSteps.length}`}
                   />
                 ))}
               </div>
@@ -1678,6 +1687,7 @@ const MarketplaceDashboard: React.FC = () => {
               <button
                 onClick={nextOnboardingStep}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+                aria-label={onboardingStep === onboardingSteps.length - 1 ? 'Get Started' : 'Next step'}
               >
                 {onboardingStep === onboardingSteps.length - 1 ? 'Get Started' : 'Next'}
               </button>
@@ -1687,18 +1697,20 @@ const MarketplaceDashboard: React.FC = () => {
       )}
 
       <div className="container mx-auto p-4">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <h1 className="text-3xl font-bold">ForgeOS Marketplace</h1>
-          <div className="flex space-x-2">
+          <div className="flex flex-wrap gap-2">
             <button 
               onClick={() => navigate('/workspaces')}
               className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition duration-200"
+              aria-label="Navigate to workspaces"
             >
               Workspaces
             </button>
             <button 
               onClick={() => navigate('/plugins')}
               className="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition duration-200"
+              aria-label="Navigate to plugins"
             >
               Plugins
             </button>
@@ -1769,9 +1781,9 @@ const MarketplaceDashboard: React.FC = () => {
           </div>
         )}
 
-        <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar Navigation */}
-          <div className="w-full md:w-64 flex-shrink-0">
+          <div className="w-full lg:w-64 flex-shrink-0">
             <div className="bg-gray-800 rounded-lg p-4">
               <h2 className="text-lg font-bold mb-4">Marketplace</h2>
               <nav>
@@ -1784,6 +1796,7 @@ const MarketplaceDashboard: React.FC = () => {
                           ? 'bg-blue-600 text-white' 
                           : 'hover:bg-gray-700 text-gray-300'
                       }`}
+                      aria-current={activeTab === 'discover' ? 'page' : undefined}
                     >
                       Discover Extensions
                     </button>
@@ -1796,6 +1809,7 @@ const MarketplaceDashboard: React.FC = () => {
                           ? 'bg-blue-600 text-white' 
                           : 'hover:bg-gray-700 text-gray-300'
                       }`}
+                      aria-current={activeTab === 'installed' ? 'page' : undefined}
                     >
                       Installed Extensions
                     </button>
@@ -1808,6 +1822,7 @@ const MarketplaceDashboard: React.FC = () => {
                           ? 'bg-blue-600 text-white' 
                           : 'hover:bg-gray-700 text-gray-300'
                       }`}
+                      aria-current={activeTab === 'updates' ? 'page' : undefined}
                     >
                       Updates
                     </button>
@@ -1820,6 +1835,7 @@ const MarketplaceDashboard: React.FC = () => {
                           ? 'bg-blue-600 text-white' 
                           : 'hover:bg-gray-700 text-gray-300'
                       }`}
+                      aria-current={activeTab === 'favorites' ? 'page' : undefined}
                     >
                       Favorites
                     </button>
@@ -1832,6 +1848,7 @@ const MarketplaceDashboard: React.FC = () => {
                           ? 'bg-blue-600 text-white' 
                           : 'hover:bg-gray-700 text-gray-300'
                       }`}
+                      aria-current={activeTab === 'collections' ? 'page' : undefined}
                     >
                       Collections
                     </button>
@@ -1844,6 +1861,7 @@ const MarketplaceDashboard: React.FC = () => {
                           ? 'bg-blue-600 text-white' 
                           : 'hover:bg-gray-700 text-gray-300'
                       }`}
+                      aria-current={activeTab === 'import-export' ? 'page' : undefined}
                     >
                       Import/Export
                     </button>
@@ -1856,6 +1874,7 @@ const MarketplaceDashboard: React.FC = () => {
                           ? 'bg-blue-600 text-white' 
                           : 'hover:bg-gray-700 text-gray-300'
                       }`}
+                      aria-current={activeTab === 'recovery' ? 'page' : undefined}
                     >
                       Recovery
                     </button>
@@ -1868,6 +1887,7 @@ const MarketplaceDashboard: React.FC = () => {
                           ? 'bg-blue-600 text-white' 
                           : 'hover:bg-gray-700 text-gray-300'
                       }`}
+                      aria-current={activeTab === 'details' ? 'page' : undefined}
                     >
                       Extension Details
                     </button>
@@ -1916,6 +1936,7 @@ const MarketplaceDashboard: React.FC = () => {
                             <button 
                               onClick={() => openRecoveryModal('1')}
                               className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200"
+                              aria-label="View recovery options for Code Assistant"
                             >
                               View Recovery Options
                             </button>
@@ -1933,6 +1954,7 @@ const MarketplaceDashboard: React.FC = () => {
                             <button 
                               onClick={() => openRecoveryModal('3')}
                               className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200"
+                              aria-label="View recovery options for Database Explorer"
                             >
                               View Recovery Options
                             </button>
@@ -1956,7 +1978,7 @@ const MarketplaceDashboard: React.FC = () => {
                         <div className="p-4 bg-gray-600 rounded-lg">
                           <h4 className="font-semibold text-white mb-2">Safe Mode</h4>
                           <p className="text-gray-300 text-sm mb-3">Enable safe mode to prevent problematic extensions from running</p>
-                          <button className="text-sm bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded transition duration-200">
+                          <button className="text-sm bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded transition duration-200" aria-label="Enable safe mode">
                             Enable Safe Mode
                           </button>
                         </div>
@@ -1964,7 +1986,7 @@ const MarketplaceDashboard: React.FC = () => {
                         <div className="p-4 bg-gray-600 rounded-lg">
                           <h4 className="font-semibold text-white mb-2">Extension Diagnostics</h4>
                           <p className="text-gray-300 text-sm mb-3">Run diagnostics to identify extension issues</p>
-                          <button className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200">
+                          <button className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200" aria-label="Run diagnostics">
                             Run Diagnostics
                           </button>
                         </div>
@@ -1972,7 +1994,7 @@ const MarketplaceDashboard: React.FC = () => {
                         <div className="p-4 bg-gray-600 rounded-lg">
                           <h4 className="font-semibold text-white mb-2">System Restore</h4>
                           <p className="text-gray-300 text-sm mb-3">Restore system to a previous state before extension issues</p>
-                          <button className="text-sm bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded transition duration-200">
+                          <button className="text-sm bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded transition duration-200" aria-label="Restore system">
                             Restore System
                           </button>
                         </div>
@@ -2001,8 +2023,11 @@ const MarketplaceDashboard: React.FC = () => {
                       <div 
                         className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition duration-200 mb-4"
                         onClick={() => fileInputRef.current?.click()}
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Select extension file to import"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                         <p className="mt-2 text-gray-300">Click to select or drag & drop a .zip or .forgeos file</p>
@@ -2015,11 +2040,13 @@ const MarketplaceDashboard: React.FC = () => {
                         onChange={handleFileSelect}
                         accept=".zip,.forgeos"
                         className="hidden"
+                        aria-label="Select extension file to import"
                       />
                       
                       <button
                         onClick={() => fileInputRef.current?.click()}
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+                        aria-label="Select extension file to import"
                       >
                         Select Extension File
                       </button>
@@ -2042,6 +2069,7 @@ const MarketplaceDashboard: React.FC = () => {
                             <button
                               onClick={() => handleExport('1')}
                               className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition duration-200"
+                              aria-label="Export Code Assistant extension"
                             >
                               Export
                             </button>
@@ -2057,6 +2085,7 @@ const MarketplaceDashboard: React.FC = () => {
                             <button
                               onClick={() => handleExport('2')}
                               className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition duration-200"
+                              aria-label="Export Git Integration extension"
                             >
                               Export
                             </button>
@@ -2072,6 +2101,7 @@ const MarketplaceDashboard: React.FC = () => {
                             <button
                               onClick={() => handleExport('3')}
                               className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition duration-200"
+                              aria-label="Export Database Explorer extension"
                             >
                               Export
                             </button>
@@ -2094,7 +2124,7 @@ const MarketplaceDashboard: React.FC = () => {
                       
                       {importStatus === 'validating' && (
                         <div className="flex flex-col items-center justify-center py-8">
-                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4" aria-hidden="true"></div>
                           <p className="text-gray-300">Validating extension file...</p>
                         </div>
                       )}
@@ -2107,12 +2137,14 @@ const MarketplaceDashboard: React.FC = () => {
                             <button
                               onClick={resetImport}
                               className="px-4 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition duration-200"
+                              aria-label="Cancel import"
                             >
                               Cancel
                             </button>
                             <button
                               onClick={handleImportConfirm}
                               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+                              aria-label="Install extension"
                             >
                               Install Extension
                             </button>
@@ -2122,7 +2154,7 @@ const MarketplaceDashboard: React.FC = () => {
                       
                       {importStatus === 'importing' && (
                         <div className="flex flex-col items-center justify-center py-8">
-                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4" aria-hidden="true"></div>
                           <p className="text-gray-300">Installing extension...</p>
                         </div>
                       )}
@@ -2135,6 +2167,7 @@ const MarketplaceDashboard: React.FC = () => {
                           <button
                             onClick={resetImport}
                             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+                            aria-label="Close success message"
                           >
                             Close
                           </button>
@@ -2149,6 +2182,7 @@ const MarketplaceDashboard: React.FC = () => {
                           <button
                             onClick={resetImport}
                             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+                            aria-label="Try again"
                           >
                             Try Again
                           </button>
@@ -2192,24 +2226,28 @@ const MarketplaceDashboard: React.FC = () => {
                   <div className="bg-gray-700 rounded-lg p-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-gray-300 mb-2">Search Extensions</label>
+                        <label className="block text-gray-300 mb-2" htmlFor="search-input">Search Extensions</label>
                         <input
+                          id="search-input"
                           type="text"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           className="w-full p-3 bg-gray-600 text-white border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholder="Search by name, description, author..."
+                          aria-label="Search extensions"
                         />
                       </div>
                       
                       <CategoryFilterDropdown />
                       
                       <div>
-                        <label className="block text-gray-300 mb-2">Sort By</label>
+                        <label className="block text-gray-300 mb-2" htmlFor="sort-select">Sort By</label>
                         <select
+                          id="sort-select"
                           value={sortOption}
                           onChange={(e) => setSortOption(e.target.value)}
                           className="w-full p-3 bg-gray-600 text-white border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          aria-label="Sort extensions"
                         >
                           <option value="name">Name</option>
                           <option value="newest">Newest</option>
@@ -2228,6 +2266,7 @@ const MarketplaceDashboard: React.FC = () => {
                           <button 
                             onClick={clearAllFilters}
                             className="text-sm text-gray-400 hover:text-white"
+                            aria-label="Clear all filters"
                           >
                             Clear All
                           </button>
@@ -2259,6 +2298,7 @@ const MarketplaceDashboard: React.FC = () => {
                       <button 
                         onClick={clearAllFilters}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200"
+                        aria-label="Clear all filters"
                       >
                         Clear Filters
                       </button>
@@ -2324,7 +2364,7 @@ const MarketplaceDashboard: React.FC = () => {
                                 </span>
                               ))}
                             </div>
-                            <button className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200">
+                            <button className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200" aria-label={`Install or manage ${extension.name}`}>
                               {extension.isInstalled ? 'Manage' : 'Install'}
                             </button>
                           </div>
@@ -2368,6 +2408,7 @@ const MarketplaceDashboard: React.FC = () => {
                       <button 
                         onClick={() => handleTabChange('discover')}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200"
+                        aria-label="Discover extensions"
                       >
                         Discover Extensions
                       </button>
@@ -2455,12 +2496,13 @@ const MarketplaceDashboard: React.FC = () => {
                               Installed: {extension.lastUpdated}
                             </div>
                             <div className="flex space-x-2">
-                              <button className="text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded transition duration-200">
+                              <button className="text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded transition duration-200" aria-label={`Configure ${extension.name}`}>
                                 Settings
                               </button>
                               <button 
                                 onClick={() => openUninstallModal(extension.id, extension.name)}
                                 className="text-sm bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition duration-200"
+                                aria-label={`Uninstall ${extension.name}`}
                               >
                                 Uninstall
                               </button>
@@ -2482,12 +2524,12 @@ const MarketplaceDashboard: React.FC = () => {
                   
                   <div className="bg-gray-700 p-4 rounded-lg">
                     <div className="flex justify-between items-center mb-3">
-                      <div className="h-4 bg-gray-600 rounded w-1/3"></div>
-                      <div className="h-4 bg-gray-600 rounded w-1/6"></div>
+                      <div className="h-4 bg-gray-600 rounded w-1/3" aria-hidden="true"></div>
+                      <div className="h-4 bg-gray-600 rounded w-1/6" aria-hidden="true"></div>
                     </div>
-                    <div className="h-3 bg-gray-600 rounded w-full mb-2"></div>
-                    <div className="h-3 bg-gray-600 rounded w-5/6 mb-4"></div>
-                    <div className="h-8 bg-gray-600 rounded w-1/4"></div>
+                    <div className="h-3 bg-gray-600 rounded w-full mb-2" aria-hidden="true"></div>
+                    <div className="h-3 bg-gray-600 rounded w-5/6 mb-4" aria-hidden="true"></div>
+                    <div className="h-8 bg-gray-600 rounded w-1/4" aria-hidden="true"></div>
                   </div>
                 </div>
               )}
@@ -2526,10 +2568,10 @@ const MarketplaceDashboard: React.FC = () => {
                               </div>
                             </div>
                             <div className="flex space-x-2">
-                              <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                              <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200" aria-label={extensionDetails.isInstalled ? `Manage ${extensionDetails.name}` : `Install ${extensionDetails.name}`}>
                                 {extensionDetails.isInstalled ? 'Manage' : 'Install'}
                               </button>
-                              <button className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition duration-200">
+                              <button className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition duration-200" aria-label="View extension details">
                                 Details
                               </button>
                             </div>
@@ -2603,13 +2645,13 @@ const MarketplaceDashboard: React.FC = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <h4 className="font-medium text-gray-300 mb-2">Repository</h4>
-                          <a href={extensionDetails.repository} className="text-blue-400 hover:text-blue-300">
+                          <a href={extensionDetails.repository} className="text-blue-400 hover:text-blue-300" aria-label={`Visit repository for ${extensionDetails.name}`}>
                             {extensionDetails.repository}
                           </a>
                         </div>
                         <div>
                           <h4 className="font-medium text-gray-300 mb-2">Documentation</h4>
-                          <a href={extensionDetails.documentation} className="text-blue-400 hover:text-blue-300">
+                          <a href={extensionDetails.documentation} className="text-blue-400 hover:text-blue-300" aria-label={`View documentation for ${extensionDetails.name}`}>
                             {extensionDetails.documentation}
                           </a>
                         </div>
@@ -2761,29 +2803,33 @@ const MarketplaceDashboard: React.FC = () => {
 
       {/* Create Collection Modal */}
       {showCollectionModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="collection-modal-title">
           <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">Create New Collection</h3>
+            <h3 id="collection-modal-title" className="text-xl font-bold text-white mb-4">Create New Collection</h3>
             <div className="mb-4">
-              <label className="block text-white mb-2">Collection Name</label>
+              <label className="block text-white mb-2" htmlFor="collection-name">Collection Name</label>
               <input
+                id="collection-name"
                 type="text"
                 value={collectionName}
                 onChange={(e) => setCollectionName(e.target.value)}
                 className="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter collection name"
+                aria-label="Enter collection name"
               />
             </div>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowCollectionModal(false)}
                 className="px-4 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition duration-200"
+                aria-label="Cancel creating collection"
               >
                 Cancel
               </button>
               <button
                 onClick={createCollection}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+                aria-label="Create collection"
               >
                 Create Collection
               </button>
@@ -2794,9 +2840,9 @@ const MarketplaceDashboard: React.FC = () => {
 
       {/* Uninstall Confirmation Modal */}
       {showUninstallModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="uninstall-modal-title">
           <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">Uninstall Extension</h3>
+            <h3 id="uninstall-modal-title" className="text-xl font-bold text-white mb-4">Uninstall Extension</h3>
             <p className="text-gray-300 mb-6">
               Are you sure you want to uninstall <span className="font-semibold">{uninstallExtensionName}</span>? 
               This action cannot be undone.
@@ -2814,12 +2860,14 @@ const MarketplaceDashboard: React.FC = () => {
               <button
                 onClick={closeUninstallModal}
                 className="px-4 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition duration-200"
+                aria-label="Cancel uninstall"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmUninstall}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition duration-200"
+                aria-label="Confirm uninstall"
               >
                 Uninstall Extension
               </button>
@@ -2830,9 +2878,9 @@ const MarketplaceDashboard: React.FC = () => {
 
       {/* Recovery Modal */}
       {showRecoveryModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="recovery-modal-title">
           <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-white mb-4">Recovery Options for {recoveryStatus?.lastSuccessfulVersion ? 'Code Assistant' : 'Database Explorer'}</h3>
+            <h3 id="recovery-modal-title" className="text-xl font-bold text-white mb-4">Recovery Options for {recoveryStatus?.lastSuccessfulVersion ? 'Code Assistant' : 'Database Explorer'}</h3>
             
             {recoveryStatus && (
               <div className="space-y-6">
@@ -2854,6 +2902,7 @@ const MarketplaceDashboard: React.FC = () => {
                         openRollbackModal('1', recoveryStatus.lastSuccessfulVersion);
                       }}
                       className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200"
+                      aria-label={`Rollback to version ${recoveryStatus.lastSuccessfulVersion}`}
                     >
                       Rollback to {recoveryStatus.lastSuccessfulVersion}
                     </button>
@@ -2864,7 +2913,7 @@ const MarketplaceDashboard: React.FC = () => {
                     <p className="text-gray-300 text-sm mb-3">
                       Enable safe mode to prevent this extension from running until issues are resolved.
                     </p>
-                    <button className="text-sm bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded transition duration-200">
+                    <button className="text-sm bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded transition duration-200" aria-label="Enable safe mode">
                       Enable Safe Mode
                     </button>
                   </div>
@@ -2874,7 +2923,7 @@ const MarketplaceDashboard: React.FC = () => {
                     <p className="text-gray-300 text-sm mb-3">
                       Run diagnostics to identify the root cause of the issue.
                     </p>
-                    <button className="text-sm bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded transition duration-200">
+                    <button className="text-sm bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded transition duration-200" aria-label="Run diagnostics">
                       Run Diagnostics
                     </button>
                   </div>
@@ -2884,7 +2933,7 @@ const MarketplaceDashboard: React.FC = () => {
                     <p className="text-gray-300 text-sm mb-3">
                       Review and reset extension settings to default values.
                     </p>
-                    <button className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition duration-200">
+                    <button className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition duration-200" aria-label="Reset settings">
                       Reset Settings
                     </button>
                   </div>
@@ -2910,6 +2959,7 @@ const MarketplaceDashboard: React.FC = () => {
                   <button
                     onClick={closeRecoveryModal}
                     className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition duration-200"
+                    aria-label="Close recovery options"
                   >
                     Close
                   </button>
@@ -2922,9 +2972,9 @@ const MarketplaceDashboard: React.FC = () => {
 
       {/* Rollback Confirmation Modal */}
       {showRollbackModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="rollback-modal-title">
           <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">Rollback Extension</h3>
+            <h3 id="rollback-modal-title" className="text-xl font-bold text-white mb-4">Rollback Extension</h3>
             <p className="text-gray-300 mb-6">
               Are you sure you want to rollback <span className="font-semibold">{rollbackExtensionId}</span> to version {rollbackVersion}? 
               This action will restore the extension to its previous state.
@@ -2942,12 +2992,14 @@ const MarketplaceDashboard: React.FC = () => {
               <button
                 onClick={closeRollbackModal}
                 className="px-4 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition duration-200"
+                aria-label="Cancel rollback"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmRollback}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+                aria-label="Confirm rollback"
               >
                 Rollback Extension
               </button>
@@ -2958,27 +3010,30 @@ const MarketplaceDashboard: React.FC = () => {
 
       {/* Import Modal */}
       {showImportModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
           <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">Import Extension</h3>
+            <h3 id="import-modal-title" className="text-xl font-bold text-white mb-4">Import Extension</h3>
             <div className="mb-4">
               <p className="text-gray-300 mb-2">Select an extension file to import:</p>
               <input
                 type="file"
                 accept=".zip,.forgeos"
                 className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label="Select extension file to import"
               />
             </div>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowImportModal(false)}
                 className="px-4 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition duration-200"
+                aria-label="Cancel import"
               >
                 Cancel
               </button>
               <button
                 onClick={() => setShowImportModal(false)}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+                aria-label="Import extension"
               >
                 Import
               </button>
