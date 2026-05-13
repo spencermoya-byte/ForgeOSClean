@@ -54,8 +54,10 @@ const MarketplaceDashboard: React.FC = () => {
     id: '1',
     name: 'Code Assistant',
     version: '1.2.3',
-    description: 'AI-powered code assistance and suggestions',
+    description: 'AI-powered code assistance and suggestions that helps developers write better code faster. Features include intelligent code completion, refactoring suggestions, and debugging support.',
     author: 'ForgeOS Team',
+    authorId: 'forgeos-team',
+    authorAvatar: '',
     isActive: true,
     hasUpdate: true,
     compatibility: 'Compatible',
@@ -66,8 +68,73 @@ const MarketplaceDashboard: React.FC = () => {
     rating: 4.8,
     license: 'MIT',
     repository: 'https://github.com/forgeos/code-assistant',
-    documentation: 'https://docs.forgeos.dev/code-assistant'
+    documentation: 'https://docs.forgeos.dev/code-assistant',
+    category: 'Development Tools',
+    tags: ['ai', 'code', 'assistant', 'productivity'],
+    versionHistory: [
+      { version: '1.2.3', date: '2023-05-15', changes: 'Bug fixes and performance improvements' },
+      { version: '1.2.2', date: '2023-04-20', changes: 'Added new code completion models' },
+      { version: '1.2.1', date: '2023-03-15', changes: 'Improved debugging support' },
+      { version: '1.2.0', date: '2023-02-10', changes: 'Major refactor and new features' },
+    ],
+    permissions: [
+      { name: 'read-files', description: 'Read files in the workspace' },
+      { name: 'write-files', description: 'Write files in the workspace' },
+      { name: 'execute-commands', description: 'Execute system commands' },
+    ],
+    dependencies: [
+      { name: 'ForgeOS Core', version: '2.1.0' },
+      { name: 'AI Engine', version: '1.0.0' },
+    ],
+    isInstalled: true,
+    isUpdateAvailable: true,
+    isCompatible: true,
+    compatibilityDetails: {
+      os: ['Windows', 'macOS', 'Linux'],
+      forgeosVersion: '>=2.0.0',
+      nodeVersion: '>=14.0.0'
+    }
   };
+
+  // Mock data for extension in discover view
+  const discoverExtensions = [
+    {
+      id: '1',
+      name: 'Code Assistant',
+      version: '1.2.3',
+      description: 'AI-powered code assistance and suggestions',
+      author: 'ForgeOS Team',
+      rating: 4.8,
+      downloads: 12500,
+      category: 'Development Tools',
+      tags: ['ai', 'code', 'assistant'],
+      isInstalled: true
+    },
+    {
+      id: '2',
+      name: 'Git Integration',
+      version: '0.9.1',
+      description: 'Enhanced Git operations and visualization',
+      author: 'ForgeOS Team',
+      rating: 4.5,
+      downloads: 8900,
+      category: 'Development Tools',
+      tags: ['git', 'version-control'],
+      isInstalled: false
+    },
+    {
+      id: '3',
+      name: 'Database Explorer',
+      version: '2.1.0',
+      description: 'Visual database management and querying',
+      author: 'ForgeOS Team',
+      rating: 4.7,
+      downloads: 6700,
+      category: 'Database Tools',
+      tags: ['database', 'sql', 'explorer'],
+      isInstalled: true
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -169,12 +236,48 @@ const MarketplaceDashboard: React.FC = () => {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[1, 2, 3].map((item) => (
-                      <div key={item} className="bg-gray-700 p-4 rounded-lg animate-pulse">
-                        <div className="h-4 bg-gray-600 rounded w-3/4 mb-3"></div>
-                        <div className="h-3 bg-gray-600 rounded w-full mb-2"></div>
-                        <div className="h-3 bg-gray-600 rounded w-5/6 mb-4"></div>
-                        <div className="h-8 bg-gray-600 rounded w-1/3"></div>
+                    {discoverExtensions.map((extension) => (
+                      <div key={extension.id} className="bg-gray-700 p-4 rounded-lg hover:bg-gray-600 transition duration-200">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <h3 className="text-xl font-bold text-white">{extension.name}</h3>
+                            <p className="text-gray-300 text-sm">v{extension.version}</p>
+                          </div>
+                          {extension.isInstalled && (
+                            <span className="px-2 py-1 bg-green-600 text-white rounded text-xs">
+                              Installed
+                            </span>
+                          )}
+                        </div>
+                        
+                        <p className="text-gray-300 mb-3">{extension.description}</p>
+                        
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="text-sm text-gray-400">
+                            {extension.author}
+                          </span>
+                          <div className="flex items-center">
+                            <span className="text-yellow-400 mr-1">★</span>
+                            <span className="text-sm text-gray-400">{extension.rating}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {extension.tags.map((tag, index) => (
+                            <span key={index} className="px-2 py-1 bg-gray-600 text-gray-200 rounded text-xs">
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-gray-400">
+                            {extension.downloads.toLocaleString()} downloads
+                          </span>
+                          <button className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200">
+                            {extension.isInstalled ? 'Manage' : 'Install'}
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -281,20 +384,209 @@ const MarketplaceDashboard: React.FC = () => {
               )}
 
               {activeTab === 'details' && (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div className="p-4 bg-gray-700 rounded-lg">
                     <h3 className="text-xl font-semibold mb-2">Extension Details</h3>
                     <p className="text-gray-300">View detailed information about an extension.</p>
                   </div>
                   
-                  <div className="bg-gray-700 p-4 rounded-lg">
-                    <div className="flex flex-col md:flex-row gap-4">
-                      <div className="h-32 bg-gray-600 rounded w-full md:w-1/4"></div>
-                      <div className="flex-1">
-                        <div className="h-6 bg-gray-600 rounded w-1/2 mb-3"></div>
-                        <div className="h-4 bg-gray-600 rounded w-full mb-2"></div>
-                        <div className="h-4 bg-gray-600 rounded w-5/6 mb-4"></div>
-                        <div className="h-8 bg-gray-600 rounded w-1/3"></div>
+                  <div className="bg-gray-700 rounded-lg overflow-hidden">
+                    {/* Extension Header */}
+                    <div className="p-6 border-b border-gray-600">
+                      <div className="flex flex-col md:flex-row gap-6">
+                        <div className="flex-shrink-0">
+                          <div className="bg-gray-600 rounded-lg w-24 h-24 flex items-center justify-center">
+                            <span className="text-2xl">📦</span>
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex flex-wrap justify-between items-start gap-4">
+                            <div>
+                              <h2 className="text-2xl font-bold">{extensionDetails.name}</h2>
+                              <div className="flex items-center mt-1">
+                                <span className="text-gray-300 mr-2">v{extensionDetails.version}</span>
+                                <span className="px-2 py-1 bg-green-600 text-white rounded text-xs">
+                                  {extensionDetails.isInstalled ? 'Installed' : 'Not Installed'}
+                                </span>
+                                {extensionDetails.isUpdateAvailable && (
+                                  <span className="px-2 py-1 bg-yellow-600 text-yellow-100 rounded text-xs ml-2">
+                                    Update Available
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex space-x-2">
+                              <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                                {extensionDetails.isInstalled ? 'Manage' : 'Install'}
+                              </button>
+                              <button className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition duration-200">
+                                Details
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <p className="mt-4 text-gray-300">{extensionDetails.description}</p>
+                          
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <span className="px-3 py-1 bg-gray-600 text-gray-200 rounded-full text-sm">
+                              {extensionDetails.category}
+                            </span>
+                            {extensionDetails.tags.map((tag, index) => (
+                              <span key={index} className="px-3 py-1 bg-gray-600 text-gray-200 rounded-full text-sm">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                          
+                          <div className="mt-4 flex items-center">
+                            <div className="flex items-center mr-4">
+                              <span className="text-yellow-400 mr-1">★</span>
+                              <span className="text-gray-300">{extensionDetails.rating}</span>
+                            </div>
+                            <span className="text-gray-400 mr-4">{extensionDetails.downloads.toLocaleString()} downloads</span>
+                            <span className="text-gray-400">{extensionDetails.license}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Extension Overview */}
+                    <div className="p-6 border-b border-gray-600">
+                      <h3 className="text-xl font-semibold mb-4">Overview</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <h4 className="font-medium text-gray-300 mb-2">Publisher</h4>
+                          <div className="flex items-center">
+                            <div className="bg-gray-600 rounded-full w-8 h-8 flex items-center justify-center mr-2">
+                              <span className="text-sm">F</span>
+                            </div>
+                            <span className="text-white">{extensionDetails.author}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-300 mb-2">Compatibility</h4>
+                          <div className="flex items-center">
+                            <span className={`px-2 py-1 rounded text-xs mr-2 ${
+                              extensionDetails.isCompatible ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+                            }`}>
+                              {extensionDetails.isCompatible ? 'Compatible' : 'Incompatible'}
+                            </span>
+                            <span className="text-gray-300">{extensionDetails.compatibility}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-300 mb-2">Installation Date</h4>
+                          <p className="text-white">{extensionDetails.installedAt}</p>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-300 mb-2">Last Updated</h4>
+                          <p className="text-white">{extensionDetails.lastUpdated}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Metadata */}
+                    <div className="p-6 border-b border-gray-600">
+                      <h3 className="text-xl font-semibold mb-4">Metadata</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <h4 className="font-medium text-gray-300 mb-2">Repository</h4>
+                          <a href={extensionDetails.repository} className="text-blue-400 hover:text-blue-300">
+                            {extensionDetails.repository}
+                          </a>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-300 mb-2">Documentation</h4>
+                          <a href={extensionDetails.documentation} className="text-blue-400 hover:text-blue-300">
+                            {extensionDetails.documentation}
+                          </a>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-300 mb-2">License</h4>
+                          <p className="text-white">{extensionDetails.license}</p>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-300 mb-2">Category</h4>
+                          <p className="text-white">{extensionDetails.category}</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Capabilities */}
+                    <div className="p-6 border-b border-gray-600">
+                      <h3 className="text-xl font-semibold mb-4">Capabilities & Permissions</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <h4 className="font-medium text-gray-300 mb-2">Capabilities</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {extensionDetails.capabilities.map((capability, index) => (
+                              <span key={index} className="px-3 py-1 bg-gray-600 text-gray-200 rounded-full text-sm">
+                                {capability}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-300 mb-2">Required Permissions</h4>
+                          <div className="space-y-2">
+                            {extensionDetails.permissions.map((permission, index) => (
+                              <div key={index} className="flex items-start">
+                                <span className="text-blue-400 mr-2">•</span>
+                                <div>
+                                  <p className="text-white font-medium">{permission.name}</p>
+                                  <p className="text-gray-300 text-sm">{permission.description}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Compatibility */}
+                    <div className="p-6 border-b border-gray-600">
+                      <h3 className="text-xl font-semibold mb-4">Compatibility</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <h4 className="font-medium text-gray-300 mb-2">Operating Systems</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {extensionDetails.compatibilityDetails.os.map((os, index) => (
+                              <span key={index} className="px-3 py-1 bg-gray-600 text-gray-200 rounded-full text-sm">
+                                {os}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-gray-300 mb-2">System Requirements</h4>
+                          <ul className="list-disc pl-5 text-gray-300 space-y-1">
+                            <li>ForgeOS version: {extensionDetails.compatibilityDetails.forgeosVersion}</li>
+                            <li>Node.js version: {extensionDetails.compatibilityDetails.nodeVersion}</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Version History */}
+                    <div className="p-6">
+                      <h3 className="text-xl font-semibold mb-4">Version History</h3>
+                      <div className="space-y-3">
+                        {extensionDetails.versionHistory.map((version, index) => (
+                          <div key={index} className="flex items-start p-3 bg-gray-600 rounded-lg">
+                            <div className="flex-shrink-0 mr-4">
+                              <div className="bg-gray-500 rounded-full w-8 h-8 flex items-center justify-center">
+                                <span className="text-sm">v{version.version}</span>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="flex items-center">
+                                <span className="text-white font-medium mr-2">v{version.version}</span>
+                                <span className="text-gray-400 text-sm">{version.date}</span>
+                              </div>
+                              <p className="text-gray-300 mt-1">{version.changes}</p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
