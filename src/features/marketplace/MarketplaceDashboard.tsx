@@ -31,6 +31,8 @@ const MarketplaceDashboard: React.FC = () => {
   const [showRollbackModal, setShowRollbackModal] = useState(false);
   const [rollbackExtensionId, setRollbackExtensionId] = useState<string | null>(null);
   const [rollbackVersion, setRollbackVersion] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(true);
+  const [onboardingStep, setOnboardingStep] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
@@ -920,8 +922,161 @@ const MarketplaceDashboard: React.FC = () => {
   // Get unique tags for filter dropdown
   const allTags = Array.from(new Set(discoverExtensions.flatMap(ext => ext.tags)));
 
+  // Onboarding steps
+  const onboardingSteps = [
+    {
+      title: "Welcome to ForgeOS Marketplace",
+      content: "This is where you can discover, install, and manage extensions to enhance your ForgeOS experience. All extensions are installed locally and never uploaded to any server.",
+      icon: "📦"
+    },
+    {
+      title: "Local-Only Extensions",
+      content: "Extensions installed from the marketplace are stored locally on your device. They work completely offline and never transmit your data to external servers.",
+      icon: "🔒"
+    },
+    {
+      title: "Permission Review",
+      content: "Before installing any extension, you'll see exactly what permissions it requests. You can review these before confirming installation.",
+      icon: "🛡️"
+    },
+    {
+      title: "Compatibility Checks",
+      content: "ForgeOS checks if extensions are compatible with your current version. Incompatible extensions will be marked clearly.",
+      icon: "⚙️"
+    },
+    {
+      title: "Manage Your Extensions",
+      content: "Once installed, you can enable/disable, update, or uninstall extensions from the 'Installed Extensions' tab.",
+      icon: "🔧"
+    }
+  ];
+
+  // Close onboarding
+  const closeOnboarding = () => {
+    setShowOnboarding(false);
+  };
+
+  // Next onboarding step
+  const nextOnboardingStep = () => {
+    if (onboardingStep < onboardingSteps.length - 1) {
+      setOnboardingStep(onboardingStep + 1);
+    } else {
+      closeOnboarding();
+    }
+  };
+
+  // Previous onboarding step
+  const prevOnboardingStep = () => {
+    if (onboardingStep > 0) {
+      setOnboardingStep(onboardingStep - 1);
+    }
+  };
+
+  // Inline help component
+  const InlineHelp = ({ title, content }: { title: string; content: string }) => {
+    return (
+      <div className="bg-gray-700 rounded-lg p-4 mb-4">
+        <div className="flex items-start">
+          <div className="flex-shrink-0 mr-3">
+            <span className="text-xl">ℹ️</span>
+          </div>
+          <div>
+            <h4 className="font-semibold text-white mb-1">{title}</h4>
+            <p className="text-gray-300 text-sm">{content}</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Safety guidance component
+  const SafetyGuidance = ({ title, content, icon }: { title: string; content: string; icon: string }) => {
+    return (
+      <div className="bg-gray-700 rounded-lg p-4 mb-4 border border-gray-600">
+        <div className="flex items-start">
+          <div className="flex-shrink-0 mr-3">
+            <span className="text-xl">{icon}</span>
+          </div>
+          <div>
+            <h4 className="font-semibold text-white mb-1">{title}</h4>
+            <p className="text-gray-300 text-sm">{content}</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Empty state component
+  const EmptyState = ({ title, description, action, icon }: { title: string; description: string; action?: React.ReactNode; icon?: string }) => {
+    return (
+      <div className="bg-gray-700 rounded-lg p-8 text-center">
+        <div className="text-4xl mb-4">{icon || '📦'}</div>
+        <h3 className="text-xl font-semibold mb-2">{title}</h3>
+        <p className="text-gray-300 mb-4">{description}</p>
+        {action && <div className="mt-4">{action}</div>}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
+      {/* Onboarding Overlay */}
+      {showOnboarding && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-white">{onboardingSteps[onboardingStep].title}</h2>
+              <button 
+                onClick={closeOnboarding}
+                className="text-gray-400 hover:text-white"
+                aria-label="Close onboarding"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="text-center mb-6">
+              <div className="text-5xl mb-4">{onboardingSteps[onboardingStep].icon}</div>
+              <p className="text-gray-300 text-lg">{onboardingSteps[onboardingStep].content}</p>
+            </div>
+            
+            <div className="flex justify-between items-center">
+              <button
+                onClick={prevOnboardingStep}
+                disabled={onboardingStep === 0}
+                className={`px-4 py-2 rounded-lg transition duration-200 ${
+                  onboardingStep === 0 
+                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
+                    : 'bg-gray-700 hover:bg-gray-600 text-white'
+                }`}
+              >
+                Back
+              </button>
+              
+              <div className="flex space-x-2">
+                {onboardingSteps.map((_, index) => (
+                  <div 
+                    key={index} 
+                    className={`w-3 h-3 rounded-full ${
+                      index === onboardingStep ? 'bg-blue-600' : 'bg-gray-600'
+                    }`}
+                  />
+                ))}
+              </div>
+              
+              <button
+                onClick={nextOnboardingStep}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+              >
+                {onboardingStep === onboardingSteps.length - 1 ? 'Get Started' : 'Next'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">ForgeOS Marketplace</h1>
@@ -1358,12 +1513,13 @@ const MarketplaceDashboard: React.FC = () => {
                           </div>
                           
                           <div className="p-4 bg-gray-600 rounded-lg">
-                            <h4 className="font-semibold text-white mb-2">Permissions</h4>
-                            <div className="flex flex-wrap gap-2">
-                              {importReview.permissions.map((perm: string, index: number) => (
-                                <span key={index} className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm">
-                                  {perm}
-                                </span>
+                            <h4 className="font-semibold text-white mb-2">Required Permissions</h4>
+                            <div className="space-y-2">
+                              {importReview.permissions.map((permission: string, index: number) => (
+                                <div key={index} className="flex items-center">
+                                  <span className="text-blue-400 mr-2">•</span>
+                                  <span className="text-white">{permission}</span>
+                                </div>
                               ))}
                             </div>
                           </div>
@@ -1372,24 +1528,17 @@ const MarketplaceDashboard: React.FC = () => {
                             <h4 className="font-semibold text-white mb-2">Dependencies</h4>
                             <div className="space-y-2">
                               {importReview.dependencies.map((dep: any, index: number) => (
-                                <div key={index} className="flex justify-between items-center">
+                                <div key={index} className="flex items-center">
+                                  <span className="text-blue-400 mr-2">•</span>
                                   <span className="text-white">{dep.name} v{dep.version}</span>
-                                  <span className={`px-2 py-1 rounded text-xs ${
-                                    dep.isInstalled ? 'bg-green-600 text-white' : 'bg-yellow-600 text-white'
-                                  }`}>
-                                    {dep.isInstalled ? 'Installed' : 'Missing'}
-                                  </span>
+                                  {dep.isInstalled ? (
+                                    <span className="ml-2 text-green-400 text-sm">Installed</span>
+                                  ) : (
+                                    <span className="ml-2 text-yellow-400 text-sm">Missing</span>
+                                  )}
                                 </div>
                               ))}
                             </div>
-                          </div>
-                          
-                          <div className="p-4 bg-gray-600 rounded-lg">
-                            <h4 className="font-semibold text-white mb-2">Trust Notice</h4>
-                            <p className="text-gray-300">
-                              This extension was imported locally and has not been verified by ForgeOS. 
-                              Only install extensions from trusted sources.
-                            </p>
                           </div>
                           
                           <div className="flex justify-end space-x-3">
@@ -1417,103 +1566,30 @@ const MarketplaceDashboard: React.FC = () => {
                       )}
                       
                       {importStatus === 'success' && (
-                        <div className="p-4 bg-green-900 text-green-100 rounded-lg">
-                          <div className="flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span>Extension imported successfully!</span>
-                          </div>
-                          <p className="mt-2 text-sm">The extension has been installed locally and is ready to use.</p>
-                          <div className="mt-4 flex justify-end">
-                            <button
-                              onClick={resetImport}
-                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
-                            >
-                              Close
-                            </button>
-                          </div>
+                        <div className="text-center py-8">
+                          <div className="text-5xl mb-4">✅</div>
+                          <h4 className="text-xl font-semibold text-white mb-2">Installation Successful!</h4>
+                          <p className="text-gray-300 mb-4">The extension has been installed successfully.</p>
+                          <button
+                            onClick={resetImport}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+                          >
+                            Close
+                          </button>
                         </div>
                       )}
                       
                       {importStatus === 'error' && importError && (
-                        <div className="p-4 bg-red-900 text-red-100 rounded-lg">
-                          <div className="flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                            <span>Import Error</span>
-                          </div>
-                          <p className="mt-2 text-sm">{importError}</p>
-                          <div className="mt-4 flex justify-end">
-                            <button
-                              onClick={resetImport}
-                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
-                            >
-                              Try Again
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
-                  {/* Export Status */}
-                  {showExportModal && (
-                    <div className="bg-gray-700 rounded-lg p-6">
-                      <h3 className="text-lg font-bold text-white mb-4">Exporting Extension</h3>
-                      
-                      {exportStatus === 'preparing' && (
-                        <div className="flex flex-col items-center justify-center py-8">
-                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-                          <p className="text-gray-300">Preparing extension for export...</p>
-                        </div>
-                      )}
-                      
-                      {exportStatus === 'exporting' && (
-                        <div className="flex flex-col items-center justify-center py-8">
-                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-                          <p className="text-gray-300">Exporting extension to your device...</p>
-                        </div>
-                      )}
-                      
-                      {exportStatus === 'success' && (
-                        <div className="p-4 bg-green-900 text-green-100 rounded-lg">
-                          <div className="flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span>Export Successful!</span>
-                          </div>
-                          <p className="mt-2 text-sm">The extension has been exported to your device.</p>
-                          <div className="mt-4 flex justify-end">
-                            <button
-                              onClick={resetExport}
-                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
-                            >
-                              Close
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {exportStatus === 'error' && exportError && (
-                        <div className="p-4 bg-red-900 text-red-100 rounded-lg">
-                          <div className="flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                            <span>Export Error</span>
-                          </div>
-                          <p className="mt-2 text-sm">{exportError}</p>
-                          <div className="mt-4 flex justify-end">
-                            <button
-                              onClick={resetExport}
-                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
-                            >
-                              Try Again
-                            </button>
-                          </div>
+                        <div className="text-center py-8">
+                          <div className="text-5xl mb-4">⚠️</div>
+                          <h4 className="text-xl font-semibold text-white mb-2">Installation Failed</h4>
+                          <p className="text-gray-300 mb-4">{importError}</p>
+                          <button
+                            onClick={resetImport}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+                          >
+                            Try Again
+                          </button>
                         </div>
                       )}
                     </div>
@@ -1521,340 +1597,30 @@ const MarketplaceDashboard: React.FC = () => {
                 </div>
               )}
 
-              {/* Search and Filters Section */}
-              {activeTab === 'discover' && (
-                <div className="mb-6">
-                  <div className="flex flex-col md:flex-row gap-4 mb-4">
-                    {/* Search Input */}
-                    <div className="flex-1">
-                      <div className="relative">
-                        <input
-                          type="text"
-                          placeholder="Search extensions by name, description, author, category, or tags..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pl-10"
-                        />
-                        <svg 
-                          xmlns="http://www.w3.org/2000/svg" 
-                          className="h-5 w-5 absolute left-3 top-3.5 text-gray-400" 
-                          viewBox="0 0 20 20" 
-                          fill="currentColor"
-                        >
-                          <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                    
-                    {/* Sort Dropdown */}
-                    <div className="w-full md:w-auto">
-                      <select
-                        value={sortOption}
-                        onChange={(e) => setSortOption(e.target.value)}
-                        className="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="name">Sort by Name</option>
-                        <option value="newest">Sort by Newest</option>
-                        <option value="rating">Sort by Rating</option>
-                        <option value="downloads">Sort by Downloads</option>
-                      </select>
-                    </div>
-                  </div>
-                  
-                  {/* Active Filters */}
-                  {activeFilters.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <span className="text-sm text-gray-400">Active filters:</span>
-                      {activeFilters.map((filter, index) => {
-                        const [filterType, filterValue] = filter.split(':');
-                        return (
-                          <FilterChip 
-                            key={index} 
-                            filter={filterType} 
-                            value={filterValue} 
-                            onRemove={() => handleFilterChange(filterType, '')} 
-                          />
-                        );
-                      })}
-                      <button 
-                        onClick={clearAllFilters}
-                        className="text-sm text-gray-400 hover:text-white flex items-center"
-                      >
-                        Clear all
-                      </button>
-                    </div>
-                  )}
-                  
-                  {/* Filter Controls */}
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Category</label>
-                      <select
-                        value={selectedFilters.category || ''}
-                        onChange={(e) => handleFilterChange('category', e.target.value)}
-                        className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      >
-                        <option value="">All Categories</option>
-                        {categories.map(category => (
-                          <option key={category} value={category}>{category}</option>
-                        ))}
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Compatibility</label>
-                      <select
-                        value={selectedFilters.compatibility || ''}
-                        onChange={(e) => handleFilterChange('compatibility', e.target.value)}
-                        className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      >
-                        <option value="">All Compatibility</option>
-                        <option value="Compatible">Compatible</option>
-                        <option value="Incompatible">Incompatible</option>
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Installed</label>
-                      <select
-                        value={selectedFilters.installed || ''}
-                        onChange={(e) => handleFilterChange('installed', e.target.value)}
-                        className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      >
-                        <option value="">All Extensions</option>
-                        <option value="installed">Installed</option>
-                        <option value="not-installed">Not Installed</option>
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Update Status</label>
-                      <select
-                        value={selectedFilters.update || ''}
-                        onChange={(e) => handleFilterChange('update', e.target.value)}
-                        className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      >
-                        <option value="">All Updates</option>
-                        <option value="update-available">Update Available</option>
-                        <option value="up-to-date">Up to Date</option>
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1">Favorites</label>
-                      <select
-                        value={selectedFilters.favorite || ''}
-                        onChange={(e) => handleFilterChange('favorite', e.target.value)}
-                        className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      >
-                        <option value="">All Extensions</option>
-                        <option value="favorites">Favorites Only</option>
-                      </select>
-                    </div>
-                  </div>
-                  
-                  {/* Results Count */}
-                  <div className="mb-4">
-                    <p className="text-gray-400 text-sm">
-                      {sortedExtensions.length} extension{sortedExtensions.length !== 1 ? 's' : ''} found
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Favorites Tab */}
-              {activeTab === 'favorites' && (
-                <div className="space-y-4">
-                  <div className="p-4 bg-gray-700 rounded-lg">
-                    <h3 className="text-xl font-semibold mb-2">Favorite Extensions</h3>
-                    <p className="text-gray-300">Extensions you've marked as favorites for quick access.</p>
-                  </div>
-                  
-                  {favorites.length === 0 ? (
-                    <div className="bg-gray-700 rounded-lg p-8 text-center">
-                      <h3 className="text-xl font-semibold mb-2">No Favorites Yet</h3>
-                      <p className="text-gray-300 mb-4">Click the star icon on any extension to add it to your favorites.</p>
-                      <button 
-                        onClick={() => handleTabChange('discover')}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200"
-                      >
-                        Discover Extensions
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {discoverExtensions
-                        .filter(ext => favorites.includes(ext.id))
-                        .map((extension) => (
-                          <div key={extension.id} className="bg-gray-700 p-4 rounded-lg">
-                            <div className="flex justify-between items-start mb-3">
-                              <div>
-                                <h3 className="text-xl font-bold text-white">{extension.name}</h3>
-                                <p className="text-gray-300 text-sm">v{extension.version}</p>
-                              </div>
-                              <div className="flex space-x-2">
-                                <FavoriteButton extensionId={extension.id} />
-                                {extension.isInstalled && (
-                                  <span className="px-2 py-1 bg-green-600 text-white rounded text-xs">
-                                    Installed
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            
-                            <p className="text-gray-300 mb-3">{extension.description}</p>
-                            
-                            <div className="flex justify-between items-center mb-3">
-                              <span className="text-sm text-gray-400">
-                                {extension.author}
-                              </span>
-                              <div className="flex items-center">
-                                <StatusBadge status={extension.compatibility} label={extension.compatibility} />
-                              </div>
-                            </div>
-                            
-                            <div className="flex flex-wrap gap-2 mb-3">
-                              {extension.tags.map((tag, index) => (
-                                <span key={index} className="px-2 py-1 bg-gray-600 text-gray-200 rounded text-xs">
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                            
-                            <div className="flex justify-between items-center">
-                              <div className="flex flex-wrap gap-1">
-                                {extension.compatibilityDetails.os.map((os, index) => (
-                                  <span key={index} className="px-2 py-1 bg-gray-600 text-gray-200 rounded text-xs">
-                                    {os}
-                                  </span>
-                                ))}
-                              </div>
-                              <button className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200">
-                                {extension.isInstalled ? 'Manage' : 'Install'}
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Collections Tab */}
-              {activeTab === 'collections' && (
-                <div className="space-y-4">
-                  <div className="p-4 bg-gray-700 rounded-lg">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="text-xl font-semibold mb-2">My Collections</h3>
-                        <p className="text-gray-300">Organize your extensions into custom collections.</p>
-                      </div>
-                      <button 
-                        onClick={() => setShowCollectionModal(true)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200"
-                      >
-                        Create Collection
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {collections.length === 0 ? (
-                    <div className="bg-gray-700 rounded-lg p-8 text-center">
-                      <h3 className="text-xl font-semibold mb-2">No Collections Yet</h3>
-                      <p className="text-gray-300 mb-4">Create collections to organize your favorite extensions.</p>
-                      <button 
-                        onClick={() => setShowCollectionModal(true)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200"
-                      >
-                        Create Your First Collection
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {collections.map((collection) => (
-                        <div key={collection.id} className="bg-gray-700 p-4 rounded-lg">
-                          <div className="flex justify-between items-start mb-3">
-                            <div>
-                              {editingCollectionId === collection.id ? (
-                                <input
-                                  type="text"
-                                  value={editingCollectionName}
-                                  onChange={(e) => setEditingCollectionName(e.target.value)}
-                                  className="bg-gray-600 text-white p-1 rounded w-full mb-2"
-                                  autoFocus
-                                  onBlur={saveCollectionName}
-                                  onKeyDown={(e) => e.key === 'Enter' && saveCollectionName()}
-                                />
-                              ) : (
-                                <h3 className="text-xl font-bold text-white">{collection.name}</h3>
-                              )}
-                            </div>
-                            <div className="flex space-x-1">
-                              {editingCollectionId === collection.id ? (
-                                <button 
-                                  onClick={saveCollectionName}
-                                  className="text-green-400 hover:text-green-300"
-                                  aria-label="Save collection name"
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                  </svg>
-                                </button>
-                              ) : (
-                                <button 
-                                  onClick={() => startEditingCollection(collection)}
-                                  className="text-gray-400 hover:text-white"
-                                  aria-label="Edit collection name"
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                                  </svg>
-                                </button>
-                              )}
-                              <button 
-                                onClick={() => deleteCollection(collection.id)}
-                                className="text-red-400 hover:text-red-300"
-                                aria-label="Delete collection"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
-                          
-                          <div className="mb-3">
-                            <p className="text-gray-300 text-sm">
-                              {collection.extensions.length} extension{collection.extensions.length !== 1 ? 's' : ''}
-                            </p>
-                          </div>
-                          
-                          <div className="flex justify-between items-center">
-                            <button 
-                              onClick={() => handleTabChange('discover')}
-                              className="text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded transition duration-200"
-                            >
-                              View Extensions
-                            </button>
-                            <div className="flex space-x-2">
-                              <button className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200">
-                                Add Extension
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Placeholder content for each tab */}
               {activeTab === 'discover' && (
                 <div className="space-y-4">
                   <div className="p-4 bg-gray-700 rounded-lg">
                     <h3 className="text-xl font-semibold mb-2">Discover New Extensions</h3>
                     <p className="text-gray-300">Browse and install extensions to enhance your ForgeOS experience.</p>
+                  </div>
+                  
+                  {/* Safety Guidance for Discover Tab */}
+                  <div className="space-y-4">
+                    <SafetyGuidance 
+                      title="Local-Only Installation" 
+                      content="All extensions are installed locally on your device and never uploaded to any server." 
+                      icon="🔒"
+                    />
+                    <SafetyGuidance 
+                      title="Permission Review" 
+                      content="Before installing any extension, you'll see exactly what permissions it requests." 
+                      icon="🛡️"
+                    />
+                    <SafetyGuidance 
+                      title="Compatibility Check" 
+                      content="ForgeOS checks if extensions are compatible with your current version." 
+                      icon="⚙️"
+                    />
                   </div>
                   
                   {sortedExtensions.length === 0 ? (
@@ -1945,6 +1711,25 @@ const MarketplaceDashboard: React.FC = () => {
                   <div className="p-4 bg-gray-700 rounded-lg">
                     <h3 className="text-xl font-semibold mb-2">Installed Extensions</h3>
                     <p className="text-gray-300">Manage your installed extensions and their settings.</p>
+                  </div>
+                  
+                  {/* Safety Guidance for Installed Tab */}
+                  <div className="space-y-4">
+                    <SafetyGuidance 
+                      title="Extension Management" 
+                      content="You can enable/disable, update, or uninstall extensions from here." 
+                      icon="🔧"
+                    />
+                    <SafetyGuidance 
+                      title="Local-Only Operation" 
+                      content="All installed extensions work completely offline and never transmit data." 
+                      icon="🔒"
+                    />
+                    <SafetyGuidance 
+                      title="Problematic Extensions" 
+                      content="If an extension causes issues, you can disable it or use the recovery tools." 
+                      icon="⚠️"
+                    />
                   </div>
                   
                   {installedExtensions.length === 0 ? (
