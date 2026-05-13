@@ -357,7 +357,18 @@ const MarketplaceDashboard: React.FC = () => {
       lastErrorTime: '2023-06-10 14:30:00',
       recoveryAvailable: true,
       rollbackAvailable: true,
-      lastSuccessfulVersion: '1.2.0'
+      lastSuccessfulVersion: '1.2.0',
+      runtimeStatus: 'running', // Added runtime status
+      processInfo: {
+        activeProcesses: 2,
+        memoryUsage: '45 MB',
+        cpuUsage: '12%',
+        lastActivity: '2023-06-15 14:30:00'
+      },
+      resourceWarnings: [
+        'Memory usage is high',
+        'CPU usage is moderate'
+      ]
     },
     {
       id: '2',
@@ -387,7 +398,10 @@ const MarketplaceDashboard: React.FC = () => {
       lastErrorTime: null,
       recoveryAvailable: false,
       rollbackAvailable: false,
-      lastSuccessfulVersion: null
+      lastSuccessfulVersion: null,
+      runtimeStatus: 'inactive', // Added runtime status
+      processInfo: null,
+      resourceWarnings: []
     },
     {
       id: '3',
@@ -424,7 +438,18 @@ const MarketplaceDashboard: React.FC = () => {
       lastErrorTime: '2023-06-01 09:15:00',
       recoveryAvailable: true,
       rollbackAvailable: true,
-      lastSuccessfulVersion: '1.5.0'
+      lastSuccessfulVersion: '1.5.0',
+      runtimeStatus: 'error', // Added runtime status
+      processInfo: {
+        activeProcesses: 0,
+        memoryUsage: '0 MB',
+        cpuUsage: '0%',
+        lastActivity: '2023-06-01 09:15:00'
+      },
+      resourceWarnings: [
+        'Extension is incompatible with current ForgeOS version',
+        'Missing required dependency: Database Driver v1.0.0'
+      ]
     }
   ];
 
@@ -487,7 +512,18 @@ const MarketplaceDashboard: React.FC = () => {
     lastErrorTime: '2023-06-10 14:30:00',
     recoveryAvailable: true,
     rollbackAvailable: true,
-    lastSuccessfulVersion: '1.2.0'
+    lastSuccessfulVersion: '1.2.0',
+    runtimeStatus: 'running',
+    processInfo: {
+      activeProcesses: 2,
+      memoryUsage: '45 MB',
+      cpuUsage: '12%',
+      lastActivity: '2023-06-15 14:30:00'
+    },
+    resourceWarnings: [
+      'Memory usage is high',
+      'CPU usage is moderate'
+    ]
   };
 
   // Mock data for extension in discover view
@@ -740,6 +776,18 @@ const MarketplaceDashboard: React.FC = () => {
         break;
       case 'requires_review':
         bgColor = 'bg-orange-600';
+        textColor = 'text-white';
+        break;
+      case 'running':
+        bgColor = 'bg-green-600';
+        textColor = 'text-white';
+        break;
+      case 'inactive':
+        bgColor = 'bg-gray-600';
+        textColor = 'text-gray-300';
+        break;
+      case 'error':
+        bgColor = 'bg-red-600';
         textColor = 'text-white';
         break;
       default:
@@ -1179,6 +1227,128 @@ const MarketplaceDashboard: React.FC = () => {
             </span>
           </React.Fragment>
         ))}
+      </div>
+    );
+  };
+
+  // Runtime status panel component
+  const RuntimeStatusPanel = ({ extension }: { extension: any }) => {
+    if (!extension.runtimeStatus) {
+      return (
+        <div className="bg-gray-700 rounded-lg p-4 mb-4">
+          <h4 className="font-semibold text-white mb-2">Runtime Status</h4>
+          <p className="text-gray-300 text-sm">Runtime information is not available for this extension.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-gray-700 rounded-lg p-4 mb-4">
+        <h4 className="font-semibold text-white mb-2">Runtime Status</h4>
+        <div className="flex items-center mb-3">
+          <StatusBadge status={extension.runtimeStatus} label={extension.runtimeStatus} />
+          <span className="ml-2 text-gray-300">
+            {extension.runtimeStatus === 'running' && 'Extension is actively running'}
+            {extension.runtimeStatus === 'inactive' && 'Extension is not active'}
+            {extension.runtimeStatus === 'error' && 'Extension encountered an error'}
+          </span>
+        </div>
+        
+        {extension.runtimeStatus === 'running' && extension.processInfo && (
+          <div className="mt-3">
+            <h5 className="font-medium text-gray-300 mb-2">Process Information</h5>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Active Processes:</span>
+                <span className="text-white">{extension.processInfo.activeProcesses}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Memory Usage:</span>
+                <span className="text-white">{extension.processInfo.memoryUsage}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">CPU Usage:</span>
+                <span className="text-white">{extension.processInfo.cpuUsage}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Last Activity:</span>
+                <span className="text-white">{extension.processInfo.lastActivity}</span>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {extension.resourceWarnings && extension.resourceWarnings.length > 0 && (
+          <div className="mt-3">
+            <h5 className="font-medium text-gray-300 mb-2">Resource Warnings</h5>
+            <ul className="list-disc pl-5 text-sm text-yellow-300 space-y-1">
+              {extension.resourceWarnings.map((warning: string, index: number) => (
+                <li key={index}>{warning}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Extension detail runtime panel
+  const ExtensionRuntimePanel = ({ extension }: { extension: any }) => {
+    if (!extension.runtimeStatus) {
+      return (
+        <div className="bg-gray-700 rounded-lg p-4 mb-4">
+          <h4 className="font-semibold text-white mb-2">Runtime Information</h4>
+          <p className="text-gray-300 text-sm">Runtime information is not available for this extension.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-gray-700 rounded-lg p-4 mb-4">
+        <h4 className="font-semibold text-white mb-2">Runtime Information</h4>
+        <div className="flex items-center mb-3">
+          <StatusBadge status={extension.runtimeStatus} label={extension.runtimeStatus} />
+          <span className="ml-2 text-gray-300">
+            {extension.runtimeStatus === 'running' && 'Extension is actively running'}
+            {extension.runtimeStatus === 'inactive' && 'Extension is not active'}
+            {extension.runtimeStatus === 'error' && 'Extension encountered an error'}
+          </span>
+        </div>
+        
+        {extension.runtimeStatus === 'running' && extension.processInfo && (
+          <div className="mt-3">
+            <h5 className="font-medium text-gray-300 mb-2">Process Information</h5>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-400">Active Processes:</span>
+                <span className="text-white">{extension.processInfo.activeProcesses}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Memory Usage:</span>
+                <span className="text-white">{extension.processInfo.memoryUsage}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">CPU Usage:</span>
+                <span className="text-white">{extension.processInfo.cpuUsage}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Last Activity:</span>
+                <span className="text-white">{extension.processInfo.lastActivity}</span>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {extension.resourceWarnings && extension.resourceWarnings.length > 0 && (
+          <div className="mt-3">
+            <h5 className="font-medium text-gray-300 mb-2">Resource Warnings</h5>
+            <ul className="list-disc pl-5 text-sm text-yellow-300 space-y-1">
+              {extension.resourceWarnings.map((warning: string, index: number) => (
+                <li key={index}>{warning}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     );
   };
@@ -2051,6 +2221,8 @@ const MarketplaceDashboard: React.FC = () => {
                             </div>
                           </div>
                           
+                          <RuntimeStatusPanel extension={extension} />
+                          
                           <div className="flex justify-between items-center">
                             <div className="text-sm text-gray-400">
                               Installed: {extension.lastUpdated}
@@ -2192,6 +2364,9 @@ const MarketplaceDashboard: React.FC = () => {
                       </div>
                     </div>
                     
+                    {/* Runtime Information */}
+                    <ExtensionRuntimePanel extension={extensionDetails} />
+                    
                     {/* Metadata */}
                     <div className="p-6 border-b border-gray-600">
                       <h3 className="text-xl font-semibold mb-4">Metadata</h3>
@@ -2315,22 +2490,10 @@ const MarketplaceDashboard: React.FC = () => {
                               <h4 className="font-semibold text-white">{dep.name}</h4>
                               <DependencyBadge status={dep.isInstalled ? 'installed' : dep.isCompatible ? 'missing' : 'incompatible'} />
                             </div>
-                            <div className="flex justify-between items-center">
-                              <p className="text-gray-300">Version: {dep.version}</p>
-                              <div className="flex space-x-2">
-                                {dep.isInstalled ? (
-                                  <span className="text-green-400 text-sm">Installed</span>
-                                ) : (
-                                  <span className="text-yellow-400 text-sm">Missing</span>
-                                )}
-                              </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-300">Version: {dep.version}</span>
+                              <span className="text-gray-300">Status: {dep.isInstalled ? 'Installed' : dep.isCompatible ? 'Compatible' : 'Incompatible'}</span>
                             </div>
-                            {dep.isCompatible === false && (
-                              <div className="mt-2 p-2 bg-red-900 text-red-100 rounded text-sm">
-                                <p className="font-semibold">Incompatible</p>
-                                <p>This dependency is not compatible with your current environment.</p>
-                              </div>
-                            )}
                           </div>
                         ))}
                       </div>
