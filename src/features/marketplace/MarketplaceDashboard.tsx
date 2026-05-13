@@ -136,6 +136,101 @@ const MarketplaceDashboard: React.FC = () => {
     }
   ];
 
+  // Mock marketplace status data
+  const marketplaceStatus = {
+    catalogStatus: 'synced', // synced, syncing, error, unavailable
+    lastSync: '2023-06-15 14:30:00',
+    syncEnabled: true,
+    syncAvailable: true,
+    hasUpdates: true,
+    error: null,
+    warning: null,
+    serviceStatus: 'healthy', // healthy, degraded, unhealthy
+    lastAction: {
+      type: 'install',
+      status: 'success',
+      timestamp: '2023-06-15 14:25:00',
+      message: 'Successfully installed Code Assistant v1.2.3'
+    }
+  };
+
+  // Status badge component
+  const StatusBadge = ({ status, label }: { status: string; label: string }) => {
+    let bgColor = 'bg-gray-600';
+    let textColor = 'text-gray-300';
+    
+    switch (status) {
+      case 'synced':
+        bgColor = 'bg-green-600';
+        textColor = 'text-white';
+        break;
+      case 'syncing':
+        bgColor = 'bg-yellow-600';
+        textColor = 'text-white';
+        break;
+      case 'error':
+        bgColor = 'bg-red-600';
+        textColor = 'text-white';
+        break;
+      case 'unavailable':
+        bgColor = 'bg-gray-600';
+        textColor = 'text-gray-400';
+        break;
+      case 'healthy':
+        bgColor = 'bg-green-600';
+        textColor = 'text-white';
+        break;
+      case 'degraded':
+        bgColor = 'bg-yellow-600';
+        textColor = 'text-white';
+        break;
+      case 'unhealthy':
+        bgColor = 'bg-red-600';
+        textColor = 'text-white';
+        break;
+      default:
+        bgColor = 'bg-gray-600';
+        textColor = 'text-gray-300';
+    }
+    
+    return (
+      <span className={`${bgColor} ${textColor} px-2 py-1 rounded text-xs`}>
+        {label}
+      </span>
+    );
+  };
+
+  // Status banner component
+  const StatusBanner = ({ type, message }: { type: string; message: string }) => {
+    let bgColor = 'bg-gray-700';
+    let textColor = 'text-gray-300';
+    
+    switch (type) {
+      case 'error':
+        bgColor = 'bg-red-900';
+        textColor = 'text-red-200';
+        break;
+      case 'warning':
+        bgColor = 'bg-yellow-900';
+        textColor = 'text-yellow-200';
+        break;
+      case 'success':
+        bgColor = 'bg-green-900';
+        textColor = 'text-green-200';
+        break;
+      default:
+        bgColor = 'bg-gray-700';
+        textColor = 'text-gray-300';
+    }
+    
+    return (
+      <div className={`${bgColor} ${textColor} p-3 rounded-lg mb-4 flex items-center`}>
+        <span className="mr-2">⚠️</span>
+        <span>{message}</span>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="container mx-auto p-4">
@@ -156,6 +251,70 @@ const MarketplaceDashboard: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Marketplace Status Summary */}
+        <div className="bg-gray-800 rounded-lg p-4 mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-bold">Marketplace Status</h2>
+              <p className="text-gray-400 text-sm">Real-time extension catalog and service status</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <StatusBadge status={marketplaceStatus.catalogStatus} label="Catalog Status" />
+              <StatusBadge status={marketplaceStatus.serviceStatus} label="Service Status" />
+              {marketplaceStatus.hasUpdates && (
+                <span className="bg-yellow-600 text-white px-2 py-1 rounded text-xs">
+                  Updates Available
+                </span>
+              )}
+            </div>
+          </div>
+          
+          <div className="mt-3 flex flex-wrap gap-4 text-sm">
+            <div className="flex items-center">
+              <span className="text-gray-400 mr-2">Last sync:</span>
+              <span className="text-white">{marketplaceStatus.lastSync}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-gray-400 mr-2">Sync enabled:</span>
+              <span className={`font-medium ${marketplaceStatus.syncEnabled ? 'text-green-400' : 'text-red-400'}`}>
+                {marketplaceStatus.syncEnabled ? 'Yes' : 'No'}
+              </span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-gray-400 mr-2">Sync available:</span>
+              <span className={`font-medium ${marketplaceStatus.syncAvailable ? 'text-green-400' : 'text-red-400'}`}>
+                {marketplaceStatus.syncAvailable ? 'Yes' : 'No'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Activity Banner */}
+        {marketplaceStatus.lastAction && (
+          <StatusBanner 
+            type={marketplaceStatus.lastAction.status} 
+            message={marketplaceStatus.lastAction.message} 
+          />
+        )}
+
+        {/* Status Indicators for Installed Extensions */}
+        {activeTab === 'installed' && (
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold">Extension Status</h3>
+              <span className="text-sm text-gray-400">Local-only mode</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="bg-blue-900 text-blue-200 px-2 py-1 rounded text-xs flex items-center">
+                <span className="mr-1">🔒</span> Local-only
+              </span>
+              <span className="bg-gray-700 text-gray-300 px-2 py-1 rounded text-xs">
+                No external communication
+              </span>
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col md:flex-row gap-6">
           {/* Sidebar Navigation */}
