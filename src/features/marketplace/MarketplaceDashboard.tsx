@@ -22,6 +22,15 @@ const MarketplaceDashboard: React.FC = () => {
   const [exportExtensionId, setExportExtensionId] = useState<string | null>(null);
   const [exportStatus, setExportStatus] = useState<'idle' | 'preparing' | 'exporting' | 'success' | 'error'>('idle');
   const [exportError, setExportError] = useState<string | null>(null);
+  const [showUninstallModal, setShowUninstallModal] = useState(false);
+  const [uninstallExtensionId, setUninstallExtensionId] = useState<string | null>(null);
+  const [uninstallExtensionName, setUninstallExtensionName] = useState<string | null>(null);
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  const [recoveryExtensionId, setRecoveryExtensionId] = useState<string | null>(null);
+  const [recoveryStatus, setRecoveryStatus] = useState<any>(null);
+  const [showRollbackModal, setShowRollbackModal] = useState(false);
+  const [rollbackExtensionId, setRollbackExtensionId] = useState<string | null>(null);
+  const [rollbackVersion, setRollbackVersion] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
@@ -237,6 +246,78 @@ const MarketplaceDashboard: React.FC = () => {
     setExportError(null);
   };
 
+  // Open uninstall confirmation
+  const openUninstallModal = (id: string, name: string) => {
+    setUninstallExtensionId(id);
+    setUninstallExtensionName(name);
+    setShowUninstallModal(true);
+  };
+
+  // Close uninstall confirmation
+  const closeUninstallModal = () => {
+    setShowUninstallModal(false);
+    setUninstallExtensionId(null);
+    setUninstallExtensionName(null);
+  };
+
+  // Confirm uninstall
+  const confirmUninstall = () => {
+    if (!uninstallExtensionId) return;
+    
+    // In a real implementation, this would call the uninstall API
+    closeUninstallModal();
+    // Show success message or handle accordingly
+  };
+
+  // Open recovery modal
+  const openRecoveryModal = (id: string) => {
+    setRecoveryExtensionId(id);
+    setShowRecoveryModal(true);
+    
+    // Simulate fetching recovery status
+    setTimeout(() => {
+      setRecoveryStatus({
+        lastError: 'Extension failed to enable after update',
+        lastErrorTime: '2023-06-10 14:30:00',
+        recoveryAvailable: true,
+        rollbackAvailable: true,
+        lastSuccessfulVersion: '1.2.0',
+        currentVersion: '1.3.0',
+        errorDetails: 'Failed to initialize AI engine component'
+      });
+    }, 500);
+  };
+
+  // Close recovery modal
+  const closeRecoveryModal = () => {
+    setShowRecoveryModal(false);
+    setRecoveryExtensionId(null);
+    setRecoveryStatus(null);
+  };
+
+  // Open rollback modal
+  const openRollbackModal = (id: string, version: string) => {
+    setRollbackExtensionId(id);
+    setRollbackVersion(version);
+    setShowRollbackModal(true);
+  };
+
+  // Close rollback modal
+  const closeRollbackModal = () => {
+    setShowRollbackModal(false);
+    setRollbackExtensionId(null);
+    setRollbackVersion(null);
+  };
+
+  // Confirm rollback
+  const confirmRollback = () => {
+    if (!rollbackExtensionId || !rollbackVersion) return;
+    
+    // In a real implementation, this would call the rollback API
+    closeRollbackModal();
+    // Show success message or handle accordingly
+  };
+
   // Mock data for installed extensions
   const installedExtensions = [
     {
@@ -269,7 +350,12 @@ const MarketplaceDashboard: React.FC = () => {
         os: ['Windows', 'macOS', 'Linux']
       },
       category: 'Development Tools',
-      tags: ['ai', 'code', 'assistant']
+      tags: ['ai', 'code', 'assistant'],
+      lastError: 'Failed to initialize AI engine component',
+      lastErrorTime: '2023-06-10 14:30:00',
+      recoveryAvailable: true,
+      rollbackAvailable: true,
+      lastSuccessfulVersion: '1.2.0'
     },
     {
       id: '2',
@@ -294,7 +380,12 @@ const MarketplaceDashboard: React.FC = () => {
       updateAvailableVersion: '0.9.1',
       updateAvailableDate: '2023-04-22',
       category: 'Development Tools',
-      tags: ['git', 'version-control']
+      tags: ['git', 'version-control'],
+      lastError: null,
+      lastErrorTime: null,
+      recoveryAvailable: false,
+      rollbackAvailable: false,
+      lastSuccessfulVersion: null
     },
     {
       id: '3',
@@ -326,7 +417,12 @@ const MarketplaceDashboard: React.FC = () => {
         os: ['Windows', 'macOS', 'Linux']
       },
       category: 'Database Tools',
-      tags: ['database', 'sql', 'explorer']
+      tags: ['database', 'sql', 'explorer'],
+      lastError: 'Incompatible with current ForgeOS version',
+      lastErrorTime: '2023-06-01 09:15:00',
+      recoveryAvailable: true,
+      rollbackAvailable: true,
+      lastSuccessfulVersion: '1.5.0'
     }
   ];
 
@@ -384,7 +480,12 @@ const MarketplaceDashboard: React.FC = () => {
       forgeosVersion: '>=2.0.0',
       nodeVersion: '>=14.0.0',
       os: ['Windows', 'macOS', 'Linux']
-    }
+    },
+    lastError: 'Failed to initialize AI engine component',
+    lastErrorTime: '2023-06-10 14:30:00',
+    recoveryAvailable: true,
+    rollbackAvailable: true,
+    lastSuccessfulVersion: '1.2.0'
   };
 
   // Mock data for extension in discover view
@@ -985,6 +1086,18 @@ const MarketplaceDashboard: React.FC = () => {
                   </li>
                   <li>
                     <button
+                      onClick={() => handleTabChange('recovery')}
+                      className={`w-full text-left px-4 py-2 rounded-lg transition duration-200 ${
+                        activeTab === 'recovery' 
+                          ? 'bg-blue-600 text-white' 
+                          : 'hover:bg-gray-700 text-gray-300'
+                      }`}
+                    >
+                      Recovery
+                    </button>
+                  </li>
+                  <li>
+                    <button
                       onClick={() => handleTabChange('details')}
                       className={`w-full text-left px-4 py-2 rounded-lg transition duration-200 ${
                         activeTab === 'details' 
@@ -1010,8 +1123,98 @@ const MarketplaceDashboard: React.FC = () => {
                 {activeTab === 'favorites' && 'Favorite Extensions'}
                 {activeTab === 'collections' && 'My Collections'}
                 {activeTab === 'import-export' && 'Import/Export Extensions'}
+                {activeTab === 'recovery' && 'Extension Recovery'}
                 {activeTab === 'details' && 'Extension Details'}
               </h2>
+
+              {/* Recovery Tab */}
+              {activeTab === 'recovery' && (
+                <div className="space-y-6">
+                  <div className="p-4 bg-gray-700 rounded-lg">
+                    <h3 className="text-xl font-semibold mb-2">Extension Recovery</h3>
+                    <p className="text-gray-300">Manage problematic extensions and access recovery options.</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-gray-700 rounded-lg p-6">
+                      <h3 className="text-lg font-bold text-white mb-4">Recovery Status</h3>
+                      <div className="space-y-4">
+                        <div className="p-4 bg-red-900/30 rounded-lg border border-red-700">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-semibold text-white">Code Assistant</h4>
+                            <span className="px-2 py-1 bg-red-600 text-white rounded text-xs">Error</span>
+                          </div>
+                          <p className="text-gray-300 text-sm mb-2">Failed to initialize AI engine component</p>
+                          <p className="text-gray-400 text-xs">Last error: 2023-06-10 14:30:00</p>
+                          <div className="mt-3 flex space-x-2">
+                            <button 
+                              onClick={() => openRecoveryModal('1')}
+                              className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200"
+                            >
+                              View Recovery Options
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className="p-4 bg-gray-600 rounded-lg">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-semibold text-white">Database Explorer</h4>
+                            <span className="px-2 py-1 bg-yellow-600 text-white rounded text-xs">Incompatible</span>
+                          </div>
+                          <p className="text-gray-300 text-sm mb-2">Incompatible with current ForgeOS version</p>
+                          <p className="text-gray-400 text-xs">Last error: 2023-06-01 09:15:00</p>
+                          <div className="mt-3 flex space-x-2">
+                            <button 
+                              onClick={() => openRecoveryModal('3')}
+                              className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200"
+                            >
+                              View Recovery Options
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className="p-4 bg-green-900/30 rounded-lg border border-green-700">
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-semibold text-white">Git Integration</h4>
+                            <span className="px-2 py-1 bg-green-600 text-white rounded text-xs">Healthy</span>
+                          </div>
+                          <p className="text-gray-300 text-sm mb-2">No issues detected</p>
+                          <p className="text-gray-400 text-xs">Last checked: 2023-06-15 10:00:00</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gray-700 rounded-lg p-6">
+                      <h3 className="text-lg font-bold text-white mb-4">Recovery Actions</h3>
+                      <div className="space-y-4">
+                        <div className="p-4 bg-gray-600 rounded-lg">
+                          <h4 className="font-semibold text-white mb-2">Safe Mode</h4>
+                          <p className="text-gray-300 text-sm mb-3">Enable safe mode to prevent problematic extensions from running</p>
+                          <button className="text-sm bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded transition duration-200">
+                            Enable Safe Mode
+                          </button>
+                        </div>
+                        
+                        <div className="p-4 bg-gray-600 rounded-lg">
+                          <h4 className="font-semibold text-white mb-2">Extension Diagnostics</h4>
+                          <p className="text-gray-300 text-sm mb-3">Run diagnostics to identify extension issues</p>
+                          <button className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200">
+                            Run Diagnostics
+                          </button>
+                        </div>
+                        
+                        <div className="p-4 bg-gray-600 rounded-lg">
+                          <h4 className="font-semibold text-white mb-2">System Restore</h4>
+                          <p className="text-gray-300 text-sm mb-3">Restore system to a previous state before extension issues</p>
+                          <button className="text-sm bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded transition duration-200">
+                            Restore System
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Import/Export Tab */}
               {activeTab === 'import-export' && (
@@ -1837,7 +2040,10 @@ const MarketplaceDashboard: React.FC = () => {
                               <button className="text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded transition duration-200">
                                 Settings
                               </button>
-                              <button className="text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded transition duration-200">
+                              <button 
+                                onClick={() => openUninstallModal(extension.id, extension.name)}
+                                className="text-sm bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition duration-200"
+                              >
                                 Uninstall
                               </button>
                             </div>
@@ -2168,6 +2374,170 @@ const MarketplaceDashboard: React.FC = () => {
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
               >
                 Create Collection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Uninstall Confirmation Modal */}
+      {showUninstallModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold text-white mb-4">Uninstall Extension</h3>
+            <p className="text-gray-300 mb-6">
+              Are you sure you want to uninstall <span className="font-semibold">{uninstallExtensionName}</span>? 
+              This action cannot be undone.
+            </p>
+            
+            <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 mb-6">
+              <h4 className="font-semibold text-white mb-2">Important Notice</h4>
+              <p className="text-gray-300 text-sm">
+                This extension will be completely removed from your system. 
+                Any configuration or data associated with this extension will be lost.
+              </p>
+            </div>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={closeUninstallModal}
+                className="px-4 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmUninstall}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition duration-200"
+              >
+                Uninstall Extension
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recovery Modal */}
+      {showRecoveryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold text-white mb-4">Recovery Options for {recoveryStatus?.lastSuccessfulVersion ? 'Code Assistant' : 'Database Explorer'}</h3>
+            
+            {recoveryStatus && (
+              <div className="space-y-6">
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <h4 className="font-semibold text-white mb-2">Error Details</h4>
+                  <p className="text-gray-300 mb-2">{recoveryStatus.lastError}</p>
+                  <p className="text-gray-400 text-sm">Error occurred: {recoveryStatus.lastErrorTime}</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gray-700 rounded-lg p-4">
+                    <h4 className="font-semibold text-white mb-2">Rollback to Previous Version</h4>
+                    <p className="text-gray-300 text-sm mb-3">
+                      Revert to version {recoveryStatus.lastSuccessfulVersion} to restore functionality.
+                    </p>
+                    <button 
+                      onClick={() => {
+                        closeRecoveryModal();
+                        openRollbackModal('1', recoveryStatus.lastSuccessfulVersion);
+                      }}
+                      className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200"
+                    >
+                      Rollback to {recoveryStatus.lastSuccessfulVersion}
+                    </button>
+                  </div>
+                  
+                  <div className="bg-gray-700 rounded-lg p-4">
+                    <h4 className="font-semibold text-white mb-2">Safe Mode</h4>
+                    <p className="text-gray-300 text-sm mb-3">
+                      Enable safe mode to prevent this extension from running until issues are resolved.
+                    </p>
+                    <button className="text-sm bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded transition duration-200">
+                      Enable Safe Mode
+                    </button>
+                  </div>
+                  
+                  <div className="bg-gray-700 rounded-lg p-4">
+                    <h4 className="font-semibold text-white mb-2">Diagnostic Tools</h4>
+                    <p className="text-gray-300 text-sm mb-3">
+                      Run diagnostics to identify the root cause of the issue.
+                    </p>
+                    <button className="text-sm bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded transition duration-200">
+                      Run Diagnostics
+                    </button>
+                  </div>
+                  
+                  <div className="bg-gray-700 rounded-lg p-4">
+                    <h4 className="font-semibold text-white mb-2">Extension Settings</h4>
+                    <p className="text-gray-300 text-sm mb-3">
+                      Review and reset extension settings to default values.
+                    </p>
+                    <button className="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded transition duration-200">
+                      Reset Settings
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-700 rounded-lg p-4">
+                  <h4 className="font-semibold text-white mb-2">Recovery Status</h4>
+                  <div className="flex items-center mb-2">
+                    <span className="text-green-400 mr-2">✓</span>
+                    <span className="text-gray-300">Rollback functionality available</span>
+                  </div>
+                  <div className="flex items-center mb-2">
+                    <span className="text-green-400 mr-2">✓</span>
+                    <span className="text-gray-300">Safe mode available</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-yellow-400 mr-2">⚠</span>
+                    <span className="text-gray-300">Settings reset may not restore all data</span>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end">
+                  <button
+                    onClick={closeRecoveryModal}
+                    className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition duration-200"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Rollback Confirmation Modal */}
+      {showRollbackModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold text-white mb-4">Rollback Extension</h3>
+            <p className="text-gray-300 mb-6">
+              Are you sure you want to rollback <span className="font-semibold">{rollbackExtensionId}</span> to version {rollbackVersion}? 
+              This action will restore the extension to its previous state.
+            </p>
+            
+            <div className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-4 mb-6">
+              <h4 className="font-semibold text-white mb-2">Important Notice</h4>
+              <p className="text-gray-300 text-sm">
+                Rolling back to a previous version may not restore all user data or settings. 
+                Some configuration changes may be lost.
+              </p>
+            </div>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={closeRollbackModal}
+                className="px-4 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmRollback}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+              >
+                Rollback Extension
               </button>
             </div>
           </div>
