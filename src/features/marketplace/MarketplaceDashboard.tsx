@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const MarketplaceDashboard: React.FC = () => {
@@ -13,7 +13,17 @@ const MarketplaceDashboard: React.FC = () => {
   const [collectionName, setCollectionName] = useState('');
   const [editingCollectionId, setEditingCollectionId] = useState<string | null>(null);
   const [editingCollectionName, setEditingCollectionName] = useState('');
-  const navigate = useUseNavigate();
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importStatus, setImportStatus] = useState<'idle' | 'validating' | 'review' | 'importing' | 'success' | 'error'>('idle');
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importReview, setImportReview] = useState<any>(null);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportExtensionId, setExportExtensionId] = useState<string | null>(null);
+  const [exportStatus, setExportStatus] = useState<'idle' | 'preparing' | 'exporting' | 'success' | 'error'>('idle');
+  const [exportError, setExportError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -132,6 +142,99 @@ const MarketplaceDashboard: React.FC = () => {
           : col
       )
     );
+  };
+
+  // Handle file selection for import
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setImportFile(file);
+      validateImportFile(file);
+    }
+  };
+
+  // Validate import file
+  const validateImportFile = (file: File) => {
+    setImportStatus('validating');
+    setImportError(null);
+    
+    // Simulate validation process
+    setTimeout(() => {
+      // In a real implementation, this would check:
+      // - File extension (.zip, .forgeos, .plugin)
+      // - File integrity
+      // - Extension metadata structure
+      // - Compatibility with current ForgeOS version
+      
+      if (file.name.endsWith('.zip') || file.name.endsWith('.forgeos')) {
+        // Simulate successful validation
+        setImportStatus('review');
+        setImportReview({
+          name: 'Sample Extension',
+          version: '1.0.0',
+          author: 'ForgeOS Team',
+          description: 'A sample extension for demonstration purposes',
+          permissions: ['read-files', 'write-files'],
+          compatibility: 'Compatible',
+          dependencies: [
+            { name: 'ForgeOS Core', version: '2.0.0', isInstalled: true }
+          ]
+        });
+      } else {
+        setImportStatus('error');
+        setImportError('Unsupported file format. Please select a .zip or .forgeos file.');
+      }
+    }, 1000);
+  };
+
+  // Handle import confirmation
+  const handleImportConfirm = () => {
+    if (!importFile) return;
+    
+    setImportStatus('importing');
+    
+    // Simulate import process
+    setTimeout(() => {
+      setImportStatus('success');
+      // In a real implementation, this would actually install the extension
+    }, 2000);
+  };
+
+  // Reset import process
+  const resetImport = () => {
+    setImportStatus('idle');
+    setImportFile(null);
+    setImportReview(null);
+    setImportError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Handle export
+  const handleExport = (extensionId: string) => {
+    setExportExtensionId(extensionId);
+    setShowExportModal(true);
+    setExportStatus('preparing');
+    
+    // Simulate export preparation
+    setTimeout(() => {
+      setExportStatus('exporting');
+      
+      // Simulate export process
+      setTimeout(() => {
+        setExportStatus('success');
+        // In a real implementation, this would download the extension file
+      }, 1500);
+    }, 500);
+  };
+
+  // Reset export process
+  const resetExport = () => {
+    setShowExportModal(false);
+    setExportExtensionId(null);
+    setExportStatus('idle');
+    setExportError(null);
   };
 
   // Mock data for installed extensions
@@ -870,6 +973,18 @@ const MarketplaceDashboard: React.FC = () => {
                   </li>
                   <li>
                     <button
+                      onClick={() => handleTabChange('import-export')}
+                      className={`w-full text-left px-4 py-2 rounded-lg transition duration-200 ${
+                        activeTab === 'import-export' 
+                          ? 'bg-blue-600 text-white' 
+                          : 'hover:bg-gray-700 text-gray-300'
+                      }`}
+                    >
+                      Import/Export
+                    </button>
+                  </li>
+                  <li>
+                    <button
                       onClick={() => handleTabChange('details')}
                       className={`w-full text-left px-4 py-2 rounded-lg transition duration-200 ${
                         activeTab === 'details' 
@@ -894,8 +1009,314 @@ const MarketplaceDashboard: React.FC = () => {
                 {activeTab === 'updates' && 'Available Updates'}
                 {activeTab === 'favorites' && 'Favorite Extensions'}
                 {activeTab === 'collections' && 'My Collections'}
+                {activeTab === 'import-export' && 'Import/Export Extensions'}
                 {activeTab === 'details' && 'Extension Details'}
               </h2>
+
+              {/* Import/Export Tab */}
+              {activeTab === 'import-export' && (
+                <div className="space-y-6">
+                  <div className="p-4 bg-gray-700 rounded-lg">
+                    <h3 className="text-xl font-semibold mb-2">Local Extension Import/Export</h3>
+                    <p className="text-gray-300">Manage extensions using local files without external communication.</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Import Card */}
+                    <div className="bg-gray-700 rounded-lg p-6">
+                      <h3 className="text-lg font-bold text-white mb-4">Import Extension</h3>
+                      <p className="text-gray-300 mb-4">
+                        Import extensions from local files. All imports are processed locally and never uploaded to any server.
+                      </p>
+                      
+                      <div 
+                        className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition duration-200 mb-4"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p className="mt-2 text-gray-300">Click to select or drag & drop a .zip or .forgeos file</p>
+                        <p className="text-sm text-gray-500 mt-1">Local-only import - no external communication</p>
+                      </div>
+                      
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileSelect}
+                        accept=".zip,.forgeos"
+                        className="hidden"
+                      />
+                      
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+                      >
+                        Select Extension File
+                      </button>
+                    </div>
+                    
+                    {/* Export Card */}
+                    <div className="bg-gray-700 rounded-lg p-6">
+                      <h3 className="text-lg font-bold text-white mb-4">Export Extension</h3>
+                      <p className="text-gray-300 mb-4">
+                        Export installed extensions to local files for sharing or backup.
+                      </p>
+                      
+                      <div className="space-y-3">
+                        <div className="p-3 bg-gray-600 rounded-lg">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h4 className="font-semibold text-white">Code Assistant</h4>
+                              <p className="text-sm text-gray-300">v1.2.3</p>
+                            </div>
+                            <button
+                              onClick={() => handleExport('1')}
+                              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition duration-200"
+                            >
+                              Export
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className="p-3 bg-gray-600 rounded-lg">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h4 className="font-semibold text-white">Git Integration</h4>
+                              <p className="text-sm text-gray-300">v0.9.1</p>
+                            </div>
+                            <button
+                              onClick={() => handleExport('2')}
+                              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition duration-200"
+                            >
+                              Export
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className="p-3 bg-gray-600 rounded-lg">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h4 className="font-semibold text-white">Database Explorer</h4>
+                              <p className="text-sm text-gray-300">v2.1.0</p>
+                            </div>
+                            <button
+                              onClick={() => handleExport('3')}
+                              className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition duration-200"
+                            >
+                              Export
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Import Status */}
+                  {importStatus !== 'idle' && (
+                    <div className="bg-gray-700 rounded-lg p-6">
+                      <h3 className="text-lg font-bold text-white mb-4">
+                        {importStatus === 'validating' && 'Validating Extension'}
+                        {importStatus === 'review' && 'Import Review'}
+                        {importStatus === 'importing' && 'Installing Extension'}
+                        {importStatus === 'success' && 'Import Successful'}
+                        {importStatus === 'error' && 'Import Error'}
+                      </h3>
+                      
+                      {importStatus === 'validating' && (
+                        <div className="flex flex-col items-center justify-center py-8">
+                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+                          <p className="text-gray-300">Validating extension file...</p>
+                        </div>
+                      )}
+                      
+                      {importStatus === 'review' && importReview && (
+                        <div className="space-y-4">
+                          <div className="p-4 bg-gray-600 rounded-lg">
+                            <h4 className="font-semibold text-white mb-2">Extension Details</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <div>
+                                <p className="text-sm text-gray-300">Name</p>
+                                <p className="text-white">{importReview.name}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-gray-300">Version</p>
+                                <p className="text-white">{importReview.version}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-gray-300">Author</p>
+                                <p className="text-white">{importReview.author}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-gray-300">Compatibility</p>
+                                <p className="text-white">{importReview.compatibility}</p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="p-4 bg-gray-600 rounded-lg">
+                            <h4 className="font-semibold text-white mb-2">Permissions</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {importReview.permissions.map((perm: string, index: number) => (
+                                <span key={index} className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm">
+                                  {perm}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="p-4 bg-gray-600 rounded-lg">
+                            <h4 className="font-semibold text-white mb-2">Dependencies</h4>
+                            <div className="space-y-2">
+                              {importReview.dependencies.map((dep: any, index: number) => (
+                                <div key={index} className="flex justify-between items-center">
+                                  <span className="text-white">{dep.name} v{dep.version}</span>
+                                  <span className={`px-2 py-1 rounded text-xs ${
+                                    dep.isInstalled ? 'bg-green-600 text-white' : 'bg-yellow-600 text-white'
+                                  }`}>
+                                    {dep.isInstalled ? 'Installed' : 'Missing'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="p-4 bg-gray-600 rounded-lg">
+                            <h4 className="font-semibold text-white mb-2">Trust Notice</h4>
+                            <p className="text-gray-300">
+                              This extension was imported locally and has not been verified by ForgeOS. 
+                              Only install extensions from trusted sources.
+                            </p>
+                          </div>
+                          
+                          <div className="flex justify-end space-x-3">
+                            <button
+                              onClick={resetImport}
+                              className="px-4 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition duration-200"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={handleImportConfirm}
+                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+                            >
+                              Install Extension
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {importStatus === 'importing' && (
+                        <div className="flex flex-col items-center justify-center py-8">
+                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+                          <p className="text-gray-300">Installing extension...</p>
+                        </div>
+                      )}
+                      
+                      {importStatus === 'success' && (
+                        <div className="p-4 bg-green-900 text-green-100 rounded-lg">
+                          <div className="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Extension imported successfully!</span>
+                          </div>
+                          <p className="mt-2 text-sm">The extension has been installed locally and is ready to use.</p>
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              onClick={resetImport}
+                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+                            >
+                              Close
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {importStatus === 'error' && importError && (
+                        <div className="p-4 bg-red-900 text-red-100 rounded-lg">
+                          <div className="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <span>Import Error</span>
+                          </div>
+                          <p className="mt-2 text-sm">{importError}</p>
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              onClick={resetImport}
+                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+                            >
+                              Try Again
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Export Status */}
+                  {showExportModal && (
+                    <div className="bg-gray-700 rounded-lg p-6">
+                      <h3 className="text-lg font-bold text-white mb-4">Exporting Extension</h3>
+                      
+                      {exportStatus === 'preparing' && (
+                        <div className="flex flex-col items-center justify-center py-8">
+                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+                          <p className="text-gray-300">Preparing extension for export...</p>
+                        </div>
+                      )}
+                      
+                      {exportStatus === 'exporting' && (
+                        <div className="flex flex-col items-center justify-center py-8">
+                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+                          <p className="text-gray-300">Exporting extension to your device...</p>
+                        </div>
+                      )}
+                      
+                      {exportStatus === 'success' && (
+                        <div className="p-4 bg-green-900 text-green-100 rounded-lg">
+                          <div className="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Export Successful!</span>
+                          </div>
+                          <p className="mt-2 text-sm">The extension has been exported to your device.</p>
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              onClick={resetExport}
+                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+                            >
+                              Close
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {exportStatus === 'error' && exportError && (
+                        <div className="p-4 bg-red-900 text-red-100 rounded-lg">
+                          <div className="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <span>Export Error</span>
+                          </div>
+                          <p className="mt-2 text-sm">{exportError}</p>
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              onClick={resetExport}
+                              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+                            >
+                              Try Again
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Search and Filters Section */}
               {activeTab === 'discover' && (
@@ -1747,6 +2168,37 @@ const MarketplaceDashboard: React.FC = () => {
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
               >
                 Create Collection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold text-white mb-4">Import Extension</h3>
+            <div className="mb-4">
+              <p className="text-gray-300 mb-2">Select an extension file to import:</p>
+              <input
+                type="file"
+                accept=".zip,.forgeos"
+                className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="px-4 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition duration-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setShowImportModal(false)}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+              >
+                Import
               </button>
             </div>
           </div>
