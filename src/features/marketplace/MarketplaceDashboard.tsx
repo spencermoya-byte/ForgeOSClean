@@ -21,7 +21,16 @@ const MarketplaceDashboard: React.FC = () => {
       hasUpdate: true,
       compatibility: 'Compatible',
       capabilities: ['code-completion', 'refactoring', 'debugging'],
-      lastUpdated: '2023-05-15'
+      lastUpdated: '2023-05-15',
+      compatibilityDetails: {
+        forgeosVersion: '>=2.0.0',
+        nodeVersion: '>=14.0.0',
+        os: ['Windows', 'macOS', 'Linux']
+      },
+      dependencies: [
+        { name: 'ForgeOS Core', version: '2.1.0', isInstalled: true, isCompatible: true },
+        { name: 'AI Engine', version: '1.0.0', isInstalled: true, isCompatible: true }
+      ]
     },
     {
       id: '2',
@@ -33,7 +42,15 @@ const MarketplaceDashboard: React.FC = () => {
       hasUpdate: false,
       compatibility: 'Compatible',
       capabilities: ['git-operations', 'branch-management', 'merge-conflicts'],
-      lastUpdated: '2023-04-22'
+      lastUpdated: '2023-04-22',
+      compatibilityDetails: {
+        forgeosVersion: '>=2.0.0',
+        nodeVersion: '>=14.0.0',
+        os: ['Windows', 'macOS', 'Linux']
+      },
+      dependencies: [
+        { name: 'ForgeOS Core', version: '2.1.0', isInstalled: true, isCompatible: true }
+      ]
     },
     {
       id: '3',
@@ -43,9 +60,18 @@ const MarketplaceDashboard: React.FC = () => {
       author: 'ForgeOS Team',
       isActive: true,
       hasUpdate: true,
-      compatibility: 'Compatible',
+      compatibility: 'Incompatible',
       capabilities: ['sql-editor', 'schema-explorer', 'data-import'],
-      lastUpdated: '2023-06-01'
+      lastUpdated: '2023-06-01',
+      compatibilityDetails: {
+        forgeosVersion: '>=3.0.0',
+        nodeVersion: '>=16.0.0',
+        os: ['Windows', 'macOS', 'Linux']
+      },
+      dependencies: [
+        { name: 'ForgeOS Core', version: '2.1.0', isInstalled: true, isCompatible: true },
+        { name: 'Database Driver', version: '1.0.0', isInstalled: false, isCompatible: true }
+      ]
     }
   ];
 
@@ -83,16 +109,17 @@ const MarketplaceDashboard: React.FC = () => {
       { name: 'execute-commands', description: 'Execute system commands' },
     ],
     dependencies: [
-      { name: 'ForgeOS Core', version: '2.1.0' },
-      { name: 'AI Engine', version: '1.0.0' },
+      { name: 'ForgeOS Core', version: '2.1.0', isInstalled: true, isCompatible: true },
+      { name: 'AI Engine', version: '1.0.0', isInstalled: true, isCompatible: true },
+      { name: 'Database Driver', version: '1.0.0', isInstalled: false, isCompatible: true }
     ],
     isInstalled: true,
     isUpdateAvailable: true,
     isCompatible: true,
     compatibilityDetails: {
-      os: ['Windows', 'macOS', 'Linux'],
       forgeosVersion: '>=2.0.0',
-      nodeVersion: '>=14.0.0'
+      nodeVersion: '>=14.0.0',
+      os: ['Windows', 'macOS', 'Linux']
     }
   };
 
@@ -108,7 +135,13 @@ const MarketplaceDashboard: React.FC = () => {
       downloads: 12500,
       category: 'Development Tools',
       tags: ['ai', 'code', 'assistant'],
-      isInstalled: true
+      isInstalled: true,
+      compatibility: 'Compatible',
+      compatibilityDetails: {
+        forgeosVersion: '>=2.0.0',
+        nodeVersion: '>=14.0.0',
+        os: ['Windows', 'macOS', 'Linux']
+      }
     },
     {
       id: '2',
@@ -120,7 +153,13 @@ const MarketplaceDashboard: React.FC = () => {
       downloads: 8900,
       category: 'Development Tools',
       tags: ['git', 'version-control'],
-      isInstalled: false
+      isInstalled: false,
+      compatibility: 'Compatible',
+      compatibilityDetails: {
+        forgeosVersion: '>=2.0.0',
+        nodeVersion: '>=14.0.0',
+        os: ['Windows', 'macOS', 'Linux']
+      }
     },
     {
       id: '3',
@@ -132,7 +171,13 @@ const MarketplaceDashboard: React.FC = () => {
       downloads: 6700,
       category: 'Database Tools',
       tags: ['database', 'sql', 'explorer'],
-      isInstalled: true
+      isInstalled: true,
+      compatibility: 'Incompatible',
+      compatibilityDetails: {
+        forgeosVersion: '>=3.0.0',
+        nodeVersion: '>=16.0.0',
+        os: ['Windows', 'macOS', 'Linux']
+      }
     }
   ];
 
@@ -188,6 +233,22 @@ const MarketplaceDashboard: React.FC = () => {
         bgColor = 'bg-red-600';
         textColor = 'text-white';
         break;
+      case 'compatible':
+        bgColor = 'bg-green-600';
+        textColor = 'text-white';
+        break;
+      case 'incompatible':
+        bgColor = 'bg-red-600';
+        textColor = 'text-white';
+        break;
+      case 'unknown':
+        bgColor = 'bg-gray-600';
+        textColor = 'text-gray-300';
+        break;
+      case 'missing':
+        bgColor = 'bg-yellow-600';
+        textColor = 'text-white';
+        break;
       default:
         bgColor = 'bg-gray-600';
         textColor = 'text-gray-300';
@@ -228,6 +289,36 @@ const MarketplaceDashboard: React.FC = () => {
         <span className="mr-2">⚠️</span>
         <span>{message}</span>
       </div>
+    );
+  };
+
+  // Dependency badge component
+  const DependencyBadge = ({ status }: { status: string }) => {
+    let bgColor = 'bg-gray-600';
+    let textColor = 'text-gray-300';
+    
+    switch (status) {
+      case 'installed':
+        bgColor = 'bg-green-600';
+        textColor = 'text-white';
+        break;
+      case 'missing':
+        bgColor = 'bg-yellow-600';
+        textColor = 'text-white';
+        break;
+      case 'incompatible':
+        bgColor = 'bg-red-600';
+        textColor = 'text-white';
+        break;
+      default:
+        bgColor = 'bg-gray-600';
+        textColor = 'text-gray-300';
+    }
+    
+    return (
+      <span className={`${bgColor} ${textColor} px-2 py-1 rounded text-xs`}>
+        {status}
+      </span>
     );
   };
 
@@ -421,7 +512,7 @@ const MarketplaceDashboard: React.FC = () => {
                           </div>
                         </div>
                         
-                        <div className="flex flex-wrap gap-2 mb-4">
+                        <div className="flex flex-wrap gap-2 mb-3">
                           {extension.tags.map((tag, index) => (
                             <span key={index} className="px-2 py-1 bg-gray-600 text-gray-200 rounded text-xs">
                               {tag}
@@ -429,10 +520,23 @@ const MarketplaceDashboard: React.FC = () => {
                           ))}
                         </div>
                         
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between items-center mb-3">
+                          <div className="flex items-center">
+                            <StatusBadge status={extension.compatibility} label={extension.compatibility} />
+                          </div>
                           <span className="text-sm text-gray-400">
                             {extension.downloads.toLocaleString()} downloads
                           </span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <div className="flex flex-wrap gap-1">
+                            {extension.compatibilityDetails.os.map((os, index) => (
+                              <span key={index} className="px-2 py-1 bg-gray-600 text-gray-200 rounded text-xs">
+                                {os}
+                              </span>
+                            ))}
+                          </div>
                           <button className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200">
                             {extension.isInstalled ? 'Manage' : 'Install'}
                           </button>
@@ -490,9 +594,9 @@ const MarketplaceDashboard: React.FC = () => {
                             <span className="text-sm text-gray-400">
                               {extension.author}
                             </span>
-                            <span className="text-sm text-gray-400">
-                              {extension.compatibility}
-                            </span>
+                            <div className="flex items-center">
+                              <StatusBadge status={extension.compatibility} label={extension.compatibility} />
+                            </div>
                           </div>
                           
                           <div className="flex flex-wrap gap-2 mb-4">
@@ -501,6 +605,37 @@ const MarketplaceDashboard: React.FC = () => {
                                 {capability}
                               </span>
                             ))}
+                          </div>
+                          
+                          <div className="mb-4">
+                            <h4 className="text-sm font-semibold text-gray-300 mb-2">Compatibility</h4>
+                            <div className="flex flex-wrap gap-2">
+                              <span className="text-xs text-gray-400">ForgeOS:</span>
+                              <span className="text-xs text-white">{extension.compatibilityDetails.forgeosVersion}</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <span className="text-xs text-gray-400">Node.js:</span>
+                              <span className="text-xs text-white">{extension.compatibilityDetails.nodeVersion}</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {extension.compatibilityDetails.os.map((os, index) => (
+                                <span key={index} className="px-2 py-1 bg-gray-600 text-gray-200 rounded text-xs">
+                                  {os}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="mb-4">
+                            <h4 className="text-sm font-semibold text-gray-300 mb-2">Dependencies</h4>
+                            <div className="space-y-2">
+                              {extension.dependencies.map((dep, index) => (
+                                <div key={index} className="flex justify-between items-center">
+                                  <span className="text-sm text-white">{dep.name} v{dep.version}</span>
+                                  <DependencyBadge status={dep.isInstalled ? 'installed' : dep.isCompatible ? 'missing' : 'incompatible'} />
+                                </div>
+                              ))}
+                            </div>
                           </div>
                           
                           <div className="flex justify-between items-center">
@@ -625,12 +760,8 @@ const MarketplaceDashboard: React.FC = () => {
                         <div>
                           <h4 className="font-medium text-gray-300 mb-2">Compatibility</h4>
                           <div className="flex items-center">
-                            <span className={`px-2 py-1 rounded text-xs mr-2 ${
-                              extensionDetails.isCompatible ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-                            }`}>
-                              {extensionDetails.isCompatible ? 'Compatible' : 'Incompatible'}
-                            </span>
-                            <span className="text-gray-300">{extensionDetails.compatibility}</span>
+                            <StatusBadge status={extensionDetails.compatibility} label={extensionDetails.compatibility} />
+                            <span className="text-gray-300 ml-2">{extensionDetails.compatibility}</span>
                           </div>
                         </div>
                         <div>
@@ -723,6 +854,37 @@ const MarketplaceDashboard: React.FC = () => {
                             <li>Node.js version: {extensionDetails.compatibilityDetails.nodeVersion}</li>
                           </ul>
                         </div>
+                      </div>
+                    </div>
+                    
+                    {/* Dependencies */}
+                    <div className="p-6 border-b border-gray-600">
+                      <h3 className="text-xl font-semibold mb-4">Dependencies</h3>
+                      <div className="space-y-4">
+                        {extensionDetails.dependencies.map((dep, index) => (
+                          <div key={index} className="p-4 bg-gray-600 rounded-lg">
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-semibold text-white">{dep.name}</h4>
+                              <DependencyBadge status={dep.isInstalled ? 'installed' : dep.isCompatible ? 'missing' : 'incompatible'} />
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <p className="text-gray-300">Version: {dep.version}</p>
+                              <div className="flex space-x-2">
+                                {dep.isInstalled ? (
+                                  <span className="text-green-400 text-sm">Installed</span>
+                                ) : (
+                                  <span className="text-yellow-400 text-sm">Missing</span>
+                                )}
+                              </div>
+                            </div>
+                            {dep.isCompatible === false && (
+                              <div className="mt-2 p-2 bg-red-900 text-red-100 rounded text-sm">
+                                <p className="font-semibold">Incompatible</p>
+                                <p>This dependency is not compatible with your current environment.</p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     </div>
                     
