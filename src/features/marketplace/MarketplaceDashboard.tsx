@@ -368,7 +368,16 @@ const MarketplaceDashboard: React.FC = () => {
       resourceWarnings: [
         'Memory usage is high',
         'CPU usage is moderate'
-      ]
+      ],
+      preflightStatus: {
+        permissionsReady: true,
+        compatibilityReady: true,
+        dependenciesReady: true,
+        runtimeSupportReady: true,
+        sandboxSupport: 'supported',
+        sandboxEnabled: true,
+        warnings: []
+      }
     },
     {
       id: '2',
@@ -401,7 +410,16 @@ const MarketplaceDashboard: React.FC = () => {
       lastSuccessfulVersion: null,
       runtimeStatus: 'inactive', // Added runtime status
       processInfo: null,
-      resourceWarnings: []
+      resourceWarnings: [],
+      preflightStatus: {
+        permissionsReady: true,
+        compatibilityReady: true,
+        dependenciesReady: true,
+        runtimeSupportReady: true,
+        sandboxSupport: 'supported',
+        sandboxEnabled: false,
+        warnings: []
+      }
     },
     {
       id: '3',
@@ -449,7 +467,19 @@ const MarketplaceDashboard: React.FC = () => {
       resourceWarnings: [
         'Extension is incompatible with current ForgeOS version',
         'Missing required dependency: Database Driver v1.0.0'
-      ]
+      ],
+      preflightStatus: {
+        permissionsReady: false,
+        compatibilityReady: false,
+        dependenciesReady: false,
+        runtimeSupportReady: false,
+        sandboxSupport: 'unsupported',
+        sandboxEnabled: false,
+        warnings: [
+          'Extension is incompatible with current ForgeOS version',
+          'Missing required dependency: Database Driver v1.0.0'
+        ]
+      }
     }
   ];
 
@@ -523,7 +553,16 @@ const MarketplaceDashboard: React.FC = () => {
     resourceWarnings: [
       'Memory usage is high',
       'CPU usage is moderate'
-    ]
+    ],
+    preflightStatus: {
+      permissionsReady: true,
+      compatibilityReady: true,
+      dependenciesReady: true,
+      runtimeSupportReady: true,
+      sandboxSupport: 'supported',
+      sandboxEnabled: true,
+      warnings: []
+    }
   };
 
   // Mock data for extension in discover view
@@ -788,6 +827,18 @@ const MarketplaceDashboard: React.FC = () => {
         break;
       case 'error':
         bgColor = 'bg-red-600';
+        textColor = 'text-white';
+        break;
+      case 'supported':
+        bgColor = 'bg-green-600';
+        textColor = 'text-white';
+        break;
+      case 'unsupported':
+        bgColor = 'bg-red-600';
+        textColor = 'text-white';
+        break;
+      case 'partial':
+        bgColor = 'bg-yellow-600';
         textColor = 'text-white';
         break;
       default:
@@ -1353,6 +1404,229 @@ const MarketplaceDashboard: React.FC = () => {
     );
   };
 
+  // Preflight safety panel component
+  const PreflightSafetyPanel = ({ extension }: { extension: any }) => {
+    if (!extension.preflightStatus) {
+      return (
+        <div className="bg-gray-700 rounded-lg p-4 mb-4">
+          <h4 className="font-semibold text-white mb-2">Preflight Safety Review</h4>
+          <p className="text-gray-300 text-sm">Preflight safety information is not available for this extension.</p>
+        </div>
+      );
+    }
+
+    const { 
+      permissionsReady, 
+      compatibilityReady, 
+      dependenciesReady, 
+      runtimeSupportReady, 
+      sandboxSupport, 
+      sandboxEnabled,
+      warnings 
+    } = extension.preflightStatus;
+
+    return (
+      <div className="bg-gray-700 rounded-lg p-4 mb-4">
+        <h4 className="font-semibold text-white mb-2">Preflight Safety Review</h4>
+        
+        <div className="mb-3">
+          <h5 className="font-medium text-gray-300 mb-2">Checklist</h5>
+          <div className="space-y-2">
+            <div className="flex items-center">
+              <StatusBadge status={permissionsReady ? 'supported' : 'error'} label={permissionsReady ? 'Permissions Ready' : 'Permissions Issue'} />
+              <span className="ml-2 text-gray-300 text-sm">Permissions review</span>
+            </div>
+            <div className="flex items-center">
+              <StatusBadge status={compatibilityReady ? 'supported' : 'error'} label={compatibilityReady ? 'Compatibility Ready' : 'Compatibility Issue'} />
+              <span className="ml-2 text-gray-300 text-sm">Compatibility check</span>
+            </div>
+            <div className="flex items-center">
+              <StatusBadge status={dependenciesReady ? 'supported' : 'error'} label={dependenciesReady ? 'Dependencies Ready' : 'Dependencies Issue'} />
+              <span className="ml-2 text-gray-300 text-sm">Dependencies check</span>
+            </div>
+            <div className="flex items-center">
+              <StatusBadge status={runtimeSupportReady ? 'supported' : 'error'} label={runtimeSupportReady ? 'Runtime Ready' : 'Runtime Issue'} />
+              <span className="ml-2 text-gray-300 text-sm">Runtime support</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mb-3">
+          <h5 className="font-medium text-gray-300 mb-2">Sandbox Status</h5>
+          <div className="flex items-center">
+            <StatusBadge status={sandboxSupport} label={sandboxSupport === 'supported' ? 'Sandbox Supported' : sandboxSupport === 'unsupported' ? 'Sandbox Unsupported' : 'Sandbox Unknown'} />
+            <span className="ml-2 text-gray-300 text-sm">
+              {sandboxSupport === 'supported' && sandboxEnabled 
+                ? 'Sandbox enabled' 
+                : sandboxSupport === 'supported' 
+                  ? 'Sandbox available but not enabled' 
+                  : sandboxSupport === 'unsupported' 
+                    ? 'Sandbox not supported' 
+                    : 'Sandbox status unknown'}
+            </span>
+          </div>
+        </div>
+        
+        {warnings && warnings.length > 0 && (
+          <div className="mt-3">
+            <h5 className="font-medium text-gray-300 mb-2">Safety Warnings</h5>
+            <ul className="list-disc pl-5 text-sm text-yellow-300 space-y-1">
+              {warnings.map((warning: string, index: number) => (
+                <li key={index}>{warning}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Extension detail preflight panel
+  const ExtensionPreflightPanel = ({ extension }: { extension: any }) => {
+    if (!extension.preflightStatus) {
+      return (
+        <div className="bg-gray-700 rounded-lg p-4 mb-4">
+          <h4 className="font-semibold text-white mb-2">Preflight Safety Review</h4>
+          <p className="text-gray-300 text-sm">Preflight safety information is not available for this extension.</p>
+        </div>
+      );
+    }
+
+    const { 
+      permissionsReady, 
+      compatibilityReady, 
+      dependenciesReady, 
+      runtimeSupportReady, 
+      sandboxSupport, 
+      sandboxEnabled,
+      warnings 
+    } = extension.preflightStatus;
+
+    return (
+      <div className="bg-gray-700 rounded-lg p-4 mb-4">
+        <h4 className="font-semibold text-white mb-2">Preflight Safety Review</h4>
+        
+        <div className="mb-3">
+          <h5 className="font-medium text-gray-300 mb-2">Checklist</h5>
+          <div className="space-y-2">
+            <div className="flex items-center">
+              <StatusBadge status={permissionsReady ? 'supported' : 'error'} label={permissionsReady ? 'Permissions Ready' : 'Permissions Issue'} />
+              <span className="ml-2 text-gray-300 text-sm">Permissions review</span>
+            </div>
+            <div className="flex items-center">
+              <StatusBadge status={compatibilityReady ? 'supported' : 'error'} label={compatibilityReady ? 'Compatibility Ready' : 'Compatibility Issue'} />
+              <span className="ml-2 text-gray-300 text-sm">Compatibility check</span>
+            </div>
+            <div className="flex items-center">
+              <StatusBadge status={dependenciesReady ? 'supported' : 'error'} label={dependenciesReady ? 'Dependencies Ready' : 'Dependencies Issue'} />
+              <span className="ml-2 text-gray-300 text-sm">Dependencies check</span>
+            </div>
+            <div className="flex items-center">
+              <StatusBadge status={runtimeSupportReady ? 'supported' : 'error'} label={runtimeSupportReady ? 'Runtime Ready' : 'Runtime Issue'} />
+              <span className="ml-2 text-gray-300 text-sm">Runtime support</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mb-3">
+          <h5 className="font-medium text-gray-300 mb-2">Sandbox Status</h5>
+          <div className="flex items-center">
+            <StatusBadge status={sandboxSupport} label={sandboxSupport === 'supported' ? 'Sandbox Supported' : sandboxSupport === 'unsupported' ? 'Sandbox Unsupported' : 'Sandbox Unknown'} />
+            <span className="ml-2 text-gray-300 text-sm">
+              {sandboxSupport === 'supported' && sandboxEnabled 
+                ? 'Sandbox enabled' 
+                : sandboxSupport === 'supported' 
+                  ? 'Sandbox available but not enabled' 
+                  : sandboxSupport === 'unsupported' 
+                    ? 'Sandbox not supported' 
+                    : 'Sandbox status unknown'}
+            </span>
+          </div>
+        </div>
+        
+        {warnings && warnings.length > 0 && (
+          <div className="mt-3">
+            <h5 className="font-medium text-gray-300 mb-2">Safety Warnings</h5>
+            <ul className="list-disc pl-5 text-sm text-yellow-300 space-y-1">
+              {warnings.map((warning: string, index: number) => (
+                <li key={index}>{warning}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Import review panel
+  const ImportReviewPanel = ({ review }: { review: any }) => {
+    if (!review) return null;
+    
+    return (
+      <div className="bg-gray-700 rounded-lg p-4 mb-4">
+        <h4 className="font-semibold text-white mb-2">Import Safety Review</h4>
+        <div className="mb-3">
+          <h5 className="font-medium text-gray-300 mb-2">Extension Details</h5>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+            <div>
+              <span className="text-gray-400">Name:</span>
+              <span className="text-white ml-2">{review.name}</span>
+            </div>
+            <div>
+              <span className="text-gray-400">Version:</span>
+              <span className="text-white ml-2">{review.version}</span>
+            </div>
+            <div>
+              <span className="text-gray-400">Author:</span>
+              <span className="text-white ml-2">{review.author}</span>
+            </div>
+            <div>
+              <span className="text-gray-400">Compatibility:</span>
+              <span className="text-white ml-2">{review.compatibility}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="mb-3">
+          <h5 className="font-medium text-gray-300 mb-2">Required Permissions</h5>
+          <div className="space-y-1">
+            {review.permissions.map((permission: string, index: number) => (
+              <div key={index} className="flex items-center">
+                <span className="text-blue-400 mr-2">•</span>
+                <span className="text-white">{permission}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="mb-3">
+          <h5 className="font-medium text-gray-300 mb-2">Dependencies</h5>
+          <div className="space-y-1">
+            {review.dependencies.map((dep: any, index: number) => (
+              <div key={index} className="flex items-center">
+                <span className="text-blue-400 mr-2">•</span>
+                <span className="text-white">{dep.name} v{dep.version}</span>
+                {dep.isInstalled ? (
+                  <span className="ml-2 text-green-400 text-sm">Installed</span>
+                ) : (
+                  <span className="ml-2 text-yellow-400 text-sm">Missing</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-3">
+          <h5 className="font-medium text-yellow-300 mb-2">Important Notice</h5>
+          <p className="text-sm text-yellow-200">
+            This extension will be installed locally on your device. 
+            All extensions are sandboxed and never transmit data to external servers.
+          </p>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Onboarding Overlay */}
@@ -1827,56 +2101,7 @@ const MarketplaceDashboard: React.FC = () => {
                       
                       {importStatus === 'review' && importReview && (
                         <div className="space-y-4">
-                          <div className="p-4 bg-gray-600 rounded-lg">
-                            <h4 className="font-semibold text-white mb-2">Extension Details</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              <div>
-                                <p className="text-sm text-gray-300">Name</p>
-                                <p className="text-white">{importReview.name}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-gray-300">Version</p>
-                                <p className="text-white">{importReview.version}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-gray-300">Author</p>
-                                <p className="text-white">{importReview.author}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm text-gray-300">Compatibility</p>
-                                <p className="text-white">{importReview.compatibility}</p>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="p-4 bg-gray-600 rounded-lg">
-                            <h4 className="font-semibold text-white mb-2">Required Permissions</h4>
-                            <div className="space-y-2">
-                              {importReview.permissions.map((permission: string, index: number) => (
-                                <div key={index} className="flex items-center">
-                                  <span className="text-blue-400 mr-2">•</span>
-                                  <span className="text-white">{permission}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                          
-                          <div className="p-4 bg-gray-600 rounded-lg">
-                            <h4 className="font-semibold text-white mb-2">Dependencies</h4>
-                            <div className="space-y-2">
-                              {importReview.dependencies.map((dep: any, index: number) => (
-                                <div key={index} className="flex items-center">
-                                  <span className="text-blue-400 mr-2">•</span>
-                                  <span className="text-white">{dep.name} v{dep.version}</span>
-                                  {dep.isInstalled ? (
-                                    <span className="ml-2 text-green-400 text-sm">Installed</span>
-                                  ) : (
-                                    <span className="ml-2 text-yellow-400 text-sm">Missing</span>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
+                          <ImportReviewPanel review={importReview} />
                           
                           <div className="flex justify-end space-x-3">
                             <button
@@ -2221,6 +2446,8 @@ const MarketplaceDashboard: React.FC = () => {
                             </div>
                           </div>
                           
+                          <PreflightSafetyPanel extension={extension} />
+                          
                           <RuntimeStatusPanel extension={extension} />
                           
                           <div className="flex justify-between items-center">
@@ -2363,6 +2590,9 @@ const MarketplaceDashboard: React.FC = () => {
                         </div>
                       </div>
                     </div>
+                    
+                    {/* Preflight Safety Review */}
+                    <ExtensionPreflightPanel extension={extensionDetails} />
                     
                     {/* Runtime Information */}
                     <ExtensionRuntimePanel extension={extensionDetails} />
