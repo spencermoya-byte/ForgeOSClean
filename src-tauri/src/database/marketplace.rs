@@ -30,6 +30,7 @@ pub struct Extension {
     pub compatibility: ExtensionCompatibility, // New field for compatibility
     pub configuration_schema: Option<serde_json::Value>, // New field for configuration schema
     pub default_configuration: Option<serde_json::Value>, // New field for default configuration
+    pub is_compatible: bool, // New field to indicate compatibility
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -187,8 +188,8 @@ impl MarketplaceDatabase {
 
     pub async fn create_extension(&self, extension: Extension) -> Result<Extension, sqlx::Error> {
         let query = r#"
-            INSERT INTO extensions (id, name, version, description, author, author_id, category, tags, is_active, is_system, is_verified, rating, download_count, size, dependencies, capabilities, license, homepage, repository, created_at, updated_at, last_updated, metadata, permissions, compatibility, configuration_schema, default_configuration)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO extensions (id, name, version, description, author, author_id, category, tags, is_active, is_system, is_verified, rating, download_count, size, dependencies, capabilities, license, homepage, repository, created_at, updated_at, last_updated, metadata, permissions, compatibility, configuration_schema, default_configuration, is_compatible)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING *
         "#;
         
@@ -220,6 +221,7 @@ impl MarketplaceDatabase {
             .bind(&serde_json::to_string(&extension.compatibility).unwrap_or_default())
             .bind(&extension.configuration_schema.as_ref().map(|v| v.to_string()).unwrap_or_default())
             .bind(&extension.default_configuration.as_ref().map(|v| v.to_string()).unwrap_or_default())
+            .bind(&extension.is_compatible)
             .fetch_one(&self.pool)
             .await?;
             
@@ -251,6 +253,7 @@ impl MarketplaceDatabase {
             compatibility: serde_json::from_str(&row.get::<String, _>("compatibility")).unwrap_or_default(),
             configuration_schema: serde_json::from_str(&row.get::<String, _>("configuration_schema")).unwrap_or_default(),
             default_configuration: serde_json::from_str(&row.get::<String, _>("default_configuration")).unwrap_or_default(),
+            is_compatible: row.get("is_compatible"),
         })
     }
 
@@ -292,6 +295,7 @@ impl MarketplaceDatabase {
             compatibility: serde_json::from_str(&row.get::<String, _>("compatibility")).unwrap_or_default(),
             configuration_schema: serde_json::from_str(&row.get::<String, _>("configuration_schema")).unwrap_or_default(),
             default_configuration: serde_json::from_str(&row.get::<String, _>("default_configuration")).unwrap_or_default(),
+            is_compatible: row.get("is_compatible"),
         })
     }
 
@@ -336,6 +340,7 @@ impl MarketplaceDatabase {
                 compatibility: serde_json::from_str(&row.get::<String, _>("compatibility")).unwrap_or_default(),
                 configuration_schema: serde_json::from_str(&row.get::<String, _>("configuration_schema")).unwrap_or_default(),
                 default_configuration: serde_json::from_str(&row.get::<String, _>("default_configuration")).unwrap_or_default(),
+                is_compatible: row.get("is_compatible"),
             });
         }
         
@@ -345,7 +350,7 @@ impl MarketplaceDatabase {
     pub async fn update_extension(&self, id: &str, extension: Extension) -> Result<Extension, sqlx::Error> {
         let query = r#"
             UPDATE extensions 
-            SET name = ?, version = ?, description = ?, author = ?, author_id = ?, category = ?, tags = ?, is_active = ?, is_system = ?, is_verified = ?, rating = ?, download_count = ?, size = ?, dependencies = ?, capabilities = ?, license = ?, homepage = ?, repository = ?, updated_at = ?, last_updated = ?, metadata = ?, permissions = ?, compatibility = ?, configuration_schema = ?, default_configuration = ?
+            SET name = ?, version = ?, description = ?, author = ?, author_id = ?, category = ?, tags = ?, is_active = ?, is_system = ?, is_verified = ?, rating = ?, download_count = ?, size = ?, dependencies = ?, capabilities = ?, license = ?, homepage = ?, repository = ?, updated_at = ?, last_updated = ?, metadata = ?, permissions = ?, compatibility = ?, configuration_schema = ?, default_configuration = ?, is_compatible = ?
             WHERE id = ?
             RETURNING *
         "#;
@@ -376,6 +381,7 @@ impl MarketplaceDatabase {
             .bind(&serde_json::to_string(&extension.compatibility).unwrap_or_default())
             .bind(&extension.configuration_schema.as_ref().map(|v| v.to_string()).unwrap_or_default())
             .bind(&extension.default_configuration.as_ref().map(|v| v.to_string()).unwrap_or_default())
+            .bind(&extension.is_compatible)
             .bind(id)
             .fetch_one(&self.pool)
             .await?;
@@ -408,6 +414,7 @@ impl MarketplaceDatabase {
             compatibility: serde_json::from_str(&row.get::<String, _>("compatibility")).unwrap_or_default(),
             configuration_schema: serde_json::from_str(&row.get::<String, _>("configuration_schema")).unwrap_or_default(),
             default_configuration: serde_json::from_str(&row.get::<String, _>("default_configuration")).unwrap_or_default(),
+            is_compatible: row.get("is_compatible"),
         })
     }
 

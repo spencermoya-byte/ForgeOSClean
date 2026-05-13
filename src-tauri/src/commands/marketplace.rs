@@ -296,3 +296,36 @@ pub async fn save_extension_configuration(
         }),
     }
 }
+
+// New command for getting extension safety review data
+#[tauri::command]
+pub async fn get_extension_safety_review(
+    db: State<'_, sqlx::SqlitePool>,
+    extension_id: String,
+) -> Result<serde_json::Value, String> {
+    // In a real implementation, this would fetch the extension safety review data
+    match db.get_extension(&extension_id).await {
+        Ok(extension) => {
+            let safety_review = serde_json::json!({
+                "extension_id": extension.id,
+                "name": extension.name,
+                "version": extension.version,
+                "author": extension.author,
+                "permissions": extension.permissions,
+                "compatibility": extension.compatibility,
+                "is_compatible": extension.is_compatible,
+                "has_configuration": extension.configuration_schema.is_some(),
+                "has_permissions": !extension.permissions.is_empty(),
+                "is_verified": extension.is_verified,
+                "description": extension.description,
+                "size": extension.size,
+                "rating": extension.rating,
+                "download_count": extension.download_count,
+            });
+            Ok(safety_review)
+        }
+        Err(_) => Ok(serde_json::json!({
+            "error": "Extension not found"
+        })),
+    }
+}

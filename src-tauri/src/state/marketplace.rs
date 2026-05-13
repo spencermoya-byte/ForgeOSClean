@@ -42,6 +42,7 @@ pub struct Extension {
     pub compatibility: ExtensionCompatibility, // New field for compatibility
     pub configuration_schema: Option<serde_json::Value>, // New field for configuration schema
     pub default_configuration: Option<serde_json::Value>, // New field for default configuration
+    pub is_compatible: bool, // New field to indicate compatibility
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
