@@ -43,6 +43,7 @@ pub struct Extension {
     pub configuration_schema: Option<serde_json::Value>, // New field for configuration schema
     pub default_configuration: Option<serde_json::Value>, // New field for default configuration
     pub is_compatible: bool, // New field to indicate compatibility
+    pub dependency_info: Option<DependencyInfo>, // New field for detailed dependency info
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -73,6 +74,31 @@ pub struct ExtensionCompatibility {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CompatibilityStatus {
     Compatible,
+    Incompatible,
+    Unknown,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DependencyInfo {
+    pub required: Vec<Dependency>,
+    pub optional: Vec<Dependency>,
+    pub missing: Vec<String>,
+    pub incompatible: Vec<Dependency>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Dependency {
+    pub id: String,
+    pub name: String,
+    pub version: String,
+    pub is_optional: bool,
+    pub status: DependencyStatus,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DependencyStatus {
+    Available,
+    Missing,
     Incompatible,
     Unknown,
 }

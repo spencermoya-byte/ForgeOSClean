@@ -31,6 +31,7 @@ pub struct Extension {
     pub configuration_schema: Option<serde_json::Value>, // New field for configuration schema
     pub default_configuration: Option<serde_json::Value>, // New field for default configuration
     pub is_compatible: bool, // New field to indicate compatibility
+    pub dependency_info: Option<DependencyInfo>, // New field for detailed dependency info
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -61,6 +62,31 @@ pub struct ExtensionCompatibility {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CompatibilityStatus {
     Compatible,
+    Incompatible,
+    Unknown,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DependencyInfo {
+    pub required: Vec<Dependency>,
+    pub optional: Vec<Dependency>,
+    pub missing: Vec<String>,
+    pub incompatible: Vec<Dependency>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Dependency {
+    pub id: String,
+    pub name: String,
+    pub version: String,
+    pub is_optional: bool,
+    pub status: DependencyStatus,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DependencyStatus {
+    Available,
+    Missing,
     Incompatible,
     Unknown,
 }
@@ -188,8 +214,8 @@ impl MarketplaceDatabase {
 
     pub async fn create_extension(&self, extension: Extension) -> Result<Extension, sqlx::Error> {
         let query = r#"
-            INSERT INTO extensions (id, name, version, description, author, author_id, category, tags, is_active, is_system, is_verified, rating, download_count, size, dependencies, capabilities, license, homepage, repository, created_at, updated_at, last_updated, metadata, permissions, compatibility, configuration_schema, default_configuration, is_compatible)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO extensions (id, name, version, description, author, author_id, category, tags, is_active, is_system, is_verified, rating, download_count, size, dependencies, capabilities, license, homepage, repository, created_at, updated_at, last_updated, metadata, permissions, compatibility, configuration_schema, default_configuration, is_compatible, dependency_info)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING *
         "#;
         
@@ -222,6 +248,7 @@ impl MarketplaceDatabase {
             .bind(&extension.configuration_schema.as_ref().map(|v| v.to_string()).unwrap_or_default())
             .bind(&extension.default_configuration.as_ref().map(|v| v.to_string()).unwrap_or_default())
             .bind(&extension.is_compatible)
+            .bind(&serde_json::to_string(&extension.dependency_info).unwrap_or_default())
             .fetch_one(&self.pool)
             .await?;
             
@@ -254,6 +281,7 @@ impl MarketplaceDatabase {
             configuration_schema: serde_json::from_str(&row.get::<String, _>("configuration_schema")).unwrap_or_default(),
             default_configuration: serde_json::from_str(&row.get::<String, _>("default_configuration")).unwrap_or_default(),
             is_compatible: row.get("is_compatible"),
+            dependency_info: serde_json::from_str(&row.get::<String, _>("dependency_info")).unwrap_or_default(),
         })
     }
 
@@ -296,6 +324,7 @@ impl MarketplaceDatabase {
             configuration_schema: serde_json::from_str(&row.get::<String, _>("configuration_schema")).unwrap_or_default(),
             default_configuration: serde_json::from_str(&row.get::<String, _>("default_configuration")).unwrap_or_default(),
             is_compatible: row.get("is_compatible"),
+            dependency_info: serde_json::from_str(&row.get::<String, _>("dependency_info")).unwrap_or_default(),
         })
     }
 
@@ -341,6 +370,7 @@ impl MarketplaceDatabase {
                 configuration_schema: serde_json::from_str(&row.get::<String, _>("configuration_schema")).unwrap_or_default(),
                 default_configuration: serde_json::from_str(&row.get::<String, _>("default_configuration")).unwrap_or_default(),
                 is_compatible: row.get("is_compatible"),
+                dependency_info: serde_json::from_str(&row.get::<String, _>("dependency_info")).unwrap_or_default(),
             });
         }
         
@@ -350,7 +380,7 @@ impl MarketplaceDatabase {
     pub async fn update_extension(&self, id: &str, extension: Extension) -> Result<Extension, sqlx::Error> {
         let query = r#"
             UPDATE extensions 
-            SET name = ?, version = ?, description = ?, author = ?, author_id = ?, category = ?, tags = ?, is_active = ?, is_system = ?, is_verified = ?, rating = ?, download_count = ?, size = ?, dependencies = ?, capabilities = ?, license = ?, homepage = ?, repository = ?, updated_at = ?, last_updated = ?, metadata = ?, permissions = ?, compatibility = ?, configuration_schema = ?, default_configuration = ?, is_compatible = ?
+            SET name = ?, version = ?, description = ?, author = ?, author_id = ?, category = ?, tags = ?, is_active = ?, is_system = ?, is_verified = ?, rating = ?, download_count = ?, size = ?, dependencies = ?, capabilities = ?, license = ?, homepage = ?, repository = ?, updated_at = ?, last_updated = ?, metadata = ?, permissions = ?, compatibility = ?, configuration_schema = ?, default_configuration = ?, is_compatible = ?, dependency_info = ?
             WHERE id = ?
             RETURNING *
         "#;
@@ -382,6 +412,7 @@ impl MarketplaceDatabase {
             .bind(&extension.configuration_schema.as_ref().map(|v| v.to_string()).unwrap_or_default())
             .bind(&extension.default_configuration.as_ref().map(|v| v.to_string()).unwrap_or_default())
             .bind(&extension.is_compatible)
+            .bind(&serde_json::to_string(&extension.dependency_info).unwrap_or_default())
             .bind(id)
             .fetch_one(&self.pool)
             .await?;
@@ -415,6 +446,7 @@ impl MarketplaceDatabase {
             configuration_schema: serde_json::from_str(&row.get::<String, _>("configuration_schema")).unwrap_or_default(),
             default_configuration: serde_json::from_str(&row.get::<String, _>("default_configuration")).unwrap_or_default(),
             is_compatible: row.get("is_compatible"),
+            dependency_info: serde_json::from_str(&row.get::<String, _>("dependency_info")).unwrap_or_default(),
         })
     }
 

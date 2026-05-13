@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use tauri::State;
-use crate::state::marketplace::{MarketplaceState, Extension, Capability, EngineeringAsset, ExtensionPermission, PermissionType, ExtensionCompatibility, CompatibilityStatus};
+use crate::state::marketplace::{MarketplaceState, Extension, Capability, EngineeringAsset, ExtensionPermission, PermissionType, ExtensionCompatibility, CompatibilityStatus, DependencyInfo, Dependency, DependencyStatus};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ExtensionSearchRequest {
@@ -321,6 +321,7 @@ pub async fn get_extension_safety_review(
                 "size": extension.size,
                 "rating": extension.rating,
                 "download_count": extension.download_count,
+                "dependency_info": extension.dependency_info,
             });
             Ok(safety_review)
         }
