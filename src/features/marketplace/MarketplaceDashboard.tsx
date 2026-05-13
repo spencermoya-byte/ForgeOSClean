@@ -9,6 +9,66 @@ const MarketplaceDashboard: React.FC = () => {
     setActiveTab(tab);
   };
 
+  // Mock data for installed extensions
+  const installedExtensions = [
+    {
+      id: '1',
+      name: 'Code Assistant',
+      version: '1.2.3',
+      description: 'AI-powered code assistance and suggestions',
+      author: 'ForgeOS Team',
+      isActive: true,
+      hasUpdate: true,
+      compatibility: 'Compatible',
+      capabilities: ['code-completion', 'refactoring', 'debugging'],
+      lastUpdated: '2023-05-15'
+    },
+    {
+      id: '2',
+      name: 'Git Integration',
+      version: '0.9.1',
+      description: 'Enhanced Git operations and visualization',
+      author: 'ForgeOS Team',
+      isActive: false,
+      hasUpdate: false,
+      compatibility: 'Compatible',
+      capabilities: ['git-operations', 'branch-management', 'merge-conflicts'],
+      lastUpdated: '2023-04-22'
+    },
+    {
+      id: '3',
+      name: 'Database Explorer',
+      version: '2.1.0',
+      description: 'Visual database management and querying',
+      author: 'ForgeOS Team',
+      isActive: true,
+      hasUpdate: true,
+      compatibility: 'Compatible',
+      capabilities: ['sql-editor', 'schema-explorer', 'data-import'],
+      lastUpdated: '2023-06-01'
+    }
+  ];
+
+  // Mock data for extension details
+  const extensionDetails = {
+    id: '1',
+    name: 'Code Assistant',
+    version: '1.2.3',
+    description: 'AI-powered code assistance and suggestions',
+    author: 'ForgeOS Team',
+    isActive: true,
+    hasUpdate: true,
+    compatibility: 'Compatible',
+    capabilities: ['code-completion', 'refactoring', 'debugging'],
+    lastUpdated: '2023-05-15',
+    installedAt: '2023-03-10',
+    downloads: 12500,
+    rating: 4.8,
+    license: 'MIT',
+    repository: 'https://github.com/forgeos/code-assistant',
+    documentation: 'https://docs.forgeos.dev/code-assistant'
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="container mx-auto p-4">
@@ -128,19 +188,76 @@ const MarketplaceDashboard: React.FC = () => {
                     <p className="text-gray-300">Manage your installed extensions and their settings.</p>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {[1, 2].map((item) => (
-                      <div key={item} className="bg-gray-700 p-4 rounded-lg animate-pulse">
-                        <div className="h-4 bg-gray-600 rounded w-1/2 mb-3"></div>
-                        <div className="h-3 bg-gray-600 rounded w-full mb-2"></div>
-                        <div className="h-3 bg-gray-600 rounded w-3/4 mb-4"></div>
-                        <div className="flex justify-between">
-                          <div className="h-8 bg-gray-600 rounded w-1/3"></div>
-                          <div className="h-8 bg-gray-600 rounded w-1/4"></div>
+                  {installedExtensions.length === 0 ? (
+                    <div className="bg-gray-700 rounded-lg p-8 text-center">
+                      <h3 className="text-xl font-semibold mb-2">No Extensions Installed</h3>
+                      <p className="text-gray-300 mb-4">Install extensions from the Discover tab to get started.</p>
+                      <button 
+                        onClick={() => handleTabChange('discover')}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200"
+                      >
+                        Discover Extensions
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {installedExtensions.map((extension) => (
+                        <div key={extension.id} className="bg-gray-700 p-4 rounded-lg">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <h3 className="text-xl font-bold text-white">{extension.name}</h3>
+                              <p className="text-gray-300 text-sm">v{extension.version}</p>
+                            </div>
+                            <div className="flex space-x-2">
+                              {extension.hasUpdate && (
+                                <span className="px-2 py-1 bg-yellow-600 text-yellow-100 rounded text-xs">
+                                  Update Available
+                                </span>
+                              )}
+                              <span className={`px-2 py-1 rounded text-xs ${
+                                extension.isActive ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
+                              }`}>
+                                {extension.isActive ? 'Active' : 'Inactive'}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <p className="text-gray-300 mb-3">{extension.description}</p>
+                          
+                          <div className="flex justify-between items-center mb-3">
+                            <span className="text-sm text-gray-400">
+                              {extension.author}
+                            </span>
+                            <span className="text-sm text-gray-400">
+                              {extension.compatibility}
+                            </span>
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {extension.capabilities.map((capability, index) => (
+                              <span key={index} className="px-2 py-1 bg-gray-600 text-gray-200 rounded text-xs">
+                                {capability}
+                              </span>
+                            ))}
+                          </div>
+                          
+                          <div className="flex justify-between items-center">
+                            <div className="text-sm text-gray-400">
+                              Installed: {extension.lastUpdated}
+                            </div>
+                            <div className="flex space-x-2">
+                              <button className="text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded transition duration-200">
+                                Settings
+                              </button>
+                              <button className="text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded transition duration-200">
+                                Uninstall
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
