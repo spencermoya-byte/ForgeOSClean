@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use tauri::State;
-use crate::state::marketplace::{MarketplaceState, Extension, Capability, EngineeringAsset};
+use crate::state::marketplace::{MarketplaceState, Extension, Capability, EngineeringAsset, ExtensionPermission, PermissionType, ExtensionCompatibility, CompatibilityStatus};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ExtensionSearchRequest {
@@ -127,6 +127,19 @@ pub enum DownloadStatus {
     Downloaded,
     AlreadyExists,
     Failed,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub enum AssetType {
+    WorkflowTemplate,
+    AIModel,
+    CodeTemplate,
+    Configuration,
+    Dataset,
+    Plugin,
+    Tool,
+    Resource,
+    Other,
 }
 
 #[tauri::command]

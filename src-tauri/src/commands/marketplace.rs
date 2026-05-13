@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use tauri::State;
-use crate::state::marketplace::{MarketplaceState, Extension, Capability, EngineeringAsset};
+use crate::state::marketplace::{MarketplaceState, Extension, Capability, EngineeringAsset, ExtensionPermission, PermissionType, ExtensionCompatibility, CompatibilityStatus};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ExtensionSearchRequest {

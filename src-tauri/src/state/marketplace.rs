@@ -37,6 +37,40 @@ pub struct Extension {
     pub updated_at: String,
     pub last_updated: String,
     pub metadata: serde_json::Value,
+    pub permissions: Vec<ExtensionPermission>, // New field for permissions
+    pub compatibility: ExtensionCompatibility, // New field for compatibility
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExtensionPermission {
+    pub name: String,
+    pub description: String,
+    pub type_: PermissionType, // Using type_ to avoid conflict with Rust keyword
+    pub required: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum PermissionType {
+    Filesystem,
+    Network,
+    AIModel,
+    Workspace,
+    Other,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExtensionCompatibility {
+    pub os: Vec<String>,
+    pub architecture: Vec<String>,
+    pub forgeos_version: String,
+    pub status: CompatibilityStatus,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum CompatibilityStatus {
+    Compatible,
+    Incompatible,
+    Unknown,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -26,6 +26,40 @@ pub struct Extension {
     pub updated_at: String,
     pub last_updated: String,
     pub metadata: serde_json::Value,
+    pub permissions: Vec<ExtensionPermission>, // New field for permissions
+    pub compatibility: ExtensionCompatibility, // New field for compatibility
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExtensionPermission {
+    pub name: String,
+    pub description: String,
+    pub type_: PermissionType, // Using type_ to avoid conflict with Rust keyword
+    pub required: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum PermissionType {
+    Filesystem,
+    Network,
+    AIModel,
+    Workspace,
+    Other,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExtensionCompatibility {
+    pub os: Vec<String>,
+    pub architecture: Vec<String>,
+    pub forgeos_version: String,
+    pub status: CompatibilityStatus,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum CompatibilityStatus {
+    Compatible,
+    Incompatible,
+    Unknown,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -143,8 +177,8 @@ impl MarketplaceDatabase {
 
     pub async fn create_extension(&self, extension: Extension) -> Result<Extension, sqlx::Error> {
         let query = r#"
-            INSERT INTO extensions (id, name, version, description, author, author_id, category, tags, is_active, is_system, is_verified, rating, download_count, size, dependencies, capabilities, license, homepage, repository, created_at, updated_at, last_updated, metadata)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO extensions (id, name, version, description, author, author_id, category, tags, is_active, is_system, is_verified, rating, download_count, size, dependencies, capabilities, license, homepage, repository, created_at, updated_at, last_updated, metadata, permissions, compatibility)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             RETURNING *
         "#;
         
@@ -172,6 +206,8 @@ impl MarketplaceDatabase {
             .bind(&extension.updated_at)
             .bind(&extension.last_updated)
             .bind(&extension.metadata.to_string())
+            .bind(&serde_json::to_string(&extension.permissions).unwrap_or_default())
+            .bind(&serde_json::to_string(&extension.compatibility).unwrap_or_default())
             .fetch_one(&self.pool)
             .await?;
             
@@ -199,6 +235,8 @@ impl MarketplaceDatabase {
             updated_at: row.get("updated_at"),
             last_updated: row.get("last_updated"),
             metadata: serde_json::from_str(&row.get::<String, _>("metadata")).unwrap_or_default(),
+            permissions: serde_json::from_str(&row.get::<String, _>("permissions")).unwrap_or_default(),
+            compatibility: serde_json::from_str(&row.get::<String, _>("compatibility")).unwrap_or_default(),
         })
     }
 
@@ -236,6 +274,8 @@ impl MarketplaceDatabase {
             updated_at: row.get("updated_at"),
             last_updated: row.get("last_updated"),
             metadata: serde_json::from_str(&row.get::<String, _>("metadata")).unwrap_or_default(),
+            permissions: serde_json::from_str(&row.get::<String, _>("permissions")).unwrap_or_default(),
+            compatibility: serde_json::from_str(&row.get::<String, _>("compatibility")).unwrap_or_default(),
         })
     }
 
@@ -276,6 +316,8 @@ impl MarketplaceDatabase {
                 updated_at: row.get("updated_at"),
                 last_updated: row.get("last_updated"),
                 metadata: serde_json::from_str(&row.get::<String, _>("metadata")).unwrap_or_default(),
+                permissions: serde_json::from_str(&row.get::<String, _>("permissions")).unwrap_or_default(),
+                compatibility: serde_json::from_str(&row.get::<String, _>("compatibility")).unwrap_or_default(),
             });
         }
         
@@ -285,7 +327,7 @@ impl MarketplaceDatabase {
     pub async fn update_extension(&self, id: &str, extension: Extension) -> Result<Extension, sqlx::Error> {
         let query = r#"
             UPDATE extensions 
-            SET name = ?, version = ?, description = ?, author = ?, author_id = ?, category = ?, tags = ?, is_active = ?, is_system = ?, is_verified = ?, rating = ?, download_count = ?, size = ?, dependencies = ?, capabilities = ?, license = ?, homepage = ?, repository = ?, updated_at = ?, last_updated = ?, metadata = ?
+            SET name = ?, version = ?, description = ?, author = ?, author_id = ?, category = ?, tags = ?, is_active = ?, is_system = ?, is_verified = ?, rating = ?, download_count = ?, size = ?, dependencies = ?, capabilities = ?, license = ?, homepage = ?, repository = ?, updated_at = ?, last_updated = ?, metadata = ?, permissions = ?, compatibility = ?
             WHERE id = ?
             RETURNING *
         "#;
@@ -312,6 +354,8 @@ impl MarketplaceDatabase {
             .bind(&extension.updated_at)
             .bind(&extension.last_updated)
             .bind(&extension.metadata.to_string())
+            .bind(&serde_json::to_string(&extension.permissions).unwrap_or_default())
+            .bind(&serde_json::to_string(&extension.compatibility).unwrap_or_default())
             .bind(id)
             .fetch_one(&self.pool)
             .await?;
@@ -340,6 +384,8 @@ impl MarketplaceDatabase {
             updated_at: row.get("updated_at"),
             last_updated: row.get("last_updated"),
             metadata: serde_json::from_str(&row.get::<String, _>("metadata")).unwrap_or_default(),
+            permissions: serde_json::from_str(&row.get::<String, _>("permissions")).unwrap_or_default(),
+            compatibility: serde_json::from_str(&row.get::<String, _>("compatibility")).unwrap_or_default(),
         })
     }
 
