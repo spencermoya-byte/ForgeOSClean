@@ -41,6 +41,7 @@ const MarketplaceDashboard: React.FC = () => {
   const [isAddingToCollection, setIsAddingToCollection] = useState<string | null>(null);
   const [isRemovingFromCollection, setIsRemovingFromCollection] = useState<string | null>(null);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState<string | null>(null);
+  const [updateProgress, setUpdateProgress] = useState<Record<string, { progress: number; status: string }>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
@@ -625,29 +626,74 @@ const MarketplaceDashboard: React.FC = () => {
     }, 1500);
   }, [isInstalling, isUpdating, isUninstalling]);
 
-  // Update extension with proper state management
+  // Update extension with proper state management and progress tracking
   const updateExtension = useCallback((extensionId: string) => {
     if (isInstalling === extensionId || isUpdating === extensionId || isUninstalling === extensionId) return;
     
     setIsUpdating(extensionId);
     
-    // Simulate update
+    // Set initial progress state
+    setUpdateProgress(prev => ({
+      ...prev,
+      [extensionId]: { progress: 0, status: 'Preparing update' }
+    }));
+    
+    // Simulate update progress
+    const progressInterval = setInterval(() => {
+      setUpdateProgress(prev => {
+        const currentProgress = prev[extensionId]?.progress || 0;
+        if (currentProgress >= 100) {
+          clearInterval(progressInterval);
+          return prev;
+        }
+        return {
+          ...prev,
+          [extensionId]: { 
+            progress: Math.min(currentProgress + 10, 100), 
+            status: currentProgress < 30 ? 'Downloading' : 
+                   currentProgress < 60 ? 'Preparing' : 
+                   currentProgress < 90 ? 'Installing' : 'Finalizing'
+          }
+        };
+      });
+    }, 200);
+    
+    // Simulate update completion
     setTimeout(() => {
+      clearInterval(progressInterval);
+      
       // Update extension version
       setInstalledExtensions(prev => 
         prev.map(ext => 
-          ext.id === extensionId ? { ...ext, version: '1.3.0', updateStatus: 'up_to_date' } : ext
+          ext.id === extensionId ? { 
+            ...ext, 
+            version: '1.3.0', 
+            updateStatus: 'up_to_date',
+            lastUpdated: new Date().toISOString().split('T')[0]
+          } : ext
         )
       );
       
       setDiscoverExtensions(prev => 
         prev.map(ext => 
-          ext.id === extensionId ? { ...ext, version: '1.3.0', updateStatus: 'up_to_date' } : ext
+          ext.id === extensionId ? { 
+            ...ext, 
+            version: '1.3.0', 
+            updateStatus: 'up_to_date',
+            lastUpdated: new Date().toISOString().split('T')[0]
+          } : ext
         )
       );
       
+      // Remove progress tracking after completion
+      setUpdateProgress(prev => {
+        const newProgress = { ...prev };
+        delete newProgress[extensionId];
+        return newProgress;
+      });
+      
       setIsUpdating(null);
-    }, 1500);
+    }, 2000);
   }, [isInstalling, isUpdating, isUninstalling]);
 
   // Uninstall extension with proper state management
@@ -846,6 +892,7 @@ const MarketplaceDashboard: React.FC = () => {
     const isUpdating = isUpdating === extension.id;
     const isUninstalling = isUninstalling === extension.id;
     const isTogglingFavorite = isTogglingFavorite === extension.id;
+    const isUpdatingProgress = updateProgress[extension.id];
     
     return (
       <div className="bg-gray-700 p-4 rounded-lg hover:bg-gray-600 transition duration-200">
@@ -963,6 +1010,21 @@ const MarketplaceDashboard: React.FC = () => {
             )}
           </div>
         </div>
+        
+        {/* Update progress indicator */}
+        {isUpdatingProgress && (
+          <div className="mt-3">
+            <div className="w-full bg-gray-600 rounded-full h-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                style={{ width: `${isUpdatingProgress.progress}%` }}
+              ></div>
+            </div>
+            <div className="text-xs text-gray-400 mt-1">
+              {isUpdatingProgress.status} ({isUpdatingProgress.progress}%)
+            </div>
+          </div>
+        )}
       </div>
     );
   });
@@ -975,6 +1037,7 @@ const MarketplaceDashboard: React.FC = () => {
     const isEnabling = isEnabling === extension.id;
     const isDisabling = isDisabling === extension.id;
     const isTogglingFavorite = isTogglingFavorite === extension.id;
+    const isUpdatingProgress = updateProgress[extension.id];
     
     return (
       <div className="bg-gray-700 rounded-lg overflow-hidden">
@@ -1055,6 +1118,24 @@ const MarketplaceDashboard: React.FC = () => {
                           Installing...
                         </span>
                       ) : 'Install'}
+                    </button>
+                  )}
+                  {extension.isInstalled && (
+                    <button 
+                      onClick={() => updateExtension(extension.id)}
+                      disabled={isUpdating === extension.id || isInstalling === extension.id || isUninstalling === extension.id}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200 disabled:opacity-50"
+                      aria-label="Update extension"
+                    >
+                      {isUpdating === extension.id ? (
+                        <span className="flex items-center">
+                          <svg className="animate-spin -ml-1 mr-1 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Updating...
+                        </span>
+                      ) : 'Update'}
                     </button>
                   )}
                   <button className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition duration-200" aria-label="View extension details">
@@ -1180,6 +1261,22 @@ const MarketplaceDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+        
+        {/* Update Progress Section */}
+        {isUpdatingProgress && (
+          <div className="p-6 border-t border-gray-600">
+            <h3 className="text-xl font-semibold mb-4">Update Progress</h3>
+            <div className="w-full bg-gray-600 rounded-full h-4 mb-2">
+              <div 
+                className="bg-blue-600 h-4 rounded-full transition-all duration-300" 
+                style={{ width: `${isUpdatingProgress.progress}%` }}
+              ></div>
+            </div>
+            <p className="text-gray-300">
+              {isUpdatingProgress.status} ({isUpdatingProgress.progress}%)
+            </p>
+          </div>
+        )}
       </div>
     );
   });
@@ -1326,7 +1423,15 @@ const MarketplaceDashboard: React.FC = () => {
                           className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200 disabled:opacity-50"
                           aria-label="Update extension"
                         >
-                          {isUpdating === extension.id ? 'Updating...' : 'Update'}
+                          {isUpdating === extension.id ? (
+                            <span className="flex items-center">
+                              <svg className="animate-spin -ml-1 mr-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Updating...
+                            </span>
+                          ) : 'Update'}
                         </button>
                       </div>
                     </div>
