@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Package, Star, Download } from 'lucide-react';
+import { Search, Filter, Package, Star, Download, X } from 'lucide-react';
 import { getExtensions } from '@/api/marketplace';
 
 interface Extension {
@@ -53,6 +53,12 @@ const MarketplaceList: React.FC = () => {
   };
 
   const handleClearSearch = () => {
+    setSearchTerm('');
+    setExtensions([]);
+  };
+
+  const handleClearFilters = () => {
+    setCategoryFilter('all');
     setSearchTerm('');
     setExtensions([]);
   };
@@ -120,6 +126,14 @@ const MarketplaceList: React.FC = () => {
               }`}
             >
               Design
+            </button>
+            <button
+              onClick={handleClearFilters}
+              className="px-3 py-2 rounded-lg text-sm font-medium bg-gray-800 text-gray-300 hover:bg-gray-700 flex items-center gap-1"
+              aria-label="Clear filters"
+            >
+              <X className="h-4 w-4" />
+              Clear
             </button>
           </div>
         </div>
