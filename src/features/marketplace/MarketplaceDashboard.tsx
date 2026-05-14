@@ -6,7 +6,6 @@ const MarketplaceDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilters, setSelectedFilters] = useState<Record<string, any>>({});
   const [sortOption, setSortOption] = useState('name');
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [collections, setCollections] = useState<any[]>([]);
   const [showCollectionModal, setShowCollectionModal] = useState(false);
@@ -742,6 +741,11 @@ const MarketplaceDashboard: React.FC = () => {
       filtered = filtered.filter(ext => ext.compatibility === selectedFilters.compatibility);
     }
     
+    // Apply favorites filter
+    if (selectedFilters.favorites && selectedFilters.favorites === true) {
+      filtered = filtered.filter(ext => favorites.includes(ext.id));
+    }
+    
     // Apply sorting
     filtered.sort((a, b) => {
       switch (sortOption) {
@@ -761,7 +765,7 @@ const MarketplaceDashboard: React.FC = () => {
     });
     
     return filtered;
-  }, [discoverExtensions, searchQuery, selectedFilters, sortOption]);
+  }, [discoverExtensions, searchQuery, selectedFilters, sortOption, favorites]);
 
   // Handle filter changes
   const handleFilterChange = (filterType: string, value: any) => {
@@ -772,20 +776,21 @@ const MarketplaceDashboard: React.FC = () => {
   };
 
   // Clear all filters
-  const clearAllFilters = () => {
+  const clearAllFilters = useCallback(() => {
     setSelectedFilters({});
     setSearchQuery('');
-  };
+  }, []);
 
-  // Get active filters
-  const getActiveFilters = () => {
+  // Get active filters for display
+  const getActiveFilters = useCallback(() => {
     const activeFilters = [];
     if (searchQuery) activeFilters.push(`Search: ${searchQuery}`);
     if (selectedFilters.category) activeFilters.push(`Category: ${selectedFilters.category}`);
     if (selectedFilters.tags && selectedFilters.tags.length > 0) activeFilters.push(`Tags: ${selectedFilters.tags.join(', ')}`);
     if (selectedFilters.compatibility) activeFilters.push(`Compatibility: ${selectedFilters.compatibility}`);
+    if (selectedFilters.favorites) activeFilters.push('Favorites Only');
     return activeFilters;
-  };
+  }, [searchQuery, selectedFilters]);
 
   // Status badge component
   const StatusBadge = ({ status, className = '' }: { status: string; className?: string }) => {
@@ -1240,6 +1245,20 @@ const MarketplaceDashboard: React.FC = () => {
                   </button>
                 </div>
               </div>
+              
+              {/* Active Filters Display */}
+              {getActiveFilters().length > 0 && (
+                <div className="mt-4">
+                  <p className="text-gray-400 text-sm mb-2">Active Filters:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {getActiveFilters().map((filter, index) => (
+                      <span key={index} className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm">
+                        {filter}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Extension Cards */}
@@ -1251,7 +1270,17 @@ const MarketplaceDashboard: React.FC = () => {
 
             {filteredAndSortedExtensions().length === 0 && (
               <div className="text-center py-12">
-                <p className="text-gray-400">No extensions match your search criteria.</p>
+                <p className="text-gray-400">
+                  {searchQuery ? 'No extensions match your search criteria.' : 'No extensions found.'}
+                </p>
+                {searchQuery && (
+                  <button 
+                    onClick={clearAllFilters}
+                    className="mt-2 text-blue-400 hover:text-blue-300 transition duration-200"
+                  >
+                    Clear search and filters
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -1519,6 +1548,10 @@ const MarketplaceDashboard: React.FC = () => {
                       </div>
                     </div>
                   ))}
+                  
+                  {installedExtensions.filter(ext => ext.lastError).length === 0 && (
+                    <p className="text-gray-400">No problematic extensions found.</p>
+                  )}
                 </div>
               </div>
             </div>
