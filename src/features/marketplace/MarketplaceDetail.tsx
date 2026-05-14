@@ -67,10 +67,10 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
       setExtension({ ...extension, is_active: true });
     } catch (err) {
       setError('Failed to install extension');
-      setStatusMessage({type: 'error', message: 'Failed to install extension'});
+      setStatusMessage({type: 'error', message: 'Failed to install extension. Please try again.'});
     } finally {
       setInstalling(false);
-      setTimeout(() => setStatusMessage(null), 3000);
+      setTimeout(() => setStatusMessage(null), 5000);
     }
   };
 
@@ -86,10 +86,10 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
       setExtension({ ...extension, version: '2.0.0', is_active: true });
     } catch (err) {
       setError('Failed to update extension');
-      setStatusMessage({type: 'error', message: 'Failed to update extension'});
+      setStatusMessage({type: 'error', message: 'Failed to update extension. Please try again.'});
     } finally {
       setUpdating(false);
-      setTimeout(() => setStatusMessage(null), 3000);
+      setTimeout(() => setStatusMessage(null), 5000);
     }
   };
 
