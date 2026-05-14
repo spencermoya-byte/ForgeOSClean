@@ -219,7 +219,12 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
                   Install Anyway
                 </button>
                 <button
-                  onClick={() => setShowPermissions(false)}
+                  onClick={() => {
+                    setShowPermissions(false);
+                    // Reset the install/update state to prevent confusion
+                    if (installing) setInstalling(false);
+                    if (updating) setUpdating(false);
+                  }}
                   className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors"
                 >
                   Cancel
