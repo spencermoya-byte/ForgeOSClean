@@ -4,101 +4,140 @@ import { useNavigate } from 'react-router-dom';
 const MarketplaceDashboard: React.FC = () => {
   // ... existing code ...
 
-  // Filter and sort extensions with memoization and improved empty state handling
-  const filteredAndSortedExtensions = useCallback(() => {
-    let filtered = [...discoverExtensions];
+  // Install extension with proper state management and duplicate action prevention
+  const installExtension = useCallback((extensionId: string) => {
+    // Prevent duplicate install actions
+    if (isInstalling === extensionId || isUpdating === extensionId || isUninstalling === extensionId) return;
     
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(ext => 
-        ext.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ext.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ext.author.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+    // Show permission modal for new installations
+    const extension = discoverExtensions.find(ext => ext.id === extensionId);
+    if (extension) {
+      setPermissionExtensionId(extensionId);
+      setPermissionExtensionName(extension.name);
+      setPermissionExtensionPermissions(extension.permissions || []);
+      setPermissionExtensionSafety({
+        level: extension.safetyLevel,
+        warnings: extension.safetyWarnings || []
+      });
+      setShowPermissionModal(true);
     }
     
-    // Apply category filter
-    if (selectedFilters.category) {
-      filtered = filtered.filter(ext => ext.category === selectedFilters.category);
+    setIsInstalling(extensionId);
+  }, [isInstalling, isUpdating, isUninstalling, discoverExtensions]);
+
+  // Confirm installation after showing permissions with proper cleanup
+  const confirmInstallation = () => {
+    if (permissionExtensionId) {
+      // Simulate installation with better synchronization
+      setTimeout(() => {
+        // Update installed extensions
+        setInstalledExtensions(prev => 
+          prev.map(ext => 
+            ext.id === permissionExtensionId ? { ...ext, isInstalled: true, isActive: true } : ext
+          )
+        );
+        
+        // Update discover extensions
+        setDiscoverExtensions(prev => 
+          prev.map(ext => 
+            ext.id === permissionExtensionId ? { ...ext, isInstalled: true } : ext
+          )
+        );
+        
+        setShowPermissionModal(false);
+        setPermissionExtensionId(null);
+        setPermissionExtensionName(null);
+        setPermissionExtensionPermissions([]);
+        setPermissionExtensionSafety(null);
+        setIsInstalling(null);
+      }, 1500);
     }
+  };
+
+  // Cancel installation with proper cleanup
+  const cancelInstallation = () => {
+    setShowPermissionModal(false);
+    setPermissionExtensionId(null);
+    setPermissionExtensionName(null);
+    setPermissionExtensionPermissions([]);
+    setPermissionExtensionSafety(null);
+    setIsInstalling(null);
+  };
+
+  // ... rest of existing code ...
+  
+  // Extension card component with improved install button state handling
+  const ExtensionCard = React.memo(({ extension }: { extension: any }) => {
+    const isInstalling = isInstalling === extension.id;
+    const isUpdating = isUpdating === extension.id;
+    const isUninstalling = isUninstalling === extension.id;
+    const isTogglingFavorite = isTogglingFavorite === extension.id;
+    const isAddingToCollection = isAddingToCollection === `${extension.id}-collection`;
+    const isRemovingFromCollection = isRemovingFromCollection === `${extension.id}-collection`;
+    const isUpdatingProgress = updateProgress[extension.id];
+    const isRollingBack = isRollingBack === extension.id;
+    const isRecovering = isRecovering === extension.id;
     
-    // Apply tags filter
-    if (selectedFilters.tags && selectedFilters.tags.length > 0) {
-      filtered = filtered.filter(ext => 
-        selectedFilters.tags.every(tag => ext.tags.includes(tag))
-      );
-    }
-    
-    // Apply compatibility filter
-    if (selectedFilters.compatibility) {
-      filtered = filtered.filter(ext => ext.compatibility === selectedFilters.compatibility);
-    }
-    
-    // Apply favorites filter
-    if (selectedFilters.favorites && selectedFilters.favorites === true) {
-      filtered = filtered.filter(ext => favorites.includes(ext.id));
-    }
-    
-    // Apply sorting
-    filtered.sort((a, b) => {
-      switch (sortOption) {
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'newest':
-          return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
-        case 'rating':
-          return b.rating - a.rating;
-        case 'downloads':
-          return b.downloads - a.downloads;
-        case 'compatibility':
-          return a.compatibility.localeCompare(b.compatibility);
-        default:
-          return 0;
-      }
-    });
-    
-    return filtered;
-  }, [discoverExtensions, searchQuery, selectedFilters, sortOption, favorites]);
+    return (
+      <div className="bg-gray-700 p-4 rounded-lg hover:bg-gray-600 transition duration-200">
+        {/* ... existing code ... */}
+        
+        <div className="flex justify-between items-center">
+          <div className="flex flex-wrap gap-1">
+            {extension.compatibilityDetails.os.map((os: string, index: number) => (
+              <span key={index} className="px-2 py-1 bg-gray-600 text-gray-200 rounded text-xs">
+                {os}
+              </span>
+            ))}
+          </div>
+          <div className="flex space-x-2">
+            {extension.isInstalled ? (
+              <button 
+                onClick={() => toggleExtensionActive(extension.id)}
+                disabled={isEnabling === extension.id || isDisabling === extension.id}
+                className="text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded transition duration-200 disabled:opacity-50"
+                aria-label={extension.isActive ? "Disable extension" : "Enable extension"}
+              >
+                {isEnabling === extension.id || isDisabling === extension.id ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {extension.isActive ? 'Disabling...' : 'Enabling...'}
+                  </span>
+                ) : extension.isActive ? 'Disable' : 'Enable'}
+              </button>
+            ) : (
+              <button 
+                onClick={() => installExtension(extension.id)}
+                disabled={isInstalling === extension.id}
+                className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200 disabled:opacity-50"
+                aria-label="Install extension"
+              >
+                {isInstalling === extension.id ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Installing...
+                  </span>
+                ) : 'Install'}
+              </button>
+            )}
+          </div>
+        </div>
+        
+        {/* ... rest of existing code ... */}
+      </div>
+    );
+  });
 
   // ... rest of existing code ...
   
   return (
     // ... existing JSX ...
-    {discoverExtensions.length > 0 ? (
-      <div>
-        {filteredAndSortedExtensions().length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredAndSortedExtensions().map((extension) => (
-              <ExtensionCard key={extension.id} extension={extension} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <div className="text-gray-400 mb-4">No extensions match your search criteria</div>
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedFilters({});
-              }}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
-            >
-              Clear Search
-            </button>
-          </div>
-        )}
-      </div>
-    ) : (
-      <div className="text-center py-12">
-        <div className="text-gray-400 mb-4">No extensions found</div>
-        <button
-          onClick={() => setShowImportModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
-        >
-          Import Extension
-        </button>
-      </div>
-    )}
-    // ... rest of existing JSX ...
   );
 };
 
