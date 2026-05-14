@@ -138,7 +138,7 @@ const MarketplaceList: React.FC = () => {
       ) : extensions.length === 0 ? (
         <div className="text-center py-12">
           <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No extensions installed</h3>
+          <h3 className="text-lg font-medium text-white mb-2">No extensions available</h3>
           <p className="text-gray-400">Search for extensions to install</p>
         </div>
       ) : (
