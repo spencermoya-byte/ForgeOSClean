@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Package, Star, Download, X } from 'lucide-react';
+import { Search, Filter, Package, Star, Download, X, Clock } from 'lucide-react';
 import { getExtensions } from '@/api/marketplace';
 
 interface Extension {
@@ -12,6 +12,7 @@ interface Extension {
   rating: number;
   downloads: number;
   isInstalled: boolean;
+  isQueued?: boolean;
 }
 
 const MarketplaceList: React.FC = () => {
@@ -179,9 +180,17 @@ const MarketplaceList: React.FC = () => {
                   <Download className="h-3 w-3 inline mr-1" />
                   {extension.downloads.toLocaleString()}
                 </span>
-                <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded transition-colors">
-                  {extension.isInstalled ? 'Installed' : 'Install'}
-                </button>
+                <div className="flex items-center gap-2">
+                  {extension.isQueued && (
+                    <span className="flex items-center text-xs text-blue-400">
+                      <Clock className="h-3 w-3 mr-1" />
+                      Queued
+                    </span>
+                  )}
+                  <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded transition-colors">
+                    {extension.isInstalled ? 'Installed' : 'Install'}
+                  </button>
+                </div>
               </div>
             </div>
           ))}

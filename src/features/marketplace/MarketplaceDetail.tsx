@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Download, Package, Calendar, User, Globe, ChevronLeft, AlertTriangle } from 'lucide-react';
+import { Star, Download, Package, Calendar, User, Globe, ChevronLeft, AlertTriangle, Clock } from 'lucide-react';
 import { getExtension } from '@/api/marketplace';
 
 interface Extension {
@@ -25,6 +25,7 @@ interface Extension {
     architecture: string[];
     forgeos_version: string;
   };
+  is_queued?: boolean;
 }
 
 const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) => {
@@ -169,6 +170,18 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
           </div>
         </div>
       </div>
+
+      {extension.is_queued && (
+        <div className="mb-6 bg-blue-900 border border-blue-700 rounded-lg p-4 flex items-start">
+          <Clock className="h-5 w-5 text-blue-400 mr-2 mt-0.5 flex-shrink-0" />
+          <div>
+            <h3 className="text-blue-200 font-medium">Installation Queued</h3>
+            <p className="text-blue-300 text-sm mt-1">
+              This extension is queued for installation and will be installed shortly.
+            </p>
+          </div>
+        </div>
+      )}
 
       {!compatible && (
         <div className="mb-6 bg-yellow-900 border border-yellow-700 rounded-lg p-4 flex items-start">
