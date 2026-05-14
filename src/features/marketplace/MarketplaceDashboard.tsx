@@ -4,54 +4,101 @@ import { useNavigate } from 'react-router-dom';
 const MarketplaceDashboard: React.FC = () => {
   // ... existing code ...
 
-  // Toggle extension active state with optimistic UI and better synchronization
-  const toggleExtensionActive = useCallback((extensionId: string) => {
-    if (isEnabling === extensionId || isDisabling === extensionId) return;
+  // Filter and sort extensions with memoization and improved empty state handling
+  const filteredAndSortedExtensions = useCallback(() => {
+    let filtered = [...discoverExtensions];
     
-    const extension = installedExtensions.find(ext => ext.id === extensionId);
-    if (!extension) return;
-    
-    if (extension.isActive) {
-      setIsDisabling(extensionId);
-    } else {
-      setIsEnabling(extensionId);
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter(ext => 
+        ext.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ext.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ext.author.toLowerCase().includes(searchQuery.toLowerCase())
+      );
     }
     
-    // Optimistically update the UI
-    setInstalledExtensions(prev => 
-      prev.map(ext => 
-        ext.id === extensionId ? { 
-          ...ext, 
-          isActive: !ext.isActive,
-          runtimeStatus: !ext.isActive ? ext.runtimeStatus : 'inactive', // Ensure runtime status is updated
-          processInfo: !ext.isActive ? ext.processInfo : null // Clear process info when disabling
-        } : ext
-      )
-    );
+    // Apply category filter
+    if (selectedFilters.category) {
+      filtered = filtered.filter(ext => ext.category === selectedFilters.category);
+    }
     
-    // Update discover extensions as well
-    setDiscoverExtensions(prev => 
-      prev.map(ext => 
-        ext.id === extensionId ? { 
-          ...ext, 
-          isActive: !ext.isActive,
-          runtimeStatus: !ext.isActive ? ext.runtimeStatus : 'inactive',
-          processInfo: !ext.isActive ? ext.processInfo : null
-        } : ext
-      )
-    );
+    // Apply tags filter
+    if (selectedFilters.tags && selectedFilters.tags.length > 0) {
+      filtered = filtered.filter(ext => 
+        selectedFilters.tags.every(tag => ext.tags.includes(tag))
+      );
+    }
     
-    // Reset after a short delay
-    setTimeout(() => {
-      setIsEnabling(null);
-      setIsDisabling(null);
-    }, 300);
-  }, [isEnabling, isDisabling, installedExtensions]);
+    // Apply compatibility filter
+    if (selectedFilters.compatibility) {
+      filtered = filtered.filter(ext => ext.compatibility === selectedFilters.compatibility);
+    }
+    
+    // Apply favorites filter
+    if (selectedFilters.favorites && selectedFilters.favorites === true) {
+      filtered = filtered.filter(ext => favorites.includes(ext.id));
+    }
+    
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortOption) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'newest':
+          return new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime();
+        case 'rating':
+          return b.rating - a.rating;
+        case 'downloads':
+          return b.downloads - a.downloads;
+        case 'compatibility':
+          return a.compatibility.localeCompare(b.compatibility);
+        default:
+          return 0;
+      }
+    });
+    
+    return filtered;
+  }, [discoverExtensions, searchQuery, selectedFilters, sortOption, favorites]);
 
   // ... rest of existing code ...
   
   return (
     // ... existing JSX ...
+    {discoverExtensions.length > 0 ? (
+      <div>
+        {filteredAndSortedExtensions().length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredAndSortedExtensions().map((extension) => (
+              <ExtensionCard key={extension.id} extension={extension} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="text-gray-400 mb-4">No extensions match your search criteria</div>
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedFilters({});
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+            >
+              Clear Search
+            </button>
+          </div>
+        )}
+      </div>
+    ) : (
+      <div className="text-center py-12">
+        <div className="text-gray-400 mb-4">No extensions found</div>
+        <button
+          onClick={() => setShowImportModal(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+        >
+          Import Extension
+        </button>
+      </div>
+    )}
+    // ... rest of existing JSX ...
   );
 };
 
