@@ -580,64 +580,167 @@ const MarketplaceDashboard: React.FC = () => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setImportFile(e.target.files[0]);
+      setImportError(null);
     }
   };
 
-  // Handle import
+  // Handle import with improved error handling and validation
   const handleImport = () => {
-    if (importFile) {
-      setImportStatus('validating');
-      // Simulate validation
-      setTimeout(() => {
+    if (!importFile) {
+      setImportError('Please select a file to import');
+      return;
+    }
+
+    // Validate file type
+    const validTypes = ['application/zip', 'application/x-zip-compressed', '.forgeos'];
+    const isValidType = validTypes.some(type => 
+      importFile.type.includes(type) || importFile.name.endsWith(type.replace('.', ''))
+    );
+    
+    if (!isValidType) {
+      setImportError('Invalid file type. Please select a .zip or .forgeos file.');
+      return;
+    }
+
+    // Validate file size (max 50MB)
+    if (importFile.size > 50 * 1024 * 1024) {
+      setImportError('File too large. Maximum size is 50MB.');
+      return;
+    }
+
+    setImportStatus('validating');
+    setImportError(null);
+    
+    // Simulate validation
+    setTimeout(() => {
+      // Simulate validation success/failure
+      const isValid = Math.random() > 0.2; // 80% success rate for demo
+      
+      if (isValid) {
         setImportStatus('review');
         setImportReview({
           name: importFile.name,
           size: importFile.size,
           type: importFile.type
         });
-      }, 1000);
-    }
+      } else {
+        setImportStatus('error');
+        setImportError('Invalid extension package. Please check the package structure and metadata.');
+      }
+    }, 1000);
   };
 
-  // Confirm import
+  // Confirm import with proper state management
   const confirmImport = () => {
+    if (importStatus !== 'review') return;
+    
     setImportStatus('importing');
+    setImportError(null);
+    
     // Simulate import process
     setTimeout(() => {
-      setImportStatus('success');
-      // Reset after success
-      setTimeout(() => {
-        setImportStatus('idle');
-        setImportFile(null);
-        setImportReview(null);
-      }, 2000);
+      // Simulate success/failure
+      const isSuccess = Math.random() > 0.1; // 90% success rate for demo
+      
+      if (isSuccess) {
+        setImportStatus('success');
+        // Add to installed extensions
+        const newExtension = {
+          id: Date.now().toString(),
+          name: 'New Imported Extension',
+          version: '1.0.0',
+          description: 'Imported extension',
+          author: 'Imported',
+          isActive: true,
+          hasUpdate: false,
+          compatibility: 'Compatible',
+          capabilities: [],
+          lastUpdated: new Date().toISOString().split('T')[0],
+          compatibilityDetails: {
+            forgeosVersion: '>=2.0.0',
+            nodeVersion: '>=14.0.0',
+            os: ['Windows', 'macOS', 'Linux']
+          },
+          dependencies: [],
+          updateStatus: 'up_to_date',
+          updateAvailableVersion: '1.0.0',
+          category: 'Imported',
+          tags: ['imported'],
+          lastError: null,
+          lastErrorTime: null,
+          recoveryAvailable: false,
+          rollbackAvailable: false,
+          lastSuccessfulVersion: null,
+          runtimeStatus: 'running',
+          processInfo: {
+            activeProcesses: 1,
+            memoryUsage: '10 MB',
+            cpuUsage: '2%',
+            lastActivity: new Date().toISOString()
+          },
+          resourceWarnings: [],
+          preflightStatus: {
+            permissionsReady: true,
+            compatibilityReady: true,
+            dependenciesReady: true,
+            runtimeSupportReady: true,
+            sandboxSupport: 'supported',
+            sandboxEnabled: true,
+            warnings: []
+          }
+        };
+        
+        setInstalledExtensions(prev => [...prev, newExtension]);
+        setDiscoverExtensions(prev => [...prev, newExtension]);
+        
+        // Reset after success
+        setTimeout(() => {
+          setImportStatus('idle');
+          setImportFile(null);
+          setImportReview(null);
+        }, 2000);
+      } else {
+        setImportStatus('error');
+        setImportError('Failed to import extension. Please check the package integrity.');
+      }
     }, 2000);
   };
 
-  // Cancel import
+  // Cancel import with proper cleanup
   const cancelImport = () => {
     setImportStatus('idle');
     setImportFile(null);
     setImportReview(null);
+    setImportError(null);
   };
 
-  // Handle export
+  // Handle export with improved error handling
   const handleExport = (extensionId: string) => {
     if (exportExtensionId === extensionId && exportStatus !== 'idle') return;
     
     setExportExtensionId(extensionId);
     setExportStatus('preparing');
+    setExportError(null);
+    
     // Simulate export preparation
     setTimeout(() => {
       setExportStatus('exporting');
+      
       // Simulate export completion
       setTimeout(() => {
-        setExportStatus('success');
-        // Reset after success
-        setTimeout(() => {
-          setExportStatus('idle');
-          setExportExtensionId(null);
-        }, 2000);
+        const isSuccess = Math.random() > 0.1; // 90% success rate for demo
+        
+        if (isSuccess) {
+          setExportStatus('success');
+          // Reset after success
+          setTimeout(() => {
+            setExportStatus('idle');
+            setExportExtensionId(null);
+          }, 2000);
+        } else {
+          setExportStatus('error');
+          setExportError('Failed to export extension. Please try again.');
+        }
       }, 2000);
     }, 1000);
   };
@@ -1141,7 +1244,7 @@ const MarketplaceDashboard: React.FC = () => {
           <div className="mt-3">
             <div className="flex items-start">
               <svg className="h-4 w-4 text-red-400 mt-0.5 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
               <div className="text-xs text-red-300">
                 {extension.safetyWarnings.slice(0, 2).join(', ')}
@@ -1242,150 +1345,79 @@ const MarketplaceDashboard: React.FC = () => {
                           </svg>
                           Installing...
                         </span>
-                      ) : 'Install'}
+                      ) : 'Install Extension'}
                     </button>
                   )}
-                  {extension.isInstalled && (
-                    <button 
-                      onClick={() => updateExtension(extension.id)}
-                      disabled={isUpdating === extension.id || isInstalling === extension.id || isUninstalling === extension.id}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200 disabled:opacity-50"
-                      aria-label="Update extension"
-                    >
-                      {isUpdating === extension.id ? (
-                        <span className="flex items-center">
-                          <svg className="animate-spin -ml-1 mr-1 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Updating...
-                        </span>
-                      ) : 'Update'}
-                    </button>
-                  )}
-                  <button className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition duration-200" aria-label="View extension details">
-                    Details
+                  <button
+                    onClick={() => handleExport(extension.id)}
+                    disabled={exportExtensionId === extension.id && exportStatus === 'exporting'}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition duration-200 disabled:opacity-50"
+                    aria-label={`Export ${extension.name} extension`}
+                  >
+                    {exportExtensionId === extension.id && exportStatus === 'exporting' ? (
+                      <span className="flex items-center">
+                        <svg className="animate-spin -ml-1 mr-1 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Exporting...
+                      </span>
+                    ) : 'Export'}
                   </button>
                 </div>
               </div>
               
-              <p className="mt-4 text-gray-300">{extension.description}</p>
+              <p className="text-gray-300 mt-4">{extension.description}</p>
               
-              <div className="mt-4 flex flex-wrap gap-2">
-                <span className="px-3 py-1 bg-gray-600 text-gray-200 rounded-full text-sm">
-                  {extension.category}
-                </span>
-                {extension.tags.map((tag: string, index: number) => (
-                  <span key={index} className="px-3 py-1 bg-gray-600 text-gray-200 rounded-full text-sm">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              
-              <div className="mt-4 flex items-center">
-                <div className="flex items-center mr-4">
-                  <span className="text-yellow-400 mr-1">★</span>
-                  <span className="text-gray-300">{extension.rating}</span>
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-semibold text-white">Author</h4>
+                  <p className="text-gray-300">{extension.author}</p>
                 </div>
-                <span className="text-gray-400 mr-4">{extension.downloads.toLocaleString()} downloads</span>
-                <span className="text-gray-400">{extension.license}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-6 border-b border-gray-600">
-          <h3 className="text-xl font-semibold mb-4">Overview</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-medium text-gray-300 mb-2">Publisher</h4>
-              <div className="flex items-center">
-                <div className="bg-gray-600 rounded-full w-8 h-8 flex items-center justify-center mr-2">
-                  <span className="text-sm">F</span>
+                <div>
+                  <h4 className="font-semibold text-white">Version</h4>
+                  <p className="text-gray-300">{extension.version}</p>
                 </div>
-                <span className="text-white">{extension.author}</span>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-300 mb-2">Compatibility</h4>
-              <div className="flex items-center">
-                <StatusBadge status={extension.compatibility} />
-                <span className="text-gray-300 ml-2">{extension.compatibility}</span>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-300 mb-2">Installation Date</h4>
-              <p className="text-white">{extension.installedAt}</p>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-300 mb-2">Last Updated</h4>
-              <p className="text-white">{extension.lastUpdated}</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="p-6 border-b border-gray-600">
-          <h3 className="text-xl font-semibold mb-4">Capabilities & Permissions</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-medium text-gray-300 mb-2">Capabilities</h4>
-              <div className="flex flex-wrap gap-2">
-                {extension.capabilities.map((capability: string, index: number) => (
-                  <span key={index} className="px-3 py-1 bg-gray-600 text-gray-200 rounded-full text-sm">
-                    {capability}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-300 mb-2">Required Permissions</h4>
-              <div className="space-y-2">
-                {extension.permissions.map((permission: any, index: number) => (
-                  <div key={index} className="flex items-start">
-                    <svg className="h-4 w-4 text-blue-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                    <div>
-                      <span className="text-white">{permission.name}</span>
-                      <p className="text-gray-300 text-sm">{permission.description}</p>
-                    </div>
-                  </div>
-                ))}
+                <div>
+                  <h4 className="font-semibold text-white">Category</h4>
+                  <p className="text-gray-300">{extension.category}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-white">Downloads</h4>
+                  <p className="text-gray-300">{extension.downloads.toLocaleString()}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
         
         <div className="p-6">
-          <h3 className="text-xl font-semibold mb-4">Runtime Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-gray-800 rounded-lg">
-              <h4 className="font-medium text-gray-300 mb-2">Status</h4>
-              <div className="flex items-center">
-                <span className={`h-3 w-3 rounded-full mr-2 ${
-                  extension.runtimeStatus === 'running' ? 'bg-green-500' : 
-                  extension.runtimeStatus === 'inactive' ? 'bg-gray-500' : 'bg-red-500'
-                }`}></span>
-                <span className="text-white capitalize">{extension.runtimeStatus}</span>
+          <h3 className="text-xl font-semibold mb-4">Extension Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-medium text-white mb-2">Compatibility</h4>
+              <div className="p-3 bg-gray-800 rounded-lg">
+                <StatusBadge status={extension.compatibility} />
+                <p className="text-gray-300 mt-2">
+                  Compatible with ForgeOS {extension.compatibilityDetails.forgeosVersion} and Node.js {extension.compatibilityDetails.nodeVersion}
+                </p>
               </div>
             </div>
-            <div className="p-4 bg-gray-800 rounded-lg">
-              <h4 className="font-medium text-gray-300 mb-2">Processes</h4>
-              <p className="text-white">
-                {extension.processInfo?.activeProcesses || 0} active processes
-              </p>
-            </div>
-            <div className="p-4 bg-gray-800 rounded-lg">
-              <h4 className="font-medium text-gray-300 mb-2">Memory Usage</h4>
-              <p className="text-white">
-                {extension.processInfo?.memoryUsage || 'N/A'}
-              </p>
-            </div>
-            <div className="p-4 bg-gray-800 rounded-lg">
-              <h4 className="font-medium text-gray-300 mb-2">CPU Usage</h4>
-              <p className="text-white">
-                {extension.processInfo?.cpuUsage || 'N/A'}
-              </p>
+            
+            <div>
+              <h4 className="font-medium text-white mb-2">Runtime Status</h4>
+              <div className="p-3 bg-gray-800 rounded-lg">
+                <div className="flex items-center">
+                  <span className={`h-3 w-3 rounded-full mr-2 ${
+                    extension.runtimeStatus === 'running' ? 'bg-green-500' : 
+                    extension.runtimeStatus === 'inactive' ? 'bg-gray-500' : 'bg-red-500'
+                  }`}></span>
+                  <span className="text-white capitalize">{extension.runtimeStatus}</span>
+                </div>
+                <p className="text-gray-300 mt-2">
+                  {extension.processInfo?.activeProcesses || 0} active processes
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -1665,6 +1697,12 @@ const MarketplaceDashboard: React.FC = () => {
                   aria-label="Select extension file to import"
                 />
                 
+                {importError && (
+                  <div className="mb-4 p-3 bg-red-900/30 border border-red-700 rounded-lg">
+                    <p className="text-red-300 text-sm">{importError}</p>
+                  </div>
+                )}
+                
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
@@ -1672,6 +1710,54 @@ const MarketplaceDashboard: React.FC = () => {
                 >
                   Select Extension File
                 </button>
+                
+                {importStatus === 'validating' && (
+                  <div className="mt-4 p-3 bg-blue-900/30 border border-blue-700 rounded-lg">
+                    <p className="text-blue-300 text-sm">Validating package...</p>
+                  </div>
+                )}
+                
+                {importStatus === 'review' && importReview && (
+                  <div className="mt-4 p-3 bg-gray-700 rounded-lg">
+                    <h4 className="font-semibold text-white mb-2">Package Review</h4>
+                    <p className="text-gray-300 text-sm">File: {importReview.name}</p>
+                    <p className="text-gray-300 text-sm">Size: {(importReview.size / (1024 * 1024)).toFixed(2)} MB</p>
+                    <div className="mt-3 flex justify-end space-x-2">
+                      <button
+                        onClick={cancelImport}
+                        className="px-3 py-1 bg-gray-600 hover:bg-gray-500 text-white rounded text-sm transition duration-200"
+                        aria-label="Cancel import"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={confirmImport}
+                        className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-sm transition duration-200"
+                        aria-label="Confirm import"
+                      >
+                        Confirm Import
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                {importStatus === 'importing' && (
+                  <div className="mt-4 p-3 bg-blue-900/30 border border-blue-700 rounded-lg">
+                    <p className="text-blue-300 text-sm">Importing extension...</p>
+                  </div>
+                )}
+                
+                {importStatus === 'success' && (
+                  <div className="mt-4 p-3 bg-green-900/30 border border-green-700 rounded-lg">
+                    <p className="text-green-300 text-sm">Extension imported successfully!</p>
+                  </div>
+                )}
+                
+                {importStatus === 'error' && importError && (
+                  <div className="mt-4 p-3 bg-red-900/30 border border-red-700 rounded-lg">
+                    <p className="text-red-300 text-sm">{importError}</p>
+                  </div>
+                )}
               </div>
               
               {/* Export Card */}
@@ -1709,6 +1795,30 @@ const MarketplaceDashboard: React.FC = () => {
                     </div>
                   ))}
                 </div>
+                
+                {exportStatus === 'preparing' && (
+                  <div className="mt-4 p-3 bg-blue-900/30 border border-blue-700 rounded-lg">
+                    <p className="text-blue-300 text-sm">Preparing export...</p>
+                  </div>
+                )}
+                
+                {exportStatus === 'exporting' && exportExtensionId && (
+                  <div className="mt-4 p-3 bg-blue-900/30 border border-blue-700 rounded-lg">
+                    <p className="text-blue-300 text-sm">Exporting extension...</p>
+                  </div>
+                )}
+                
+                {exportStatus === 'success' && (
+                  <div className="mt-4 p-3 bg-green-900/30 border border-green-700 rounded-lg">
+                    <p className="text-green-300 text-sm">Extension exported successfully!</p>
+                  </div>
+                )}
+                
+                {exportStatus === 'error' && exportError && (
+                  <div className="mt-4 p-3 bg-red-900/30 border border-red-700 rounded-lg">
+                    <p className="text-red-300 text-sm">{exportError}</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
