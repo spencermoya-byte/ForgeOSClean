@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Download, Package, Calendar, User, Globe, ChevronLeft, AlertTriangle, Clock, Shield, WifiOff, RotateCcw } from 'lucide-react';
+import { Star, Download, Package, Calendar, User, Globe, ChevronLeft, AlertTriangle, Clock, Shield, WifiOff, RotateCcw, Upload } from 'lucide-react';
 import { getExtension } from '@/api/marketplace';
 
 interface Extension {
@@ -38,6 +38,7 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
   const [statusMessage, setStatusMessage] = useState<{type: string, message: string} | null>(null);
   const [showPermissions, setShowPermissions] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [importStatus, setImportStatus] = useState<'idle' | 'validating' | 'importing' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     // Check online status
@@ -173,6 +174,42 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImport = async () => {
+    // Simulate import process
+    setImportStatus('validating');
+    setStatusMessage({type: 'success', message: 'Validating extension package...'});
+    
+    try {
+      // Simulate validation
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setImportStatus('importing');
+      setStatusMessage({type: 'success', message: 'Importing extension...'});
+      
+      // Simulate import
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setImportStatus('success');
+      setStatusMessage({type: 'success', message: 'Extension imported successfully!'});
+      
+      // Reset status after success
+      setTimeout(() => {
+        setImportStatus('idle');
+        setStatusMessage(null);
+      }, 3000);
+      
+    } catch (err) {
+      setImportStatus('error');
+      setStatusMessage({type: 'error', message: 'Failed to import extension. Please try again.'});
+      
+      // Reset status after error
+      setTimeout(() => {
+        setImportStatus('idle');
+        setStatusMessage(null);
+      }, 5000);
     }
   };
 
@@ -328,6 +365,37 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
         </div>
       </div>
 
+      {importStatus !== 'idle' && (
+        <div className="mb-4 bg-blue-900 border border-blue-700 rounded-lg p-4">
+          <div className="flex items-center">
+            {importStatus === 'validating' && (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500 mr-2"></div>
+                <span className="text-blue-200">Validating extension package...</span>
+              </>
+            )}
+            {importStatus === 'importing' && (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500 mr-2"></div>
+                <span className="text-blue-200">Importing extension...</span>
+              </>
+            )}
+            {importStatus === 'success' && (
+              <>
+                <Upload className="h-4 w-4 text-green-400 mr-2" />
+                <span className="text-green-200">Extension imported successfully!</span>
+              </>
+            )}
+            {importStatus === 'error' && (
+              <>
+                <AlertTriangle className="h-4 w-4 text-red-400 mr-2" />
+                <span className="text-red-200">Failed to import extension</span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {extension.is_queued && (
         <div className="mb-6 bg-blue-900 border border-blue-700 rounded-lg p-4 flex items-start">
           <Clock className="h-5 w-5 text-blue-400 mr-2 mt-0.5 flex-shrink-0" />
@@ -426,6 +494,21 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
                 </a>
               )}
             </div>
+          </div>
+          
+          <div className="bg-gray-800 rounded-lg p-4 mt-4">
+            <h2 className="text-lg font-semibold text-white mb-3">Import Extension</h2>
+            <p className="text-gray-300 text-sm mb-3">
+              Import an extension package from your local system
+            </p>
+            <button
+              onClick={handleImport}
+              disabled={importStatus !== 'idle'}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 flex items-center"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Import Extension
+            </button>
           </div>
         </div>
       </div>
