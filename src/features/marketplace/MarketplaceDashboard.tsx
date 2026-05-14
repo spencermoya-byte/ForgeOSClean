@@ -37,6 +37,11 @@ const MarketplaceDashboard: React.FC = () => {
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
   const [isUninstalling, setIsUninstalling] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isEnabling, setIsEnabling] = useState<string | null>(null);
+  const [isDisabling, setIsDisabling] = useState<string | null>(null);
+  const [isAddingToCollection, setIsAddingToCollection] = useState<string | null>(null);
+  const [isRemovingFromCollection, setIsRemovingFromCollection] = useState<string | null>(null);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
@@ -78,7 +83,7 @@ const MarketplaceDashboard: React.FC = () => {
       recoveryAvailable: true,
       rollbackAvailable: true,
       lastSuccessfulVersion: '1.2.0',
-      runtimeStatus: 'running', // Added runtime status
+      runtimeStatus: 'running',
       processInfo: {
         activeProcesses: 2,
         memoryUsage: '45 MB',
@@ -128,7 +133,7 @@ const MarketplaceDashboard: React.FC = () => {
       recoveryAvailable: false,
       rollbackAvailable: false,
       lastSuccessfulVersion: null,
-      runtimeStatus: 'inactive', // Added runtime status
+      runtimeStatus: 'inactive',
       processInfo: null,
       resourceWarnings: [],
       preflightStatus: {
@@ -177,7 +182,7 @@ const MarketplaceDashboard: React.FC = () => {
       recoveryAvailable: true,
       rollbackAvailable: true,
       lastSuccessfulVersion: '1.5.0',
-      runtimeStatus: 'error', // Added runtime status
+      runtimeStatus: 'error',
       processInfo: {
         activeProcesses: 0,
         memoryUsage: '0 MB',
@@ -430,18 +435,24 @@ const MarketplaceDashboard: React.FC = () => {
     localStorage.setItem('marketplaceCollections', JSON.stringify(collections));
   }, [collections]);
 
-  // Handle refresh
+  // Handle refresh with proper state management
   const handleRefresh = useCallback(() => {
+    if (isRefreshing) return; // Prevent duplicate refreshes
+    
     setIsRefreshing(true);
     // Simulate refresh delay
     setTimeout(() => {
       setIsRefreshing(false);
       // In a real app, this would fetch fresh data from the backend
     }, 500);
-  }, []);
+  }, [isRefreshing]);
 
-  // Toggle favorite
-  const toggleFavorite = (extensionId: string) => {
+  // Toggle favorite with optimistic UI
+  const toggleFavorite = useCallback((extensionId: string) => {
+    if (isTogglingFavorite === extensionId) return; // Prevent duplicate actions
+    
+    setIsTogglingFavorite(extensionId);
+    
     setFavorites(prev => {
       if (prev.includes(extensionId)) {
         return prev.filter(id => id !== extensionId);
@@ -449,7 +460,10 @@ const MarketplaceDashboard: React.FC = () => {
         return [...prev, extensionId];
       }
     });
-  };
+    
+    // Reset after a short delay to allow UI to update
+    setTimeout(() => setIsTogglingFavorite(null), 300);
+  }, [isTogglingFavorite]);
 
   // Create collection
   const createCollection = () => {
@@ -486,8 +500,12 @@ const MarketplaceDashboard: React.FC = () => {
     setCollections(prev => prev.filter(col => col.id !== collectionId));
   };
 
-  // Add extension to collection
-  const addExtensionToCollection = (collectionId: string, extensionId: string) => {
+  // Add extension to collection with optimistic UI
+  const addExtensionToCollection = useCallback((collectionId: string, extensionId: string) => {
+    if (isAddingToCollection === `${collectionId}-${extensionId}`) return;
+    
+    setIsAddingToCollection(`${collectionId}-${extensionId}`);
+    
     setCollections(prev => 
       prev.map(col => 
         col.id === collectionId 
@@ -495,10 +513,16 @@ const MarketplaceDashboard: React.FC = () => {
           : col
       )
     );
-  };
+    
+    setTimeout(() => setIsAddingToCollection(null), 300);
+  }, [isAddingToCollection]);
 
-  // Remove extension from collection
-  const removeExtensionFromCollection = (collectionId: string, extensionId: string) => {
+  // Remove extension from collection with optimistic UI
+  const removeExtensionFromCollection = useCallback((collectionId: string, extensionId: string) => {
+    if (isRemovingFromCollection === `${collectionId}-${extensionId}`) return;
+    
+    setIsRemovingFromCollection(`${collectionId}-${extensionId}`);
+    
     setCollections(prev => 
       prev.map(col => 
         col.id === collectionId 
@@ -506,7 +530,9 @@ const MarketplaceDashboard: React.FC = () => {
           : col
       )
     );
-  };
+    
+    setTimeout(() => setIsRemovingFromCollection(null), 300);
+  }, [isRemovingFromCollection]);
 
   // Handle file selection for import
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -555,6 +581,8 @@ const MarketplaceDashboard: React.FC = () => {
 
   // Handle export
   const handleExport = (extensionId: string) => {
+    if (exportExtensionId === extensionId && exportStatus !== 'idle') return;
+    
     setExportExtensionId(extensionId);
     setExportStatus('preparing');
     // Simulate export preparation
@@ -572,9 +600,12 @@ const MarketplaceDashboard: React.FC = () => {
     }, 1000);
   };
 
-  // Install extension
-  const installExtension = (extensionId: string) => {
+  // Install extension with proper state management
+  const installExtension = useCallback((extensionId: string) => {
+    if (isInstalling === extensionId || isUpdating === extensionId || isUninstalling === extensionId) return;
+    
     setIsInstalling(extensionId);
+    
     // Simulate installation
     setTimeout(() => {
       // Update installed extensions
@@ -593,11 +624,14 @@ const MarketplaceDashboard: React.FC = () => {
       
       setIsInstalling(null);
     }, 1500);
-  };
+  }, [isInstalling, isUpdating, isUninstalling]);
 
-  // Update extension
-  const updateExtension = (extensionId: string) => {
+  // Update extension with proper state management
+  const updateExtension = useCallback((extensionId: string) => {
+    if (isInstalling === extensionId || isUpdating === extensionId || isUninstalling === extensionId) return;
+    
     setIsUpdating(extensionId);
+    
     // Simulate update
     setTimeout(() => {
       // Update extension version
@@ -615,11 +649,14 @@ const MarketplaceDashboard: React.FC = () => {
       
       setIsUpdating(null);
     }, 1500);
-  };
+  }, [isInstalling, isUpdating, isUninstalling]);
 
-  // Uninstall extension
-  const uninstallExtension = (extensionId: string) => {
+  // Uninstall extension with proper state management
+  const uninstallExtension = useCallback((extensionId: string) => {
+    if (isInstalling === extensionId || isUpdating === extensionId || isUninstalling === extensionId) return;
+    
     setIsUninstalling(extensionId);
+    
     // Simulate uninstallation
     setTimeout(() => {
       // Update installed extensions
@@ -639,18 +676,43 @@ const MarketplaceDashboard: React.FC = () => {
       setIsUninstalling(null);
       setShowUninstallModal(false);
     }, 1500);
-  };
+  }, [isInstalling, isUpdating, isUninstalling]);
 
-  // Toggle extension active state
-  const toggleExtensionActive = (extensionId: string) => {
+  // Toggle extension active state with optimistic UI
+  const toggleExtensionActive = useCallback((extensionId: string) => {
+    if (isEnabling === extensionId || isDisabling === extensionId) return;
+    
+    const extension = installedExtensions.find(ext => ext.id === extensionId);
+    if (!extension) return;
+    
+    if (extension.isActive) {
+      setIsDisabling(extensionId);
+    } else {
+      setIsEnabling(extensionId);
+    }
+    
+    // Optimistically update the UI
     setInstalledExtensions(prev => 
       prev.map(ext => 
         ext.id === extensionId ? { ...ext, isActive: !ext.isActive } : ext
       )
     );
-  };
+    
+    // Update discover extensions as well
+    setDiscoverExtensions(prev => 
+      prev.map(ext => 
+        ext.id === extensionId ? { ...ext, isActive: !ext.isActive } : ext
+      )
+    );
+    
+    // Reset after a short delay
+    setTimeout(() => {
+      setIsEnabling(null);
+      setIsDisabling(null);
+    }, 300);
+  }, [isEnabling, isDisabling, installedExtensions]);
 
-  // Filter and sort extensions
+  // Filter and sort extensions with memoization
   const filteredAndSortedExtensions = useCallback(() => {
     let filtered = [...discoverExtensions];
     
@@ -773,535 +835,470 @@ const MarketplaceDashboard: React.FC = () => {
     </div>
   );
 
-  // Extension card component
-  const ExtensionCard = ({ extension }: { extension: any }) => (
-    <div className="bg-gray-700 p-4 rounded-lg hover:bg-gray-600 transition duration-200">
-      <div className="flex justify-between items-start mb-3">
-        <div>
-          <h3 className="text-xl font-bold text-white">{extension.name}</h3>
-          <p className="text-gray-300 text-sm">v{extension.version}</p>
-        </div>
-        <div className="flex space-x-2">
-          <button 
-            onClick={() => toggleFavorite(extension.id)}
-            className="text-gray-400 hover:text-yellow-400 transition duration-200"
-            aria-label={favorites.includes(extension.id) ? "Remove from favorites" : "Add to favorites"}
-          >
-            {favorites.includes(extension.id) ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            )}
-          </button>
-          {extension.isInstalled && (
-            <span className="px-2 py-1 bg-green-600 text-white rounded text-xs">
-              Installed
-            </span>
-          )}
-        </div>
-      </div>
-      
-      <p className="text-gray-300 mb-3">{extension.description}</p>
-      
-      <div className="flex justify-between items-center mb-3">
-        <span className="text-sm text-gray-400">
-          {extension.author}
-        </span>
-        <div className="flex items-center">
-          <span className="text-yellow-400 mr-1">★</span>
-          <span className="text-sm text-gray-400">{extension.rating}</span>
-        </div>
-      </div>
-      
-      <div className="flex flex-wrap gap-2 mb-3">
-        {extension.tags.map((tag: string, index: number) => (
-          <span key={index} className="px-2 py-1 bg-gray-600 text-gray-200 rounded text-xs">
-            {tag}
-          </span>
-        ))}
-      </div>
-      
-      <div className="flex justify-between items-center mb-3">
-        <div className="flex items-center">
-          <StatusBadge status={extension.compatibility} />
-          {extension.updateStatus === 'available' && (
-            <span className="ml-2 px-2 py-1 bg-blue-600 text-white rounded text-xs">
-              Update Available
-            </span>
-          )}
-        </div>
-        <span className="text-sm text-gray-400">
-          {extension.downloads.toLocaleString()} downloads
-        </span>
-      </div>
-      
-      <div className="flex justify-between items-center">
-        <div className="flex flex-wrap gap-1">
-          {extension.compatibilityDetails.os.map((os: string, index: number) => (
-            <span key={index} className="px-2 py-1 bg-gray-600 text-gray-200 rounded text-xs">
-              {os}
-            </span>
-          ))}
-        </div>
-        <div className="flex space-x-2">
-          {extension.isInstalled ? (
+  // Extension card component with improved performance
+  const ExtensionCard = React.memo(({ extension }: { extension: any }) => {
+    const isInstalling = isInstalling === extension.id;
+    const isUpdating = isUpdating === extension.id;
+    const isUninstalling = isUninstalling === extension.id;
+    const isTogglingFavorite = isTogglingFavorite === extension.id;
+    
+    return (
+      <div className="bg-gray-700 p-4 rounded-lg hover:bg-gray-600 transition duration-200">
+        <div className="flex justify-between items-start mb-3">
+          <div>
+            <h3 className="text-xl font-bold text-white">{extension.name}</h3>
+            <p className="text-gray-300 text-sm">v{extension.version}</p>
+          </div>
+          <div className="flex space-x-2">
             <button 
-              onClick={() => toggleExtensionActive(extension.id)}
-              className="text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded transition duration-200"
-              aria-label={extension.isActive ? "Disable extension" : "Enable extension"}
+              onClick={() => toggleFavorite(extension.id)}
+              disabled={isTogglingFavorite}
+              className="text-gray-400 hover:text-yellow-400 transition duration-200"
+              aria-label={favorites.includes(extension.id) ? "Remove from favorites" : "Add to favorites"}
             >
-              {extension.isActive ? 'Disable' : 'Enable'}
-            </button>
-          ) : (
-            <button 
-              onClick={() => installExtension(extension.id)}
-              disabled={isInstalling === extension.id}
-              className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200 disabled:opacity-50"
-              aria-label="Install extension"
-            >
-              {isInstalling === extension.id ? 'Installing...' : 'Install'}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  // Extension detail component
-  const ExtensionDetail = ({ extension }: { extension: any }) => (
-    <div className="bg-gray-700 rounded-lg overflow-hidden">
-      <div className="p-6 border-b border-gray-600">
-        <div className="flex flex-col md:flex-row gap-6">
-          <div className="flex-shrink-0">
-            <div className="bg-gray-600 rounded-lg w-24 h-24 flex items-center justify-center">
-              <span className="text-2xl">📦</span>
-            </div>
-          </div>
-          <div className="flex-1">
-            <div className="flex flex-wrap justify-between items-start gap-4">
-              <div>
-                <h2 className="text-2xl font-bold">{extension.name}</h2>
-                <div className="flex items-center mt-1">
-                  <span className="text-gray-300 mr-2">v{extension.version}</span>
-                  <button 
-                    onClick={() => toggleFavorite(extension.id)}
-                    className="text-gray-400 hover:text-yellow-400 transition duration-200"
-                    aria-label={favorites.includes(extension.id) ? "Remove from favorites" : "Add to favorites"}
-                  >
-                    {favorites.includes(extension.id) ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    )}
-                  </button>
-                  <span className={`px-2 py-1 rounded text-xs ${extension.isInstalled ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'}`}>
-                    {extension.isInstalled ? 'Installed' : 'Not Installed'}
-                  </span>
-                  {extension.isUpdateAvailable && (
-                    <span className="px-2 py-1 bg-yellow-600 text-yellow-100 rounded text-xs ml-2">
-                      Update Available
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="flex space-x-2">
-                {extension.isInstalled ? (
-                  <button 
-                    onClick={() => toggleExtensionActive(extension.id)}
-                    className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition duration-200"
-                    aria-label={extension.isActive ? "Disable extension" : "Enable extension"}
-                  >
-                    {extension.isActive ? 'Disable' : 'Enable'}
-                  </button>
-                ) : (
-                  <button 
-                    onClick={() => installExtension(extension.id)}
-                    disabled={isInstalling === extension.id}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200 disabled:opacity-50"
-                    aria-label="Install extension"
-                  >
-                    {isInstalling === extension.id ? 'Installing...' : 'Install'}
-                  </button>
-                )}
-                <button className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition duration-200" aria-label="View extension details">
-                  Details
-                </button>
-              </div>
-            </div>
-            
-            <p className="mt-4 text-gray-300">{extension.description}</p>
-            
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className="px-3 py-1 bg-gray-600 text-gray-200 rounded-full text-sm">
-                {extension.category}
-              </span>
-              {extension.tags.map((tag: string, index: number) => (
-                <span key={index} className="px-3 py-1 bg-gray-600 text-gray-200 rounded-full text-sm">
-                  {tag}
-                </span>
-              ))}
-            </div>
-            
-            <div className="mt-4 flex items-center">
-              <div className="flex items-center mr-4">
-                <span className="text-yellow-400 mr-1">★</span>
-                <span className="text-gray-300">{extension.rating}</span>
-              </div>
-              <span className="text-gray-400 mr-4">{extension.downloads.toLocaleString()} downloads</span>
-              <span className="text-gray-400">{extension.license}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div className="p-6 border-b border-gray-600">
-        <h3 className="text-xl font-semibold mb-4">Overview</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <h4 className="font-medium text-gray-300 mb-2">Publisher</h4>
-            <div className="flex items-center">
-              <div className="bg-gray-600 rounded-full w-8 h-8 flex items-center justify-center mr-2">
-                <span className="text-sm">F</span>
-              </div>
-              <span className="text-white">{extension.author}</span>
-            </div>
-          </div>
-          <div>
-            <h4 className="font-medium text-gray-300 mb-2">Compatibility</h4>
-            <div className="flex items-center">
-              <StatusBadge status={extension.compatibility} />
-              <span className="text-gray-300 ml-2">{extension.compatibility}</span>
-            </div>
-          </div>
-          <div>
-            <h4 className="font-medium text-gray-300 mb-2">Installation Date</h4>
-            <p className="text-white">{extension.installedAt}</p>
-          </div>
-          <div>
-            <h4 className="font-medium text-gray-300 mb-2">Last Updated</h4>
-            <p className="text-white">{extension.lastUpdated}</p>
-          </div>
-        </div>
-      </div>
-      
-      <div className="p-6 border-b border-gray-600">
-        <h3 className="text-xl font-semibold mb-4">Capabilities & Permissions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <h4 className="font-medium text-gray-300 mb-2">Capabilities</h4>
-            <div className="flex flex-wrap gap-2">
-              {extension.capabilities.map((capability: string, index: number) => (
-                <span key={index} className="px-3 py-1 bg-gray-600 text-gray-200 rounded-full text-sm">
-                  {capability}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div>
-            <h4 className="font-medium text-gray-300 mb-2">Required Permissions</h4>
-            <div className="space-y-2">
-              {extension.permissions.map((permission: any, index: number) => (
-                <div key={index} className="flex items-start">
-                  <span className="text-blue-400 mr-2">•</span>
-                  <div>
-                    <p className="text-white font-medium">{permission.name}</p>
-                    <p className="text-gray-300 text-sm">{permission.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div className="p-6 border-b border-gray-600">
-        <h3 className="text-xl font-semibold mb-4">Compatibility</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <h4 className="font-medium text-gray-300 mb-2">Operating Systems</h4>
-            <div className="flex flex-wrap gap-2">
-              {extension.compatibilityDetails.os.map((os: string, index: number) => (
-                <span key={index} className="px-3 py-1 bg-gray-600 text-gray-200 rounded-full text-sm">
-                  {os}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div>
-            <h4 className="font-medium text-gray-300 mb-2">System Requirements</h4>
-            <ul className="list-disc pl-5 text-gray-300 space-y-1">
-              <li>ForgeOS version: {extension.compatibilityDetails.forgeosVersion}</li>
-              <li>Node.js version: {extension.compatibilityDetails.nodeVersion}</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-      
-      <div className="p-6">
-        <h3 className="text-xl font-semibold mb-4">Version History</h3>
-        <div className="space-y-3">
-          {extension.versionHistory.map((version: any, index: number) => (
-            <div key={index} className="flex items-start p-3 bg-gray-600 rounded-lg">
-              <div className="flex-shrink-0 mr-4">
-                <div className="bg-gray-500 rounded-full w-8 h-8 flex items-center justify-center">
-                  <span className="text-sm">v{version.version}</span>
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center">
-                  <span className="text-white font-medium mr-2">v{version.version}</span>
-                  <span className="text-gray-400 text-sm">{version.date}</span>
-                </div>
-                <p className="text-gray-300 mt-1">{version.changes}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  // Render the dashboard
-  return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">ForgeOS Marketplace</h1>
-          <div className="flex space-x-3">
-            <button 
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="flex items-center bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg transition duration-200 disabled:opacity-50"
-              aria-label="Refresh marketplace"
-            >
-              {isRefreshing ? (
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              {isTogglingFavorite ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 animate-spin" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                </svg>
+              ) : favorites.includes(extension.id) ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
               )}
-              Refresh
             </button>
-            <button 
-              onClick={() => setShowImportModal(true)}
-              className="flex items-center bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition duration-200"
-              aria-label="Import extension"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-              Import
-            </button>
+            {extension.isInstalled && (
+              <span className="px-2 py-1 bg-green-600 text-white rounded text-xs">
+                Installed
+              </span>
+            )}
           </div>
         </div>
+        
+        <p className="text-gray-300 mb-3">{extension.description}</p>
+        
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-sm text-gray-400">
+            {extension.author}
+          </span>
+          <div className="flex items-center">
+            <span className="text-yellow-400 mr-1">★</span>
+            <span className="text-sm text-gray-400">{extension.rating}</span>
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-2 mb-3">
+          {extension.tags.map((tag: string, index: number) => (
+            <span key={index} className="px-2 py-1 bg-gray-600 text-gray-200 rounded text-xs">
+              {tag}
+            </span>
+          ))}
+        </div>
+        
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center">
+            <StatusBadge status={extension.compatibility} />
+            {extension.updateStatus === 'available' && (
+              <span className="ml-2 px-2 py-1 bg-blue-600 text-white rounded text-xs">
+                Update Available
+              </span>
+            )}
+          </div>
+          <span className="text-sm text-gray-400">
+            {extension.downloads.toLocaleString()} downloads
+          </span>
+        </div>
+        
+        <div className="flex justify-between items-center">
+          <div className="flex flex-wrap gap-1">
+            {extension.compatibilityDetails.os.map((os: string, index: number) => (
+              <span key={index} className="px-2 py-1 bg-gray-600 text-gray-200 rounded text-xs">
+                {os}
+              </span>
+            ))}
+          </div>
+          <div className="flex space-x-2">
+            {extension.isInstalled ? (
+              <button 
+                onClick={() => toggleExtensionActive(extension.id)}
+                disabled={isEnabling === extension.id || isDisabling === extension.id}
+                className="text-sm bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded transition duration-200 disabled:opacity-50"
+                aria-label={extension.isActive ? "Disable extension" : "Enable extension"}
+              >
+                {isEnabling === extension.id || isDisabling === extension.id ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {extension.isActive ? 'Disabling...' : 'Enabling...'}
+                  </span>
+                ) : extension.isActive ? 'Disable' : 'Enable'}
+              </button>
+            ) : (
+              <button 
+                onClick={() => installExtension(extension.id)}
+                disabled={isInstalling === extension.id}
+                className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200 disabled:opacity-50"
+                aria-label="Install extension"
+              >
+                {isInstalling === extension.id ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Installing...
+                  </span>
+                ) : 'Install'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  });
 
+  // Extension detail component with improved performance
+  const ExtensionDetail = React.memo(({ extension }: { extension: any }) => {
+    const isInstalling = isInstalling === extension.id;
+    const isUpdating = isUpdating === extension.id;
+    const isUninstalling = isUninstalling === extension.id;
+    const isEnabling = isEnabling === extension.id;
+    const isDisabling = isDisabling === extension.id;
+    const isTogglingFavorite = isTogglingFavorite === extension.id;
+    
+    return (
+      <div className="bg-gray-700 rounded-lg overflow-hidden">
+        <div className="p-6 border-b border-gray-600">
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex-shrink-0">
+              <div className="bg-gray-600 rounded-lg w-24 h-24 flex items-center justify-center">
+                <span className="text-2xl">📦</span>
+              </div>
+            </div>
+            <div className="flex-1">
+              <div className="flex flex-wrap justify-between items-start gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold">{extension.name}</h2>
+                  <div className="flex items-center mt-1">
+                    <span className="text-gray-300 mr-2">v{extension.version}</span>
+                    <button 
+                      onClick={() => toggleFavorite(extension.id)}
+                      disabled={isTogglingFavorite}
+                      className="text-gray-400 hover:text-yellow-400 transition duration-200"
+                      aria-label={favorites.includes(extension.id) ? "Remove from favorites" : "Add to favorites"}
+                    >
+                      {isTogglingFavorite ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 animate-spin" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                        </svg>
+                      ) : favorites.includes(extension.id) ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                      )}
+                    </button>
+                    <span className={`px-2 py-1 rounded text-xs ${extension.isInstalled ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'}`}>
+                      {extension.isInstalled ? 'Installed' : 'Not Installed'}
+                    </span>
+                    {extension.isUpdateAvailable && (
+                      <span className="px-2 py-1 bg-yellow-600 text-yellow-100 rounded text-xs ml-2">
+                        Update Available
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  {extension.isInstalled ? (
+                    <button 
+                      onClick={() => toggleExtensionActive(extension.id)}
+                      disabled={isEnabling || isDisabling}
+                      className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition duration-200 disabled:opacity-50"
+                      aria-label={extension.isActive ? "Disable extension" : "Enable extension"}
+                    >
+                      {isEnabling || isDisabling ? (
+                        <span className="flex items-center">
+                          <svg className="animate-spin -ml-1 mr-1 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          {extension.isActive ? 'Disabling...' : 'Enabling...'}
+                        </span>
+                      ) : extension.isActive ? 'Disable' : 'Enable'}
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => installExtension(extension.id)}
+                      disabled={isInstalling}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200 disabled:opacity-50"
+                      aria-label="Install extension"
+                    >
+                      {isInstalling ? (
+                        <span className="flex items-center">
+                          <svg className="animate-spin -ml-1 mr-1 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Installing...
+                        </span>
+                      ) : 'Install'}
+                    </button>
+                  )}
+                  <button className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition duration-200" aria-label="View extension details">
+                    Details
+                  </button>
+                </div>
+              </div>
+              
+              <p className="mt-4 text-gray-300">{extension.description}</p>
+              
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="px-3 py-1 bg-gray-600 text-gray-200 rounded-full text-sm">
+                  {extension.category}
+                </span>
+                {extension.tags.map((tag: string, index: number) => (
+                  <span key={index} className="px-3 py-1 bg-gray-600 text-gray-200 rounded-full text-sm">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              
+              <div className="mt-4 flex items-center">
+                <div className="flex items-center mr-4">
+                  <span className="text-yellow-400 mr-1">★</span>
+                  <span className="text-gray-300">{extension.rating}</span>
+                </div>
+                <span className="text-gray-400 mr-4">{extension.downloads.toLocaleString()} downloads</span>
+                <span className="text-gray-400">{extension.license}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="p-6 border-b border-gray-600">
+          <h3 className="text-xl font-semibold mb-4">Overview</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-medium text-gray-300 mb-2">Publisher</h4>
+              <div className="flex items-center">
+                <div className="bg-gray-600 rounded-full w-8 h-8 flex items-center justify-center mr-2">
+                  <span className="text-sm">F</span>
+                </div>
+                <span className="text-white">{extension.author}</span>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-300 mb-2">Compatibility</h4>
+              <div className="flex items-center">
+                <StatusBadge status={extension.compatibility} />
+                <span className="text-gray-300 ml-2">{extension.compatibility}</span>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-300 mb-2">Installation Date</h4>
+              <p className="text-white">{extension.installedAt}</p>
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-300 mb-2">Last Updated</h4>
+              <p className="text-white">{extension.lastUpdated}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="p-6 border-b border-gray-600">
+          <h3 className="text-xl font-semibold mb-4">Capabilities & Permissions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-medium text-gray-300 mb-2">Capabilities</h4>
+              <div className="flex flex-wrap gap-2">
+                {extension.capabilities.map((capability: string, index: number) => (
+                  <span key={index} className="px-3 py-1 bg-gray-600 text-gray-200 rounded-full text-sm">
+                    {capability}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-300 mb-2">Required Permissions</h4>
+              <div className="space-y-2">
+                {extension.permissions.map((permission: any, index: number) => (
+                  <div key={index} className="flex items-center">
+                    <svg className="h-4 w-4 text-blue-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    <span className="text-white">{permission.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="p-6">
+          <h3 className="text-xl font-semibold mb-4">Runtime Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 bg-gray-800 rounded-lg">
+              <h4 className="font-medium text-gray-300 mb-2">Status</h4>
+              <div className="flex items-center">
+                <span className={`h-3 w-3 rounded-full mr-2 ${
+                  extension.runtimeStatus === 'running' ? 'bg-green-500' : 
+                  extension.runtimeStatus === 'inactive' ? 'bg-gray-500' : 'bg-red-500'
+                }`}></span>
+                <span className="text-white capitalize">{extension.runtimeStatus}</span>
+              </div>
+            </div>
+            <div className="p-4 bg-gray-800 rounded-lg">
+              <h4 className="font-medium text-gray-300 mb-2">Processes</h4>
+              <p className="text-white">
+                {extension.processInfo?.activeProcesses || 0} active processes
+              </p>
+            </div>
+            <div className="p-4 bg-gray-800 rounded-lg">
+              <h4 className="font-medium text-gray-300 mb-2">Memory Usage</h4>
+              <p className="text-white">
+                {extension.processInfo?.memoryUsage || 'N/A'}
+              </p>
+            </div>
+            <div className="p-4 bg-gray-800 rounded-lg">
+              <h4 className="font-medium text-gray-300 mb-2">CPU Usage</h4>
+              <p className="text-white">
+                {extension.processInfo?.cpuUsage || 'N/A'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  });
+
+  // Render the marketplace dashboard
+  return (
+    <div className="min-h-screen bg-gray-900">
+      <div className="container mx-auto px-4 py-6">
         {/* Navigation Tabs */}
-        <div className="flex space-x-1 mb-6 bg-gray-800 p-1 rounded-lg">
-          <button
-            onClick={() => setActiveTab('discover')}
-            className={`px-4 py-2 rounded-md transition duration-200 ${
-              activeTab === 'discover' 
-                ? 'bg-blue-600 text-white' 
-                : 'text-gray-300 hover:text-white'
-            }`}
-          >
-            Discover
-          </button>
-          <button
-            onClick={() => setActiveTab('installed')}
-            className={`px-4 py-2 rounded-md transition duration-200 ${
-              activeTab === 'installed' 
-                ? 'bg-blue-600 text-white' 
-                : 'text-gray-300 hover:text-white'
-            }`}
-          >
-            Installed
-          </button>
-          <button
-            onClick={() => setActiveTab('updates')}
-            className={`px-4 py-2 rounded-md transition duration-200 ${
-              activeTab === 'updates' 
-                ? 'bg-blue-600 text-white' 
-                : 'text-gray-300 hover:text-white'
-            }`}
-          >
-            Updates
-          </button>
-          <button
-            onClick={() => setActiveTab('details')}
-            className={`px-4 py-2 rounded-md transition duration-200 ${
-              activeTab === 'details' 
-                ? 'bg-blue-600 text-white' 
-                : 'text-gray-300 hover:text-white'
-            }`}
-          >
-            Details
-          </button>
-          <button
-            onClick={() => setActiveTab('import-export')}
-            className={`px-4 py-2 rounded-md transition duration-200 ${
-              activeTab === 'import-export' 
-                ? 'bg-blue-600 text-white' 
-                : 'text-gray-300 hover:text-white'
-            }`}
-          >
-            Import/Export
-          </button>
-          <button
-            onClick={() => setActiveTab('recovery')}
-            className={`px-4 py-2 rounded-md transition duration-200 ${
-              activeTab === 'recovery' 
-                ? 'bg-blue-600 text-white' 
-                : 'text-gray-300 hover:text-white'
-            }`}
-          >
-            Recovery
-          </button>
+        <div className="flex flex-wrap gap-2 mb-6">
+          {['discover', 'installed', 'details', 'import-export', 'recovery', 'updates'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 rounded-lg capitalize transition duration-200 ${
+                activeTab === tab
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+              }`}
+            >
+              {tab === 'import-export' ? 'Import/Export' : tab}
+            </button>
+          ))}
         </div>
 
         {/* Discover Tab */}
         {activeTab === 'discover' && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="p-4 bg-gray-800 rounded-lg">
-              <h3 className="text-xl font-semibold mb-2">Discover New Extensions</h3>
+              <h3 className="text-xl font-semibold mb-2">Discover Extensions</h3>
               <p className="text-gray-300">Browse and install extensions to enhance your ForgeOS experience.</p>
             </div>
-            
-            {/* Filters Section */}
+
+            {/* Search and Filters */}
             <div className="bg-gray-800 rounded-lg p-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-gray-300 mb-2" htmlFor="search-input">Search Extensions</label>
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
                   <input
-                    id="search-input"
                     type="text"
+                    placeholder="Search extensions..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Search by name, description, author..."
-                    aria-label="Search extensions"
                   />
                 </div>
-                
-                <div>
-                  <label className="block text-gray-300 mb-2" htmlFor="category-select">Category</label>
+                <div className="flex gap-2">
                   <select
-                    id="category-select"
-                    value={selectedFilters.category || ''}
-                    onChange={(e) => handleFilterChange('category', e.target.value)}
-                    className="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    aria-label="Filter by category"
-                  >
-                    <option value="">All Categories</option>
-                    <option value="Development Tools">Development Tools</option>
-                    <option value="Database Tools">Database Tools</option>
-                    <option value="UI Tools">UI Tools</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-gray-300 mb-2" htmlFor="sort-select">Sort By</label>
-                  <select
-                    id="sort-select"
                     value={sortOption}
                     onChange={(e) => setSortOption(e.target.value)}
-                    className="w-full p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    aria-label="Sort extensions"
+                    className="p-3 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="name">Name</option>
-                    <option value="newest">Newest</option>
-                    <option value="rating">Rating</option>
-                    <option value="downloads">Downloads</option>
-                    <option value="compatibility">Compatibility</option>
+                    <option value="name">Sort by Name</option>
+                    <option value="newest">Sort by Newest</option>
+                    <option value="rating">Sort by Rating</option>
+                    <option value="downloads">Sort by Downloads</option>
+                    <option value="compatibility">Sort by Compatibility</option>
                   </select>
+                  <button
+                    onClick={clearAllFilters}
+                    className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition duration-200"
+                  >
+                    Clear Filters
+                  </button>
                 </div>
               </div>
-              
-              {/* Active Filters */}
-              {getActiveFilters().length > 0 && (
-                <div className="mt-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-gray-300">Active Filters</h4>
-                    <button 
-                      onClick={clearAllFilters}
-                      className="text-sm text-gray-400 hover:text-white"
-                      aria-label="Clear all filters"
-                    >
-                      Clear All
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {getActiveFilters().map((filter, index) => (
-                      <span key={index} className="px-3 py-1 bg-gray-700 text-gray-200 rounded-full text-sm">
-                        {filter}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
-            
-            {/* Extensions Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+            {/* Extension Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredAndSortedExtensions().map((extension) => (
                 <ExtensionCard key={extension.id} extension={extension} />
               ))}
             </div>
+
+            {filteredAndSortedExtensions().length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-400">No extensions match your search criteria.</p>
+              </div>
+            )}
           </div>
         )}
 
         {/* Installed Tab */}
         {activeTab === 'installed' && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="p-4 bg-gray-800 rounded-lg">
               <h3 className="text-xl font-semibold mb-2">Installed Extensions</h3>
               <p className="text-gray-300">Manage your installed extensions and their settings.</p>
             </div>
-            
-            {installedExtensions.length === 0 ? (
-              <div className="bg-gray-800 rounded-lg p-8 text-center">
-                <h3 className="text-xl font-semibold mb-2">No Extensions Installed</h3>
-                <p className="text-gray-300 mb-4">Install extensions from the Discover tab to get started.</p>
-                <button 
-                  onClick={() => setActiveTab('discover')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200"
-                  aria-label="Discover extensions"
-                >
-                  Discover Extensions
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            {installedExtensions.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {installedExtensions.map((extension) => (
-                  <div key={extension.id} className="bg-gray-800 p-4 rounded-lg">
+                  <div key={extension.id} className="bg-gray-800 rounded-lg p-6">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="text-xl font-bold text-white">{extension.name}</h3>
-                        <p className="text-gray-300 text-sm">v{extension.version}</p>
+                        <h3 className="text-lg font-bold text-white">{extension.name}</h3>
+                        <p className="text-gray-400 text-sm">v{extension.version}</p>
                       </div>
                       <div className="flex space-x-2">
-                        {extension.hasUpdate && (
-                          <span className="px-2 py-1 bg-yellow-600 text-yellow-100 rounded text-xs">
-                            Update Available
-                          </span>
-                        )}
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          extension.isActive ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
-                        }`}>
-                          {extension.isActive ? 'Active' : 'Inactive'}
-                        </span>
+                        <button 
+                          onClick={() => toggleExtensionActive(extension.id)}
+                          disabled={isEnabling === extension.id || isDisabling === extension.id}
+                          className="text-sm bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded transition duration-200 disabled:opacity-50"
+                          aria-label={extension.isActive ? "Disable extension" : "Enable extension"}
+                        >
+                          {isEnabling === extension.id || isDisabling === extension.id ? (
+                            <span className="flex items-center">
+                              <svg className="animate-spin -ml-1 mr-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              {extension.isActive ? 'Disabling...' : 'Enabling...'}
+                            </span>
+                          ) : extension.isActive ? 'Disable' : 'Enable'}
+                        </button>
+                        <button 
+                          onClick={() => updateExtension(extension.id)}
+                          disabled={isInstalling === extension.id || isUpdating === extension.id || isUninstalling === extension.id}
+                          className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200 disabled:opacity-50"
+                          aria-label="Update extension"
+                        >
+                          {isUpdating === extension.id ? 'Updating...' : 'Update'}
+                        </button>
                       </div>
                     </div>
                     
@@ -1327,62 +1324,29 @@ const MarketplaceDashboard: React.FC = () => {
                       ))}
                     </div>
                     
-                    <div className="mb-4">
-                      <h4 className="text-sm font-semibold text-gray-300 mb-2">Compatibility</h4>
-                      <div className="flex flex-wrap gap-2">
-                        <span className="text-xs text-gray-400">ForgeOS:</span>
-                        <span className="text-xs text-white">{extension.compatibilityDetails.forgeosVersion}</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <span className="text-xs text-gray-400">Node.js:</span>
-                        <span className="text-xs text-white">{extension.compatibilityDetails.nodeVersion}</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {extension.compatibilityDetails.os.map((os: string, index: number) => (
-                          <span key={index} className="px-2 py-1 bg-gray-700 text-gray-200 rounded text-xs">
-                            {os}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    
                     <div className="flex justify-between items-center">
                       <div className="text-sm text-gray-400">
                         Installed: {extension.lastUpdated}
                       </div>
-                      <div className="flex space-x-2">
-                        <button 
-                          onClick={() => toggleExtensionActive(extension.id)}
-                          disabled={isInstalling === extension.id || isUpdating === extension.id || isUninstalling === extension.id}
-                          className="text-sm bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded transition duration-200 disabled:opacity-50"
-                          aria-label={extension.isActive ? "Disable extension" : "Enable extension"}
-                        >
-                          {extension.isActive ? 'Disable' : 'Enable'}
-                        </button>
-                        <button 
-                          onClick={() => updateExtension(extension.id)}
-                          disabled={isInstalling === extension.id || isUpdating === extension.id || isUninstalling === extension.id}
-                          className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200 disabled:opacity-50"
-                          aria-label="Update extension"
-                        >
-                          {isUpdating === extension.id ? 'Updating...' : 'Update'}
-                        </button>
-                        <button 
-                          onClick={() => {
-                            setUninstallExtensionId(extension.id);
-                            setUninstallExtensionName(extension.name);
-                            setShowUninstallModal(true);
-                          }}
-                          disabled={isInstalling === extension.id || isUpdating === extension.id || isUninstalling === extension.id}
-                          className="text-sm bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition duration-200 disabled:opacity-50"
-                          aria-label="Uninstall extension"
-                        >
-                          {isUninstalling === extension.id ? 'Uninstalling...' : 'Uninstall'}
-                        </button>
-                      </div>
+                      <button 
+                        onClick={() => {
+                          setUninstallExtensionId(extension.id);
+                          setUninstallExtensionName(extension.name);
+                          setShowUninstallModal(true);
+                        }}
+                        disabled={isInstalling === extension.id || isUpdating === extension.id || isUninstalling === extension.id}
+                        className="text-sm bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition duration-200 disabled:opacity-50"
+                        aria-label="Uninstall extension"
+                      >
+                        {isUninstalling === extension.id ? 'Uninstalling...' : 'Uninstall'}
+                      </button>
                     </div>
                   </div>
                 ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-400">You haven't installed any extensions yet.</p>
               </div>
             )}
           </div>
@@ -1469,7 +1433,15 @@ const MarketplaceDashboard: React.FC = () => {
                           className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition duration-200 disabled:opacity-50"
                           aria-label={`Export ${extension.name} extension`}
                         >
-                          {exportExtensionId === extension.id && exportStatus === 'exporting' ? 'Exporting...' : 'Export'}
+                          {exportExtensionId === extension.id && exportStatus === 'exporting' ? (
+                            <span className="flex items-center">
+                              <svg className="animate-spin -ml-1 mr-1 h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Exporting...
+                            </span>
+                          ) : 'Export'}
                         </button>
                       </div>
                     </div>
