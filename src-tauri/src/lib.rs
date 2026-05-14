@@ -66,6 +66,8 @@ pub fn run() {
             commands::workspace::delete_workspace,
             commands::workspace::set_active_workspace,
             commands::workspace::get_active_workspace,
+            commands::workspace::get_workspace_by_path,
+            commands::workspace::update_workspace_last_opened,
             
             // AI commands
             ai::filesystem::start_filesystem_indexing,

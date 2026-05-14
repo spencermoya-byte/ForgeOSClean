@@ -191,4 +191,52 @@ impl WorkspaceDatabase {
             Err(_) => Ok(None),
         }
     }
+    
+    // New methods for workspace management
+    pub async fn get_workspace_by_path(&self, path: &str) -> Result<Option<Workspace>, sqlx::Error> {
+        let query = r#"
+            SELECT id, name, description, path, is_active, created_at, updated_at
+            FROM workspaces
+            WHERE path = ?
+        "#;
+        
+        let row = sqlx::query(query)
+            .bind(path)
+            .fetch_one(&self.pool)
+            .await;
+            
+        match row {
+            Ok(row) => {
+                let workspace = Workspace {
+                    id: row.get("id"),
+                    name: row.get("name"),
+                    description: row.get("description"),
+                    path: row.get("path"),
+                    is_active: row.get("is_active"),
+                    created_at: row.get("created_at"),
+                    updated_at: row.get("updated_at"),
+                };
+                Ok(Some(workspace))
+            }
+            Err(_) => Ok(None),
+        }
+    }
+    
+    pub async fn update_workspace_last_opened(&self, id: &str) -> Result<(), sqlx::Error> {
+        let now = chrono::Utc::now().to_rfc3339();
+        
+        let query = r#"
+            UPDATE workspaces 
+            SET updated_at = ? 
+            WHERE id = ?
+        "#;
+        
+        sqlx::query(query)
+            .bind(&now)
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+            
+        Ok(())
+    }
 }

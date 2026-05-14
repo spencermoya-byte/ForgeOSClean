@@ -55,3 +55,12 @@ export const getActiveWorkspace = async (): Promise<Workspace | null> => {
   const response = await window.__TAURI__.invoke('get_active_workspace');
   return response as Workspace | null;
 };
+
+export const getWorkspaceByPath = async (path: string): Promise<Workspace | null> => {
+  const response = await window.__TAURI__.invoke('get_workspace_by_path', { path });
+  return response as Workspace | null;
+};
+
+export const updateWorkspaceLastOpened = async (id: string): Promise<void> => {
+  await window.__TAURI__.invoke('update_workspace_last_opened', { id });
+};

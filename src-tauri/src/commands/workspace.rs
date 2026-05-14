@@ -133,6 +133,32 @@ pub async fn get_active_workspace(
     }
 }
 
+// New commands for workspace management
+#[tauri::command]
+pub async fn get_workspace_by_path(
+    db: State<'_, sqlx::SqlitePool>,
+    path: String,
+) -> Result<Option<WorkspaceResponse>, String> {
+    let workspace_db = WorkspaceDatabase::new(db.inner().clone());
+    match workspace_db.get_workspace_by_path(&path).await {
+        Ok(Some(workspace)) => Ok(Some(WorkspaceResponse { workspace })),
+        Ok(None) => Ok(None),
+        Err(e) => Err(format!("Failed to get workspace by path: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn update_workspace_last_opened(
+    db: State<'_, sqlx::SqlitePool>,
+    id: String,
+) -> Result<(), String> {
+    let workspace_db = WorkspaceDatabase::new(db.inner().clone());
+    match workspace_db.update_workspace_last_opened(&id).await {
+        Ok(_) => Ok(()),
+        Err(e) => Err(format!("Failed to update workspace last opened: {}", e)),
+    }
+}
+
 // Collaboration commands
 #[tauri::command]
 pub async fn get_workspace_members(
