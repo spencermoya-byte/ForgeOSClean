@@ -11,6 +11,8 @@ pub struct MarketplaceState {
     pub marketplace_config: MarketplaceConfig,
     pub ecosystem_health: EcosystemHealth,
     pub extension_configurations: HashMap<String, serde_json::Value>, // New field for extension configurations
+    pub last_sync: String, // Track last sync time
+    pub sync_status: SyncStatus, // Track sync status
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -196,6 +198,14 @@ pub enum HealthStatus {
     Unknown,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum SyncStatus {
+    Synced,
+    Syncing,
+    Error,
+    Unavailable,
+}
+
 impl Default for MarketplaceState {
     fn default() -> Self {
         MarketplaceState {
@@ -226,6 +236,8 @@ impl Default for MarketplaceState {
                 health_status: HealthStatus::Healthy,
             },
             extension_configurations: HashMap::new(), // Initialize the new field
+            last_sync: chrono::Utc::now().to_rfc3339(),
+            sync_status: SyncStatus::Synced,
         }
     }
 }

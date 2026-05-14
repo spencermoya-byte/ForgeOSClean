@@ -1167,4 +1167,70 @@ impl MarketplaceDatabase {
             
         Ok(())
     }
+
+    // New method to create extension update record
+    pub async fn create_extension_update(&self, update: ExtensionUpdate) -> Result<ExtensionUpdate, sqlx::Error> {
+        let query = r#"
+            INSERT INTO extension_updates (id, extension_id, old_version, new_version, status, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            RETURNING *
+        "#;
+        
+        let row = sqlx::query(query)
+            .bind(&update.id)
+            .bind(&update.extension_id)
+            .bind(&update.old_version)
+            .bind(&update.new_version)
+            .bind(&update.status.to_string())
+            .bind(&update.updated_at)
+            .fetch_one(&self.pool)
+            .await?;
+            
+        Ok(ExtensionUpdate {
+            id: row.get("id"),
+            extension_id: row.get("extension_id"),
+            old_version: row.get("old_version"),
+            new_version: row.get("new_version"),
+            status: match row.get::<String, _>("status").as_str() {
+                "Updated" => UpdateStatus::Updated,
+                "UpToDate" => UpdateStatus::UpToDate,
+                "Failed" => UpdateStatus::Failed,
+                _ => UpdateStatus::Updated,
+            },
+            updated_at: row.get("updated_at"),
+        })
+    }
+
+    // New method to get extension updates
+    pub async fn get_extension_updates(&self, extension_id: &str, limit: i32, offset: i32) -> Result<Vec<ExtensionUpdate>, sqlx::Error> {
+        let query = r#"
+            SELECT * FROM extension_updates WHERE extension_id = ? ORDER BY updated_at DESC LIMIT ? OFFSET ?
+        "#;
+        
+        let rows = sqlx::query(query)
+            .bind(extension_id)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await?;
+            
+        let mut updates = Vec::new();
+        for row in rows {
+            updates.push(ExtensionUpdate {
+                id: row.get("id"),
+                extension_id: row.get("extension_id"),
+                old_version: row.get("old_version"),
+                new_version: row.get("new_version"),
+                status: match row.get::<String, _>("status").as_str() {
+                    "Updated" => UpdateStatus::Updated,
+                    "UpToDate" => UpdateStatus::UpToDate,
+                    "Failed" => UpdateStatus::Failed,
+                    _ => UpdateStatus::Updated,
+                },
+                updated_at: row.get("updated_at"),
+            });
+        }
+        
+        Ok(updates)
+    }
 }

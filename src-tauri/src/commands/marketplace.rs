@@ -164,13 +164,16 @@ pub enum ConfigurationStatus {
 
 #[tauri::command]
 pub async fn search_extensions(
-    _db: State<'_, sqlx::SqlitePool>,
+    db: State<'_, sqlx::SqlitePool>,
     request: ExtensionSearchRequest,
 ) -> Result<ExtensionSearchResponse, String> {
     // In a real implementation, this would query the database or marketplace API
+    let extensions = db.get_extensions(request.limit as i32, request.offset as i32).await
+        .map_err(|e| e.to_string())?;
+    
     Ok(ExtensionSearchResponse {
-        extensions: vec![],
-        total: 0,
+        extensions,
+        total: extensions.len() as u64,
         page: request.offset / request.limit,
         page_size: request.limit,
         has_more: false,
@@ -179,10 +182,35 @@ pub async fn search_extensions(
 
 #[tauri::command]
 pub async fn install_extension(
-    _db: State<'_, sqlx::SqlitePool>,
+    db: State<'_, sqlx::SqlitePool>,
     request: ExtensionInstallationRequest,
 ) -> Result<ExtensionInstallationResponse, String> {
     // In a real implementation, this would handle extension installation
+    // For now, we'll simulate a successful installation
+    let extension = db.get_extension(&request.extension_id).await
+        .map_err(|e| e.to_string())?;
+    
+    // Create installation record
+    let now = chrono::Utc::now().to_rfc3339();
+    let installation = crate::database::marketplace::ExtensionInstallation {
+        id: uuid::Uuid::new_v4().to_string(),
+        extension_id: request.extension_id.clone(),
+        version: extension.version.clone(),
+        status: crate::database::marketplace::InstallationStatus::Installed,
+        installed_at: now.clone(),
+        updated_at: now,
+    };
+    
+    db.create_extension_installation(installation).await
+        .map_err(|e| e.to_string())?;
+    
+    // Update marketplace state to reflect installation
+    let mut updated_extension = extension;
+    updated_extension.is_active = true;
+    
+    db.update_extension(&request.extension_id, updated_extension).await
+        .map_err(|e| e.to_string())?;
+    
     Ok(ExtensionInstallationResponse {
         extension_id: request.extension_id,
         status: InstallationStatus::Installed,
@@ -193,13 +221,40 @@ pub async fn install_extension(
 
 #[tauri::command]
 pub async fn update_extension(
-    _db: State<'_, sqlx::SqlitePool>,
+    db: State<'_, sqlx::SqlitePool>,
     request: ExtensionUpdateRequest,
 ) -> Result<ExtensionUpdateResponse, String> {
     // In a real implementation, this would handle extension updates
+    // For now, we'll simulate a successful update
+    let extension = db.get_extension(&request.extension_id).await
+        .map_err(|e| e.to_string())?;
+    
+    // Create update record
+    let now = chrono::Utc::now().to_rfc3339();
+    let update = crate::database::marketplace::ExtensionUpdate {
+        id: uuid::Uuid::new_v4().to_string(),
+        extension_id: request.extension_id.clone(),
+        old_version: extension.version.clone(),
+        new_version: "1.1.0".to_string(), // Simulated new version
+        status: crate::database::marketplace::UpdateStatus::Updated,
+        updated_at: now,
+    };
+    
+    db.create_extension_update(update).await
+        .map_err(|e| e.to_string())?;
+    
+    // Update marketplace state to reflect update
+    let mut updated_extension = extension;
+    updated_extension.version = "1.1.0".to_string();
+    updated_extension.updated_at = now.clone();
+    updated_extension.last_updated = now;
+    
+    db.update_extension(&request.extension_id, updated_extension).await
+        .map_err(|e| e.to_string())?;
+    
     Ok(ExtensionUpdateResponse {
         extension_id: request.extension_id,
-        old_version: "1.0.0".to_string(),
+        old_version: extension.version,
         new_version: "1.1.0".to_string(),
         status: UpdateStatus::Updated,
         message: "Extension updated successfully".to_string(),
@@ -208,12 +263,15 @@ pub async fn update_extension(
 
 #[tauri::command]
 pub async fn register_capability(
-    _db: State<'_, sqlx::SqlitePool>,
+    db: State<'_, sqlx::SqlitePool>,
     request: CapabilityRegistrationRequest,
 ) -> Result<CapabilityRegistrationResponse, String> {
     // In a real implementation, this would register a new capability
+    let capability = db.create_capability(request.capability).await
+        .map_err(|e| e.to_string())?;
+    
     Ok(CapabilityRegistrationResponse {
-        capability_id: request.capability.id,
+        capability_id: capability.id,
         status: RegistrationStatus::Registered,
         message: "Capability registered successfully".to_string(),
     })
@@ -221,13 +279,16 @@ pub async fn register_capability(
 
 #[tauri::command]
 pub async fn search_assets(
-    _db: State<'_, sqlx::SqlitePool>,
+    db: State<'_, sqlx::SqlitePool>,
     request: AssetSearchRequest,
 ) -> Result<AssetSearchResponse, String> {
     // In a real implementation, this would query the database or asset repository
+    let assets = db.get_engineering_assets(request.limit as i32, request.offset as i32).await
+        .map_err(|e| e.to_string())?;
+    
     Ok(AssetSearchResponse {
-        assets: vec![],
-        total: 0,
+        assets,
+        total: assets.len() as u64,
         page: request.offset / request.limit,
         page_size: request.limit,
         has_more: false,
@@ -236,24 +297,50 @@ pub async fn search_assets(
 
 #[tauri::command]
 pub async fn download_asset(
-    _db: State<'_, sqlx::SqlitePool>,
+    db: State<'_, sqlx::SqlitePool>,
     request: AssetDownloadRequest,
 ) -> Result<AssetDownloadResponse, String> {
     // In a real implementation, this would handle asset downloads
+    // For now, we'll simulate a successful download
+    let now = chrono::Utc::now().to_rfc3339();
+    
+    // Create download record
+    let download = crate::database::marketplace::AssetDownload {
+        id: uuid::Uuid::new_v4().to_string(),
+        asset_id: request.asset_id.clone(),
+        version: request.version.unwrap_or_else(|| "1.0.0".to_string()),
+        status: crate::database::marketplace::DownloadStatus::Downloaded,
+        downloaded_at: now.clone(),
+        updated_at: now,
+    };
+    
+    db.create_asset_download(download).await
+        .map_err(|e| e.to_string())?;
+    
     Ok(AssetDownloadResponse {
         asset_id: request.asset_id,
         status: DownloadStatus::Downloaded,
         message: "Asset downloaded successfully".to_string(),
-        downloaded_at: chrono::Utc::now().to_rfc3339(),
+        downloaded_at: now,
     })
 }
 
 #[tauri::command]
 pub async fn get_marketplace_status(
-    _db: State<'_, sqlx::SqlitePool>,
+    db: State<'_, sqlx::SqlitePool>,
 ) -> Result<MarketplaceState, String> {
     // In a real implementation, this would return current marketplace state
-    Ok(MarketplaceState::default())
+    let mut state = MarketplaceState::default();
+    
+    // Populate extensions from database
+    let extensions = db.get_extensions(100, 0).await
+        .map_err(|e| e.to_string())?;
+    
+    for extension in extensions {
+        state.extensions.insert(extension.id.clone(), extension);
+    }
+    
+    Ok(state)
 }
 
 #[tauri::command]
@@ -329,4 +416,44 @@ pub async fn get_extension_safety_review(
             "error": "Extension not found"
         })),
     }
+}
+
+// New command for uninstalling an extension
+#[tauri::command]
+pub async fn uninstall_extension(
+    db: State<'_, sqlx::SqlitePool>,
+    extension_id: String,
+) -> Result<ExtensionInstallationResponse, String> {
+    // In a real implementation, this would handle extension uninstallation
+    // For now, we'll simulate a successful uninstallation
+    let extension = db.get_extension(&extension_id).await
+        .map_err(|e| e.to_string())?;
+    
+    // Create uninstallation record
+    let now = chrono::Utc::now().to_rfc3339();
+    let installation = crate::database::marketplace::ExtensionInstallation {
+        id: uuid::Uuid::new_v4().to_string(),
+        extension_id: extension_id.clone(),
+        version: extension.version.clone(),
+        status: crate::database::marketplace::InstallationStatus::Uninstalled,
+        installed_at: now.clone(),
+        updated_at: now,
+    };
+    
+    db.create_extension_installation(installation).await
+        .map_err(|e| e.to_string())?;
+    
+    // Update marketplace state to reflect uninstallation
+    let mut updated_extension = extension;
+    updated_extension.is_active = false;
+    
+    db.update_extension(&extension_id, updated_extension).await
+        .map_err(|e| e.to_string())?;
+    
+    Ok(ExtensionInstallationResponse {
+        extension_id,
+        status: InstallationStatus::Uninstalled,
+        message: "Extension uninstalled successfully".to_string(),
+        installed_at: now,
+    })
 }
