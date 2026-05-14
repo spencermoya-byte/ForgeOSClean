@@ -14,7 +14,7 @@ const PluginDetail: React.FC = () => {
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
 
   useEffect(() => {
-    const fetchPlugin = async () => {
+    const fetchPluginData = async () => {
       if (!id) return;
         
       try {
@@ -35,7 +35,7 @@ const PluginDetail: React.FC = () => {
       }
     };
 
-    fetchPlugin();
+    fetchPluginData();
   }, [id]);
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -119,7 +119,7 @@ const PluginDetail: React.FC = () => {
         <div className="flex space-x-2">
           <button
             onClick={() => navigate('/plugins')}
-            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             Back to Plugins
           </button>
