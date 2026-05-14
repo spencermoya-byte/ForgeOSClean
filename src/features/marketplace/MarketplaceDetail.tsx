@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Download, Package, Calendar, User, Globe, ChevronLeft, AlertTriangle, Clock } from 'lucide-react';
+import { Star, Download, Package, Calendar, User, Globe, ChevronLeft, AlertTriangle, Clock, Shield } from 'lucide-react';
 import { getExtension } from '@/api/marketplace';
 
 interface Extension {
@@ -26,6 +26,7 @@ interface Extension {
     forgeos_version: string;
   };
   is_queued?: boolean;
+  permissions?: string[];
 }
 
 const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) => {
@@ -35,6 +36,7 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
   const [installing, setInstalling] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{type: string, message: string} | null>(null);
+  const [showPermissions, setShowPermissions] = useState(false);
 
   useEffect(() => {
     const fetchExtension = async () => {
@@ -58,6 +60,12 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
   const handleInstall = async () => {
     if (!extension) return;
     
+    // Show permissions warning before proceeding
+    if (extension.permissions && extension.permissions.length > 0) {
+      setShowPermissions(true);
+      return;
+    }
+    
     setInstalling(true);
     setStatusMessage({type: 'success', message: 'Installation started for ' + extension.name});
     try {
@@ -77,8 +85,50 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
   const handleUpdate = async () => {
     if (!extension) return;
     
+    // Show permissions warning before proceeding
+    if (extension.permissions && extension.permissions.length > 0) {
+      setShowPermissions(true);
+      return;
+    }
+    
     setUpdating(true);
     setStatusMessage({type: 'success', message: 'Update started for ' + extension.name});
+    try {
+      // Simulate update
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      // In a real app, this would call the update API
+      setExtension({ ...extension, version: '2.0.0', is_active: true });
+    } catch (err) {
+      setError('Failed to update extension');
+      setStatusMessage({type: 'error', message: 'Failed to update extension. Please try again.'});
+    } finally {
+      setUpdating(false);
+      setTimeout(() => setStatusMessage(null), 5000);
+    }
+  };
+
+  const handleConfirmInstall = async () => {
+    setShowPermissions(false);
+    setInstalling(true);
+    setStatusMessage({type: 'success', message: 'Installation started for ' + extension?.name});
+    try {
+      // Simulate installation
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      // In a real app, this would call the installation API
+      setExtension({ ...extension, is_active: true });
+    } catch (err) {
+      setError('Failed to install extension');
+      setStatusMessage({type: 'error', message: 'Failed to install extension. Please try again.'});
+    } finally {
+      setInstalling(false);
+      setTimeout(() => setStatusMessage(null), 5000);
+    }
+  };
+
+  const handleConfirmUpdate = async () => {
+    setShowPermissions(false);
+    setUpdating(true);
+    setStatusMessage({type: 'success', message: 'Update started for ' + extension?.name});
     try {
       // Simulate update
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -144,6 +194,39 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
             : 'bg-red-900 border border-red-700 text-red-200'
         }`}>
           {statusMessage.message}
+        </div>
+      )}
+      
+      {showPermissions && extension && (
+        <div className="mb-4 bg-yellow-900 border border-yellow-700 rounded-lg p-4">
+          <div className="flex items-start">
+            <Shield className="h-5 w-5 text-yellow-400 mr-2 mt-0.5 flex-shrink-0" />
+            <div>
+              <h3 className="text-yellow-200 font-medium">Permission Required</h3>
+              <p className="text-yellow-300 text-sm mt-1">
+                This extension requires the following permissions:
+              </p>
+              <ul className="mt-2 text-yellow-300 text-sm list-disc pl-5">
+                {extension.permissions?.map((permission, index) => (
+                  <li key={index}>{permission}</li>
+                ))}
+              </ul>
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={handleConfirmInstall}
+                  className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded transition-colors"
+                >
+                  Install Anyway
+                </button>
+                <button
+                  onClick={() => setShowPermissions(false)}
+                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
       
