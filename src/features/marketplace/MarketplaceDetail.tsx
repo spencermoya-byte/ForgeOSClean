@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Download, Package, Calendar, User, Globe, ChevronLeft } from 'lucide-react';
+import { Star, Download, Package, Calendar, User, Globe, ChevronLeft, AlertTriangle } from 'lucide-react';
 import { getExtension } from '@/api/marketplace';
 
 interface Extension {
@@ -61,7 +61,7 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
       // Simulate installation
       await new Promise(resolve => setTimeout(resolve, 1000));
       // In a real app, this would call the installation API
-      setExtension({ ...extension, is_installed: true });
+      setExtension({ ...extension, is_active: true });
     } catch (err) {
       setError('Failed to install extension');
     } finally {
@@ -77,12 +77,21 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
       // Simulate update
       await new Promise(resolve => setTimeout(resolve, 1000));
       // In a real app, this would call the update API
-      setExtension({ ...extension, version: '2.0.0' });
+      setExtension({ ...extension, version: '2.0.0', is_active: true });
     } catch (err) {
       setError('Failed to update extension');
     } finally {
       setUpdating(false);
     }
+  };
+
+  // Check if extension is compatible with current system
+  const isCompatible = () => {
+    if (!extension) return true;
+    
+    // In a real app, this would check against the actual system
+    // For now, we'll simulate compatibility checking
+    return true;
   };
 
   if (loading) {
@@ -115,6 +124,8 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
       </div>
     );
   }
+
+  const compatible = isCompatible();
 
   return (
     <div className="p-6">
@@ -158,6 +169,19 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
           </div>
         </div>
       </div>
+
+      {!compatible && (
+        <div className="mb-6 bg-yellow-900 border border-yellow-700 rounded-lg p-4 flex items-start">
+          <AlertTriangle className="h-5 w-5 text-yellow-400 mr-2 mt-0.5 flex-shrink-0" />
+          <div>
+            <h3 className="text-yellow-200 font-medium">Compatibility Warning</h3>
+            <p className="text-yellow-300 text-sm mt-1">
+              This extension may not be fully compatible with your current system.
+              Proceed with caution.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
