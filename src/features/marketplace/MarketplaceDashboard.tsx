@@ -42,6 +42,15 @@ const MarketplaceDashboard: React.FC = () => {
   const [isRemovingFromCollection, setIsRemovingFromCollection] = useState<string | null>(null);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState<string | null>(null);
   const [updateProgress, setUpdateProgress] = useState<Record<string, { progress: number; status: string }>>({});
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [permissionExtensionId, setPermissionExtensionId] = useState<string | null>(null);
+  const [permissionExtensionName, setPermissionExtensionName] = useState<string | null>(null);
+  const [permissionExtensionPermissions, setPermissionExtensionPermissions] = useState<any[]>([]);
+  const [permissionExtensionSafety, setPermissionExtensionSafety] = useState<any>(null);
+  const [showSafetyWarningModal, setShowSafetyWarningModal] = useState(false);
+  const [safetyWarningExtensionId, setSafetyWarningExtensionId] = useState<string | null>(null);
+  const [safetyWarningExtensionName, setSafetyWarningExtensionName] = useState<string | null>(null);
+  const [safetyWarningDetails, setSafetyWarningDetails] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
@@ -237,9 +246,10 @@ const MarketplaceDashboard: React.FC = () => {
       { version: '1.2.0', date: '2023-02-10', changes: 'Major refactor and new features' },
     ],
     permissions: [
-      { name: 'read-files', description: 'Read files in the workspace' },
-      { name: 'write-files', description: 'Write files in the workspace' },
-      { name: 'execute-commands', description: 'Execute system commands' },
+      { name: 'read-files', description: 'Read files in the workspace', type: 'filesystem' },
+      { name: 'write-files', description: 'Write files in the workspace', type: 'filesystem' },
+      { name: 'execute-commands', description: 'Execute system commands', type: 'network' },
+      { name: 'access-ai-models', description: 'Access AI models for code analysis', type: 'ai-model' },
     ],
     dependencies: [
       { name: 'ForgeOS Core', version: '2.1.0', isInstalled: true, isCompatible: true },
@@ -312,7 +322,18 @@ const MarketplaceDashboard: React.FC = () => {
       updateStatus: 'available',
       updateAvailableVersion: '1.3.0',
       category: 'Development Tools',
-      tags: ['ai', 'code', 'assistant']
+      tags: ['ai', 'code', 'assistant'],
+      permissions: [
+        { name: 'read-files', description: 'Read files in the workspace', type: 'filesystem' },
+        { name: 'write-files', description: 'Write files in the workspace', type: 'filesystem' },
+        { name: 'execute-commands', description: 'Execute system commands', type: 'network' },
+        { name: 'access-ai-models', description: 'Access AI models for code analysis', type: 'ai-model' },
+      ],
+      safetyLevel: 'medium',
+      safetyWarnings: [
+        'Access to system commands',
+        'Access to AI models'
+      ]
     },
     {
       id: '2',
@@ -332,7 +353,13 @@ const MarketplaceDashboard: React.FC = () => {
         os: ['Windows', 'macOS', 'Linux']
       },
       category: 'Development Tools',
-      tags: ['git', 'version-control']
+      tags: ['git', 'version-control'],
+      permissions: [
+        { name: 'read-files', description: 'Read files in the workspace', type: 'filesystem' },
+        { name: 'write-files', description: 'Write files in the workspace', type: 'filesystem' },
+      ],
+      safetyLevel: 'low',
+      safetyWarnings: []
     },
     {
       id: '3',
@@ -354,7 +381,17 @@ const MarketplaceDashboard: React.FC = () => {
       updateStatus: 'requires_review',
       updateAvailableVersion: '2.2.0',
       category: 'Database Tools',
-      tags: ['database', 'sql', 'explorer']
+      tags: ['database', 'sql', 'explorer'],
+      permissions: [
+        { name: 'read-files', description: 'Read files in the workspace', type: 'filesystem' },
+        { name: 'write-files', description: 'Write files in the workspace', type: 'filesystem' },
+        { name: 'access-database-drivers', description: 'Access database drivers', type: 'network' },
+      ],
+      safetyLevel: 'high',
+      safetyWarnings: [
+        'Incompatible with current ForgeOS version',
+        'Missing required dependency: Database Driver v1.0.0'
+      ]
     },
     {
       id: '4',
@@ -376,7 +413,12 @@ const MarketplaceDashboard: React.FC = () => {
       updateStatus: 'up_to_date',
       updateAvailableVersion: '1.0.5',
       category: 'UI Tools',
-      tags: ['theme', 'ui', 'customization']
+      tags: ['theme', 'ui', 'customization'],
+      permissions: [
+        { name: 'read-files', description: 'Read files in the workspace', type: 'filesystem' },
+      ],
+      safetyLevel: 'low',
+      safetyWarnings: []
     }
   ]);
 
@@ -604,27 +646,60 @@ const MarketplaceDashboard: React.FC = () => {
   const installExtension = useCallback((extensionId: string) => {
     if (isInstalling === extensionId || isUpdating === extensionId || isUninstalling === extensionId) return;
     
-    setIsInstalling(extensionId);
+    // Show permission modal for new installations
+    const extension = discoverExtensions.find(ext => ext.id === extensionId);
+    if (extension) {
+      setPermissionExtensionId(extensionId);
+      setPermissionExtensionName(extension.name);
+      setPermissionExtensionPermissions(extension.permissions || []);
+      setPermissionExtensionSafety({
+        level: extension.safetyLevel,
+        warnings: extension.safetyWarnings || []
+      });
+      setShowPermissionModal(true);
+    }
     
-    // Simulate installation
-    setTimeout(() => {
-      // Update installed extensions
-      setInstalledExtensions(prev => 
-        prev.map(ext => 
-          ext.id === extensionId ? { ...ext, isInstalled: true, isActive: true } : ext
-        )
-      );
-      
-      // Update discover extensions
-      setDiscoverExtensions(prev => 
-        prev.map(ext => 
-          ext.id === extensionId ? { ...ext, isInstalled: true } : ext
-        )
-      );
-      
-      setIsInstalling(null);
-    }, 1500);
-  }, [isInstalling, isUpdating, isUninstalling]);
+    setIsInstalling(extensionId);
+  }, [isInstalling, isUpdating, isUninstalling, discoverExtensions]);
+
+  // Confirm installation after showing permissions
+  const confirmInstallation = () => {
+    if (permissionExtensionId) {
+      // Simulate installation
+      setTimeout(() => {
+        // Update installed extensions
+        setInstalledExtensions(prev => 
+          prev.map(ext => 
+            ext.id === permissionExtensionId ? { ...ext, isInstalled: true, isActive: true } : ext
+          )
+        );
+        
+        // Update discover extensions
+        setDiscoverExtensions(prev => 
+          prev.map(ext => 
+            ext.id === permissionExtensionId ? { ...ext, isInstalled: true } : ext
+          )
+        );
+        
+        setShowPermissionModal(false);
+        setPermissionExtensionId(null);
+        setPermissionExtensionName(null);
+        setPermissionExtensionPermissions([]);
+        setPermissionExtensionSafety(null);
+        setIsInstalling(null);
+      }, 1500);
+    }
+  };
+
+  // Cancel installation
+  const cancelInstallation = () => {
+    setShowPermissionModal(false);
+    setPermissionExtensionId(null);
+    setPermissionExtensionName(null);
+    setPermissionExtensionPermissions([]);
+    setPermissionExtensionSafety(null);
+    setIsInstalling(null);
+  };
 
   // Update extension with proper state management and progress tracking
   const updateExtension = useCallback((extensionId: string) => {
@@ -876,6 +951,40 @@ const MarketplaceDashboard: React.FC = () => {
     );
   };
 
+  // Safety level badge component
+  const SafetyLevelBadge = ({ level, className = '' }: { level: string; className?: string }) => {
+    let bgColor = 'bg-gray-600';
+    let textColor = 'text-gray-200';
+    
+    switch (level.toLowerCase()) {
+      case 'low':
+        bgColor = 'bg-green-600';
+        textColor = 'text-white';
+        break;
+      case 'medium':
+        bgColor = 'bg-yellow-600';
+        textColor = 'text-white';
+        break;
+      case 'high':
+        bgColor = 'bg-red-600';
+        textColor = 'text-white';
+        break;
+      case 'strict':
+        bgColor = 'bg-purple-600';
+        textColor = 'text-white';
+        break;
+      default:
+        bgColor = 'bg-gray-600';
+        textColor = 'text-gray-200';
+    }
+    
+    return (
+      <span className={`${bgColor} ${textColor} px-2 py-1 rounded text-xs ${className}`}>
+        {level}
+      </span>
+    );
+  };
+
   // Loading skeleton component
   const LoadingSkeleton = () => (
     <div className="animate-pulse">
@@ -958,6 +1067,7 @@ const MarketplaceDashboard: React.FC = () => {
                 Update Available
               </span>
             )}
+            <SafetyLevelBadge level={extension.safetyLevel} className="ml-2" />
           </div>
           <span className="text-sm text-gray-400">
             {extension.downloads.toLocaleString()} downloads
@@ -1022,6 +1132,21 @@ const MarketplaceDashboard: React.FC = () => {
             </div>
             <div className="text-xs text-gray-400 mt-1">
               {isUpdatingProgress.status} ({isUpdatingProgress.progress}%)
+            </div>
+          </div>
+        )}
+        
+        {/* Safety warnings */}
+        {extension.safetyWarnings && extension.safetyWarnings.length > 0 && (
+          <div className="mt-3">
+            <div className="flex items-start">
+              <svg className="h-4 w-4 text-red-400 mt-0.5 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <div className="text-xs text-red-300">
+                {extension.safetyWarnings.slice(0, 2).join(', ')}
+                {extension.safetyWarnings.length > 2 && ` +${extension.safetyWarnings.length - 2} more`}
+              </div>
             </div>
           </div>
         )}
@@ -1216,11 +1341,14 @@ const MarketplaceDashboard: React.FC = () => {
               <h4 className="font-medium text-gray-300 mb-2">Required Permissions</h4>
               <div className="space-y-2">
                 {extension.permissions.map((permission: any, index: number) => (
-                  <div key={index} className="flex items-center">
-                    <svg className="h-4 w-4 text-blue-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div key={index} className="flex items-start">
+                    <svg className="h-4 w-4 text-blue-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
-                    <span className="text-white">{permission.name}</span>
+                    <div>
+                      <span className="text-white">{permission.name}</span>
+                      <p className="text-gray-300 text-sm">{permission.description}</p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1683,6 +1811,77 @@ const MarketplaceDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Permission Review Modal */}
+      {showPermissionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="permission-modal-title">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h3 id="permission-modal-title" className="text-xl font-bold text-white mb-4">Install Extension</h3>
+            <p className="text-gray-300 mb-4">
+              Before installing <span className="font-semibold">{permissionExtensionName}</span>, please review the permissions this extension requests:
+            </p>
+            
+            <div className="mb-6">
+              <h4 className="font-semibold text-white mb-2">Extension Permissions</h4>
+              <div className="space-y-3">
+                {permissionExtensionPermissions.map((permission, index) => (
+                  <div key={index} className="p-3 bg-gray-700 rounded-lg">
+                    <div className="flex items-start">
+                      <svg className="h-5 w-5 text-blue-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                      <div>
+                        <h5 className="font-medium text-white">{permission.name}</h5>
+                        <p className="text-gray-300 text-sm">{permission.description}</p>
+                        <span className="inline-block px-2 py-1 bg-gray-600 text-gray-200 rounded text-xs mt-1">
+                          {permission.type}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {permissionExtensionSafety && permissionExtensionSafety.warnings && permissionExtensionSafety.warnings.length > 0 && (
+              <div className="mb-6">
+                <h4 className="font-semibold text-white mb-2">Safety Warnings</h4>
+                <div className="p-3 bg-red-900/30 border border-red-700 rounded-lg">
+                  <div className="flex items-start">
+                    <svg className="h-5 w-5 text-red-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                      <p className="text-red-300">
+                        {permissionExtensionSafety.warnings.map((warning: string, index: number) => (
+                          <span key={index}>{warning}{index < permissionExtensionSafety.warnings.length - 1 ? ', ' : ''}</span>
+                        ))}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={cancelInstallation}
+                className="px-4 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition duration-200"
+                aria-label="Cancel installation"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmInstallation}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+                aria-label="Confirm installation"
+              >
+                Install Extension
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Create Collection Modal */}
       {showCollectionModal && (
