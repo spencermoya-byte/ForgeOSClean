@@ -41,6 +41,8 @@ const MarketplaceDashboard: React.FC = () => {
   const [isAddingToCollection, setIsAddingToCollection] = useState<string | null>(null);
   const [isRemovingFromCollection, setIsRemovingFromCollection] = useState<string | null>(null);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState<string | null>(null);
+  const [isRollingBack, setIsRollingBack] = useState<string | null>(null);
+  const [isRecovering, setIsRecovering] = useState<string | null>(null);
   const [updateProgress, setUpdateProgress] = useState<Record<string, { progress: number; status: string }>>({});
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [permissionExtensionId, setPermissionExtensionId] = useState<string | null>(null);
@@ -957,6 +959,147 @@ const MarketplaceDashboard: React.FC = () => {
     }, 300);
   }, [isEnabling, isDisabling, installedExtensions]);
 
+  // Show recovery modal for extension
+  const showExtensionRecovery = (extensionId: string) => {
+    setRecoveryExtensionId(extensionId);
+    setShowRecoveryModal(true);
+    
+    // Simulate recovery status fetch
+    setTimeout(() => {
+      const extension = installedExtensions.find(ext => ext.id === extensionId);
+      if (extension) {
+        setRecoveryStatus({
+          extensionId,
+          recoveryAvailable: extension.recoveryAvailable,
+          rollbackAvailable: extension.rollbackAvailable,
+          lastSuccessfulVersion: extension.lastSuccessfulVersion,
+          lastError: extension.lastError,
+          lastErrorTime: extension.lastErrorTime
+        });
+      }
+    }, 500);
+  };
+
+  // Perform recovery action
+  const performRecovery = (action: 'rollback' | 'restore') => {
+    if (!recoveryExtensionId || isRecovering) return;
+    
+    setIsRecovering(recoveryExtensionId);
+    
+    // Simulate recovery process
+    setTimeout(() => {
+      // Simulate success/failure with more realistic scenarios
+      const isSuccess = Math.random() > 0.2; // 80% success rate for demo
+      
+      if (isSuccess) {
+        // Update extension state after recovery
+        setInstalledExtensions(prev => 
+          prev.map(ext => 
+            ext.id === recoveryExtensionId ? { 
+              ...ext, 
+              lastError: null,
+              lastErrorTime: null,
+              recoveryAvailable: false,
+              rollbackAvailable: false
+            } : ext
+          )
+        );
+        
+        setDiscoverExtensions(prev => 
+          prev.map(ext => 
+            ext.id === recoveryExtensionId ? { 
+              ...ext, 
+              lastError: null,
+              lastErrorTime: null,
+              recoveryAvailable: false,
+              rollbackAvailable: false
+            } : ext
+          )
+        );
+        
+        // Reset after success with better UI feedback
+        setTimeout(() => {
+          setShowRecoveryModal(false);
+          setRecoveryExtensionId(null);
+          setRecoveryStatus(null);
+          setIsRecovering(null);
+        }, 1500);
+      } else {
+        // Handle recovery failure
+        setIsRecovering(null);
+        // In a real app, we would show an error message
+      }
+    }, 2000);
+  };
+
+  // Show rollback modal for extension
+  const showExtensionRollback = (extensionId: string) => {
+    setRollbackExtensionId(extensionId);
+    setShowRollbackModal(true);
+    
+    // Simulate rollback info fetch
+    setTimeout(() => {
+      const extension = installedExtensions.find(ext => ext.id === extensionId);
+      if (extension) {
+        setRollbackVersion(extension.lastSuccessfulVersion || extension.version);
+      }
+    }, 500);
+  };
+
+  // Perform rollback action
+  const performRollback = () => {
+    if (!rollbackExtensionId || isRollingBack) return;
+    
+    setIsRollingBack(rollbackExtensionId);
+    
+    // Simulate rollback process
+    setTimeout(() => {
+      // Simulate success/failure with more realistic scenarios
+      const isSuccess = Math.random() > 0.15; // 85% success rate for demo
+      
+      if (isSuccess) {
+        // Update extension state after rollback
+        setInstalledExtensions(prev => 
+          prev.map(ext => 
+            ext.id === rollbackExtensionId ? { 
+              ...ext, 
+              version: rollbackVersion || ext.version,
+              lastError: null,
+              lastErrorTime: null,
+              rollbackAvailable: false,
+              recoveryAvailable: false
+            } : ext
+          )
+        );
+        
+        setDiscoverExtensions(prev => 
+          prev.map(ext => 
+            ext.id === rollbackExtensionId ? { 
+              ...ext, 
+              version: rollbackVersion || ext.version,
+              lastError: null,
+              lastErrorTime: null,
+              rollbackAvailable: false,
+              recoveryAvailable: false
+            } : ext
+          )
+        );
+        
+        // Reset after success with better UI feedback
+        setTimeout(() => {
+          setShowRollbackModal(false);
+          setRollbackExtensionId(null);
+          setRollbackVersion(null);
+          setIsRollingBack(null);
+        }, 1500);
+      } else {
+        // Handle rollback failure
+        setIsRollingBack(null);
+        // In a real app, we would show an error message
+      }
+    }, 2500);
+  };
+
   // Filter and sort extensions with memoization
   const filteredAndSortedExtensions = useCallback(() => {
     let filtered = [...discoverExtensions];
@@ -1129,6 +1272,8 @@ const MarketplaceDashboard: React.FC = () => {
     const isAddingToCollection = isAddingToCollection === `${extension.id}-collection`;
     const isRemovingFromCollection = isRemovingFromCollection === `${extension.id}-collection`;
     const isUpdatingProgress = updateProgress[extension.id];
+    const isRollingBack = isRollingBack === extension.id;
+    const isRecovering = isRecovering === extension.id;
     
     return (
       <div className="bg-gray-700 p-4 rounded-lg hover:bg-gray-600 transition duration-200">
@@ -1263,6 +1408,29 @@ const MarketplaceDashboard: React.FC = () => {
           </div>
         )}
         
+        {/* Recovery/rollback indicators */}
+        {extension.lastError && (
+          <div className="mt-3">
+            <div className="flex items-start">
+              <svg className="h-4 w-4 text-red-400 mt-0.5 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <div className="text-xs text-red-300">
+                Error: {extension.lastError}
+              </div>
+            </div>
+            <div className="mt-1">
+              <button
+                onClick={() => showExtensionRecovery(extension.id)}
+                disabled={isRecovering}
+                className="text-xs text-blue-400 hover:text-blue-300 transition duration-200"
+              >
+                {isRecovering ? 'Recovering...' : 'Recover Extension'}
+              </button>
+            </div>
+          </div>
+        )}
+        
         {/* Safety warnings */}
         {extension.safetyWarnings && extension.safetyWarnings.length > 0 && (
           <div className="mt-3">
@@ -1290,6 +1458,8 @@ const MarketplaceDashboard: React.FC = () => {
     const isDisabling = isDisabling === extension.id;
     const isTogglingFavorite = isTogglingFavorite === extension.id;
     const isUpdatingProgress = updateProgress[extension.id];
+    const isRollingBack = isRollingBack === extension.id;
+    const isRecovering = isRecovering === extension.id;
     
     return (
       <div className="bg-gray-700 rounded-lg overflow-hidden">
@@ -1455,6 +1625,45 @@ const MarketplaceDashboard: React.FC = () => {
               ))}
             </div>
           </div>
+          
+          {/* Recovery/rollback section */}
+          {extension.lastError && (
+            <div className="mt-6 bg-gray-800 p-4 rounded-lg">
+              <h4 className="font-semibold text-white mb-2">Recovery Options</h4>
+              <div className="space-y-3">
+                <div className="flex items-start">
+                  <svg className="h-5 w-5 text-red-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <div>
+                    <p className="text-white font-medium">Extension Error</p>
+                    <p className="text-gray-300 text-sm">Last error: {extension.lastError}</p>
+                    <p className="text-gray-400 text-xs">Occurred: {extension.lastErrorTime}</p>
+                  </div>
+                </div>
+                
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => showExtensionRecovery(extension.id)}
+                    disabled={isRecovering}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200 disabled:opacity-50"
+                  >
+                    {isRecovering ? 'Recovering...' : 'Recover Extension'}
+                  </button>
+                  
+                  {extension.rollbackAvailable && (
+                    <button
+                      onClick={() => showExtensionRollback(extension.id)}
+                      disabled={isRollingBack}
+                      className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition duration-200 disabled:opacity-50"
+                    >
+                      {isRollingBack ? 'Rolling Back...' : 'Rollback to Previous Version'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -1727,6 +1936,156 @@ const MarketplaceDashboard: React.FC = () => {
                     <p className="text-red-300 text-sm">{exportError}</p>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Recovery Modal */}
+        {showRecoveryModal && recoveryExtensionId && recoveryStatus && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="recovery-modal-title">
+            <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <h3 id="recovery-modal-title" className="text-xl font-bold text-white mb-4">Recover Extension</h3>
+              
+              <div className="mb-6">
+                <div className="flex items-start mb-4">
+                  <div className="bg-gray-700 rounded-lg w-16 h-16 flex items-center justify-center mr-4">
+                    <span className="text-2xl">📦</span>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-white">{installedExtensions.find(e => e.id === recoveryExtensionId)?.name || 'Extension'}</h4>
+                    <p className="text-gray-300">v{installedExtensions.find(e => e.id === recoveryExtensionId)?.version || 'Unknown'}</p>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-700 p-4 rounded-lg mb-4">
+                  <h5 className="font-semibold text-white mb-2">Error Details</h5>
+                  <p className="text-gray-300 text-sm">{recoveryStatus.lastError}</p>
+                  <p className="text-gray-400 text-xs mt-1">Occurred: {recoveryStatus.lastErrorTime}</p>
+                </div>
+                
+                <div className="space-y-3">
+                  {recoveryStatus.recoveryAvailable && (
+                    <div className="flex items-start p-3 bg-blue-900/30 border border-blue-700 rounded-lg">
+                      <svg className="h-5 w-5 text-blue-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v3l9-11h-7z" />
+                      </svg>
+                      <div>
+                        <p className="text-white font-medium">Recovery Available</p>
+                        <p className="text-gray-300 text-sm">This extension can be recovered to a stable state.</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {recoveryStatus.rollbackAvailable && (
+                    <div className="flex items-start p-3 bg-yellow-900/30 border border-yellow-700 rounded-lg">
+                      <svg className="h-5 w-5 text-yellow-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      <div>
+                        <p className="text-white font-medium">Rollback Available</p>
+                        <p className="text-gray-300 text-sm">This extension can be rolled back to a previous version.</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {!recoveryStatus.recoveryAvailable && !recoveryStatus.rollbackAvailable && (
+                    <div className="flex items-start p-3 bg-gray-700 border border-gray-600 rounded-lg">
+                      <svg className="h-5 w-5 text-gray-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <div>
+                        <p className="text-white font-medium">No Recovery Options</p>
+                        <p className="text-gray-300 text-sm">This extension cannot be recovered automatically.</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowRecoveryModal(false)}
+                  className="px-4 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => performRecovery('restore')}
+                  disabled={isRecovering}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200 disabled:opacity-50"
+                >
+                  {isRecovering ? 'Recovering...' : 'Recover Extension'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Rollback Modal */}
+        {showRollbackModal && rollbackExtensionId && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="rollback-modal-title">
+            <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <h3 id="rollback-modal-title" className="text-xl font-bold text-white mb-4">Rollback Extension</h3>
+              
+              <div className="mb-6">
+                <div className="flex items-start mb-4">
+                  <div className="bg-gray-700 rounded-lg w-16 h-16 flex items-center justify-center mr-4">
+                    <span className="text-2xl">📦</span>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-white">{installedExtensions.find(e => e.id === rollbackExtensionId)?.name || 'Extension'}</h4>
+                    <p className="text-gray-300">v{installedExtensions.find(e => e.id === rollbackExtensionId)?.version || 'Unknown'}</p>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-700 p-4 rounded-lg mb-4">
+                  <h5 className="font-semibold text-white mb-2">Current Version</h5>
+                  <p className="text-gray-300">{installedExtensions.find(e => e.id === rollbackExtensionId)?.version || 'Unknown'}</p>
+                </div>
+                
+                <div className="bg-gray-700 p-4 rounded-lg mb-4">
+                  <h5 className="font-semibold text-white mb-2">Rollback Target</h5>
+                  <div className="flex items-center">
+                    <input
+                      type="text"
+                      value={rollbackVersion || ''}
+                      onChange={(e) => setRollbackVersion(e.target.value)}
+                      className="w-full p-2 bg-gray-600 text-white border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Enter version to rollback to"
+                    />
+                    <button
+                      onClick={() => setRollbackVersion(installedExtensions.find(e => e.id === rollbackExtensionId)?.lastSuccessfulVersion || '')}
+                      className="ml-2 px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-lg transition duration-200"
+                    >
+                      Use Previous
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-700 p-4 rounded-lg">
+                  <h5 className="font-semibold text-white mb-2">Warning</h5>
+                  <p className="text-gray-300 text-sm">
+                    Rolling back will revert this extension to the selected version. 
+                    This action cannot be undone and may cause loss of recent features or bug fixes.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setShowRollbackModal(false)}
+                  className="px-4 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 transition duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={performRollback}
+                  disabled={isRollingBack || !rollbackVersion}
+                  className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition duration-200 disabled:opacity-50"
+                >
+                  {isRollingBack ? 'Rolling Back...' : 'Rollback Extension'}
+                </button>
               </div>
             </div>
           </div>
