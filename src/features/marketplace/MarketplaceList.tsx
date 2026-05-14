@@ -21,6 +21,7 @@ const MarketplaceList: React.FC = () => {
   const [extensions, setExtensions] = useState<Extension[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<{type: string, message: string} | null>(null);
 
   useEffect(() => {
     const fetchExtensions = async () => {
@@ -68,8 +69,30 @@ const MarketplaceList: React.FC = () => {
     setCategoryFilter(category);
   };
 
+  const handleInstall = (extensionId: string) => {
+    // Simulate installation
+    setStatusMessage({type: 'success', message: 'Installation started for extension'});
+    setTimeout(() => setStatusMessage(null), 3000);
+  };
+
+  const handleUpdate = (extensionId: string) => {
+    // Simulate update
+    setStatusMessage({type: 'success', message: 'Update started for extension'});
+    setTimeout(() => setStatusMessage(null), 3000);
+  };
+
   return (
     <div className="p-6">
+      {statusMessage && (
+        <div className={`mb-4 p-4 rounded-lg ${
+          statusMessage.type === 'success' 
+            ? 'bg-green-900 border border-green-700 text-green-200' 
+            : 'bg-red-900 border border-red-700 text-red-200'
+        }`}>
+          {statusMessage.message}
+        </div>
+      )}
+      
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white mb-4">Marketplace</h1>
         
@@ -187,8 +210,11 @@ const MarketplaceList: React.FC = () => {
                       Queued
                     </span>
                   )}
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded transition-colors">
-                    {extension.isInstalled ? 'Installed' : 'Install'}
+                  <button 
+                    onClick={() => extension.isInstalled ? handleUpdate(extension.id) : handleInstall(extension.id)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded transition-colors"
+                  >
+                    {extension.isInstalled ? 'Update' : 'Install'}
                   </button>
                 </div>
               </div>

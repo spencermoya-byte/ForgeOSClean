@@ -34,6 +34,7 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
   const [error, setError] = useState<string | null>(null);
   const [installing, setInstalling] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{type: string, message: string} | null>(null);
 
   useEffect(() => {
     const fetchExtension = async () => {
@@ -58,6 +59,7 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
     if (!extension) return;
     
     setInstalling(true);
+    setStatusMessage({type: 'success', message: 'Installation started for ' + extension.name});
     try {
       // Simulate installation
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -65,8 +67,10 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
       setExtension({ ...extension, is_active: true });
     } catch (err) {
       setError('Failed to install extension');
+      setStatusMessage({type: 'error', message: 'Failed to install extension'});
     } finally {
       setInstalling(false);
+      setTimeout(() => setStatusMessage(null), 3000);
     }
   };
 
@@ -74,6 +78,7 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
     if (!extension) return;
     
     setUpdating(true);
+    setStatusMessage({type: 'success', message: 'Update started for ' + extension.name});
     try {
       // Simulate update
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -81,8 +86,10 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
       setExtension({ ...extension, version: '2.0.0', is_active: true });
     } catch (err) {
       setError('Failed to update extension');
+      setStatusMessage({type: 'error', message: 'Failed to update extension'});
     } finally {
       setUpdating(false);
+      setTimeout(() => setStatusMessage(null), 3000);
     }
   };
 
@@ -130,6 +137,16 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
 
   return (
     <div className="p-6">
+      {statusMessage && (
+        <div className={`mb-4 p-4 rounded-lg ${
+          statusMessage.type === 'success' 
+            ? 'bg-green-900 border border-green-700 text-green-200' 
+            : 'bg-red-900 border border-red-700 text-red-200'
+        }`}>
+          {statusMessage.message}
+        </div>
+      )}
+      
       <div className="mb-6">
         <button className="flex items-center text-blue-400 hover:text-blue-300 mb-4">
           <ChevronLeft className="h-4 w-4 mr-1" />
