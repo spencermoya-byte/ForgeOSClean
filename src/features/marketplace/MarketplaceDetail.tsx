@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Download, Package, Calendar, User, Globe, ChevronLeft, AlertTriangle, Clock, Shield } from 'lucide-react';
+import { Star, Download, Package, Calendar, User, Globe, ChevronLeft, AlertTriangle, Clock, Shield, WifiOff, RotateCcw } from 'lucide-react';
 import { getExtension } from '@/api/marketplace';
 
 interface Extension {
@@ -37,6 +37,24 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
   const [updating, setUpdating] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{type: string, message: string} | null>(null);
   const [showPermissions, setShowPermissions] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+
+  useEffect(() => {
+    // Check online status
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    // Initial check
+    setIsOnline(navigator.onLine);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchExtension = async () => {
@@ -143,6 +161,21 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
     }
   };
 
+  const handleRetry = async () => {
+    // Simulate retry
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getExtension(extensionId);
+      setExtension(data);
+    } catch (err) {
+      setError('Failed to fetch extension details');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Check if extension is compatible with current system
   const isCompatible = () => {
     if (!extension) return true;
@@ -194,6 +227,25 @@ const MarketplaceDetail: React.FC<{ extensionId: string }> = ({ extensionId }) =
             : 'bg-red-900 border border-red-700 text-red-200'
         }`}>
           {statusMessage.message}
+        </div>
+      )}
+      
+      {!isOnline && (
+        <div className="mb-4 bg-yellow-900 border border-yellow-700 rounded-lg p-4 flex items-start">
+          <WifiOff className="h-5 w-5 text-yellow-400 mr-2 mt-0.5 flex-shrink-0" />
+          <div>
+            <h3 className="text-yellow-200 font-medium">Offline Mode</h3>
+            <p className="text-yellow-300 text-sm mt-1">
+              You are currently offline. Some features may be limited.
+            </p>
+            <button
+              onClick={handleRetry}
+              className="mt-2 flex items-center text-yellow-200 hover:text-yellow-100 text-sm"
+            >
+              <RotateCcw className="h-4 w-4 mr-1" />
+              Retry Connection
+            </button>
+          </div>
         </div>
       )}
       
