@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getPlugin, updatePlugin, getPluginSettings, getPluginCapabilities } from '../../api/plugin';
 import { toast } from 'react-toastify';
@@ -6,28 +6,32 @@ import { toast } from 'react-toastify';
 const PluginDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [plugin, setPlugin] = useState<any>(null);
+  const [plugin, setPlugin] = useState<any | null>(null);
   const [settings, setSettings] = useState<any[]>([]);
   const [capabilities, setCapabilities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
 
   useEffect(() => {
     const fetchPlugin = async () => {
       if (!id) return;
-      
+        
       try {
+        setLoading(true);
         const fetchedPlugin = await getPlugin(id);
         setPlugin(fetchedPlugin);
-        
+          
         const fetchedSettings = await getPluginSettings(id);
         setSettings(fetchedSettings);
-        
+          
         const fetchedCapabilities = await getPluginCapabilities(id);
         setCapabilities(fetchedCapabilities);
       } catch (error) {
         console.error('Failed to fetch plugin:', error);
         toast.error('Failed to load plugin');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -87,7 +91,7 @@ const PluginDetail: React.FC = () => {
     }
   };
 
-  if (!plugin) {
+  if (loading) {
     return (
       <div className="p-4">
         <div className="animate-pulse">
@@ -96,6 +100,14 @@ const PluginDetail: React.FC = () => {
           <div className="h-4 bg-gray-700 rounded w-5/6 mb-4"></div>
           <div className="h-4 bg-gray-700 rounded w-4/6 mb-6"></div>
         </div>
+      </div>
+    );
+  }
+
+  if (!plugin) {
+    return (
+      <div className="p-4">
+        <p className="text-red-500">Plugin not found</p>
       </div>
     );
   }
@@ -114,7 +126,7 @@ const PluginDetail: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-gray-800 rounded-lg p-6 mb-6">
+      <div className="bg-gray-800 rounded-lg p-6 mb-6 md:p-8 md:mb-8">
         <p className="text-gray-300 mb-6">{plugin.description}</p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -160,6 +172,7 @@ const PluginDetail: React.FC = () => {
                       className={`px-3 py-1 rounded text-xs ${
                         capability.isEnabled ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'
                       }`}
+                      aria-label={`${capability.capability} is ${capability.isEnabled ? 'enabled' : 'disabled'}`}
                     >
                       {capability.isEnabled ? 'Enabled' : 'Disabled'}
                     </button>
