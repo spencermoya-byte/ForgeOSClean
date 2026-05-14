@@ -4,6 +4,7 @@ import { useExtensionUpdates } from '../../hooks/useExtensionUpdates';
 const ExtensionCard = ({ extension, handleUpdate, handleInstall }) => {
   const { hasUpdate, isUpdating, updateExtension } = useExtensionUpdates(extension.id);
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
+  const [isInstallLoading, setIsInstallLoading] = useState(false);
 
   const handleUpdateClick = async () => {
     try {
@@ -30,6 +31,20 @@ const ExtensionCard = ({ extension, handleUpdate, handleInstall }) => {
       console.error('Failed to toggle favorite:', error);
     } finally {
       setIsFavoriteLoading(false);
+    }
+  };
+
+  const handleInstallClick = async () => {
+    // Prevent duplicate clicks during installation
+    if (isInstallLoading) return;
+    
+    setIsInstallLoading(true);
+    try {
+      await handleInstall(extension.id);
+    } catch (error) {
+      console.error('Install failed:', error);
+    } finally {
+      setIsInstallLoading(false);
     }
   };
 
@@ -64,10 +79,11 @@ const ExtensionCard = ({ extension, handleUpdate, handleInstall }) => {
             </button>
           ) : (
             <button 
-              onClick={() => handleInstall(extension.id)}
+              onClick={handleInstallClick}
+              disabled={isInstallLoading}
               className="install-button"
             >
-              Install
+              {isInstallLoading ? 'Installing...' : 'Install'}
             </button>
           )}
         </div>
