@@ -4,73 +4,49 @@ import { useNavigate } from 'react-router-dom';
 const MarketplaceDashboard: React.FC = () => {
   // ... existing code ...
 
-  // Show rollback modal for extension
-  const showExtensionRollback = (extensionId: string) => {
-    setRollbackExtensionId(extensionId);
-    setShowRollbackModal(true);
+  // Toggle extension active state with optimistic UI and better synchronization
+  const toggleExtensionActive = useCallback((extensionId: string) => {
+    if (isEnabling === extensionId || isDisabling === extensionId) return;
     
-    // Simulate rollback info fetch
+    const extension = installedExtensions.find(ext => ext.id === extensionId);
+    if (!extension) return;
+    
+    if (extension.isActive) {
+      setIsDisabling(extensionId);
+    } else {
+      setIsEnabling(extensionId);
+    }
+    
+    // Optimistically update the UI
+    setInstalledExtensions(prev => 
+      prev.map(ext => 
+        ext.id === extensionId ? { 
+          ...ext, 
+          isActive: !ext.isActive,
+          runtimeStatus: !ext.isActive ? ext.runtimeStatus : 'inactive', // Ensure runtime status is updated
+          processInfo: !ext.isActive ? ext.processInfo : null // Clear process info when disabling
+        } : ext
+      )
+    );
+    
+    // Update discover extensions as well
+    setDiscoverExtensions(prev => 
+      prev.map(ext => 
+        ext.id === extensionId ? { 
+          ...ext, 
+          isActive: !ext.isActive,
+          runtimeStatus: !ext.isActive ? ext.runtimeStatus : 'inactive',
+          processInfo: !ext.isActive ? ext.processInfo : null
+        } : ext
+      )
+    );
+    
+    // Reset after a short delay
     setTimeout(() => {
-      const extension = installedExtensions.find(ext => ext.id === extensionId);
-      if (extension) {
-        setRollbackVersion(extension.lastSuccessfulVersion || extension.version);
-      }
-    }, 500);
-  };
-
-  // Perform rollback action with improved state management
-  const performRollback = () => {
-    if (!rollbackExtensionId || isRollingBack) return;
-    
-    setIsRollingBack(rollbackExtensionId);
-    
-    // Simulate rollback process
-    setTimeout(() => {
-      // Simulate success/failure with more realistic scenarios
-      const isSuccess = Math.random() > 0.15; // 85% success rate for demo
-      
-      if (isSuccess) {
-        // Update extension state after rollback
-        setInstalledExtensions(prev => 
-          prev.map(ext => 
-            ext.id === rollbackExtensionId ? { 
-              ...ext, 
-              version: rollbackVersion || ext.version,
-              lastError: null,
-              lastErrorTime: null,
-              rollbackAvailable: false,
-              recoveryAvailable: false
-            } : ext
-          )
-        );
-        
-        setDiscoverExtensions(prev => 
-          prev.map(ext => 
-            ext.id === rollbackExtensionId ? { 
-              ...ext, 
-              version: rollbackVersion || ext.version,
-              lastError: null,
-              lastErrorTime: null,
-              rollbackAvailable: false,
-              recoveryAvailable: false
-            } : ext
-          )
-        );
-        
-        // Reset after success with better UI feedback
-        setTimeout(() => {
-          setShowRollbackModal(false);
-          setRollbackExtensionId(null);
-          setRollbackVersion(null);
-          setIsRollingBack(null);
-        }, 1500);
-      } else {
-        // Handle rollback failure - clear the rolling back state
-        setIsRollingBack(null);
-        // In a real app, we would show an error message
-      }
-    }, 2500);
-  };
+      setIsEnabling(null);
+      setIsDisabling(null);
+    }, 300);
+  }, [isEnabling, isDisabling, installedExtensions]);
 
   // ... rest of existing code ...
   
