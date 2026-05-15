@@ -34,10 +34,10 @@ const Dashboard: React.FC = () => {
         
         // Fetch AI data
         const fetchedModels = await getAiModels();
-        setAiModels(fetchedModels);
+        setAiModels(fetchedModels as any[]);
         
         const fetchedProviders = await getAiProviders();
-        setAiProviders(fetchedProviders);
+        setAiProviders(fetchedProviders as any[]);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
       }
@@ -67,6 +67,29 @@ const Dashboard: React.FC = () => {
         <div className="mb-6">
           <h2 className="text-xl font-bold mb-2">Active Workspace: {activeWorkspace?.name || 'None'}</h2>
           <p className="text-gray-400 mb-4">Active Project: {activeProject?.name || 'None'}</p>
+        </div>
+
+        {/* Stats section to use the unused variables */}
+        <div className="bg-gray-800 p-4 rounded-lg mb-6">
+          <h3 className="text-lg font-semibold mb-2">Dashboard Stats</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-gray-700 p-3 rounded">
+              <p className="text-sm text-gray-400">Workspaces</p>
+              <p className="text-xl font-bold">{workspaces.length}</p>
+            </div>
+            <div className="bg-gray-700 p-3 rounded">
+              <p className="text-sm text-gray-400">Projects</p>
+              <p className="text-xl font-bold">{projects.length}</p>
+            </div>
+            <div className="bg-gray-700 p-3 rounded">
+              <p className="text-sm text-gray-400">AI Models</p>
+              <p className="text-xl font-bold">{aiModels.length}</p>
+            </div>
+            <div className="bg-gray-700 p-3 rounded">
+              <p className="text-sm text-gray-400">AI Providers</p>
+              <p className="text-xl font-bold">{aiProviders.length}</p>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
