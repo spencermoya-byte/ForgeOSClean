@@ -1,6 +1,10 @@
 import React from 'react';
 
-const ExtensionCard = ({ extension }) => {
+type ExtensionCardProps = {
+  extension: any;
+};
+
+const ExtensionCard = ({ extension }: ExtensionCardProps) => {
   return (
     <div className="extension-card">
       <div className="extension-header">
