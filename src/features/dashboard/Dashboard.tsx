@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/authContext';
-import { getWorkspaces, getActiveWorkspace } from '../../api/workspace';
-import { getProjects, getActiveProject } from '../../api/project';
-import { getAiModels, getAiProviders } from '../../api/ai';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
