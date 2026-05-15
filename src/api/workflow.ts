@@ -1,3 +1,5 @@
+import { invoke } from "@tauri-apps/api/core";
+
 export interface Workflow {
   id: string;
   name: string;
@@ -72,41 +74,63 @@ export interface UpdateWorkflowStepData {
 }
 
 export const getWorkflows = async (workspaceId?: string, projectId?: string): Promise<Workflow[]> => {
-  return [] as Workflow[];
+  void workspaceId;
+  void projectId;
+  const result = await invoke('get_workflows');
+  return result as Workflow[];
 };
 
 export const getWorkflow = async (id: string): Promise<Workflow> => {
-  return {} as Workflow;
+  void id;
+  const result = await invoke('get_workflow', { id });
+  return result as Workflow;
 };
 
 export const createWorkflow = async (data: CreateWorkflowData): Promise<Workflow> => {
-  return {} as Workflow;
+  void data;
+  const result = await invoke('create_workflow', { data });
+  return result as Workflow;
 };
 
 export const updateWorkflow = async (id: string, data: UpdateWorkflowData): Promise<Workflow> => {
-  return {} as Workflow;
+  void id;
+  void data;
+  const result = await invoke('update_workflow', { id, data });
+  return result as Workflow;
 };
 
 export const deleteWorkflow = async (id: string): Promise<void> => {
-  return;
+  void id;
+  await invoke('delete_workflow', { id });
 };
 
 export const getWorkflowSteps = async (workflowId: string): Promise<WorkflowStep[]> => {
-  return [] as WorkflowStep[];
+  void workflowId;
+  const result = await invoke('get_workflow_steps', { workflowId });
+  return result as WorkflowStep[];
 };
 
 export const createWorkflowStep = async (data: CreateWorkflowStepData): Promise<WorkflowStep> => {
-  return {} as WorkflowStep;
+  void data;
+  const result = await invoke('create_workflow_step', { data });
+  return result as WorkflowStep;
 };
 
 export const updateWorkflowStep = async (id: string, data: UpdateWorkflowStepData): Promise<WorkflowStep> => {
-  return {} as WorkflowStep;
+  void id;
+  void data;
+  const result = await invoke('update_workflow_step', { id, data });
+  return result as WorkflowStep;
 };
 
 export const createWorkflowExecution = async (workflowId: string): Promise<WorkflowExecution> => {
-  return {} as WorkflowExecution;
+  void workflowId;
+  const result = await invoke('create_workflow_execution', { workflowId });
+  return result as WorkflowExecution;
 };
 
 export const getWorkflowExecutions = async (workflowId: string): Promise<WorkflowExecution[]> => {
-  return [] as WorkflowExecution[];
+  void workflowId;
+  const result = await invoke('get_workflow_executions', { workflowId });
+  return result as WorkflowExecution[];
 };
