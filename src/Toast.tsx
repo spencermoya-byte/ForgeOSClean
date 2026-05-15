@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext } from "react";
-import toast from 'react-toastify';
+import { toast } from 'react-toastify';
 
 // Toast Context
 const ToastContext = createContext<{
@@ -12,7 +12,7 @@ export const useToast = () => useContext(ToastContext);
 
 function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
-    <ToastContext.Provider value={{ addToast: (message) => toast.error(message) }}>
+    <ToastContext.Provider value={{ addToast: (message) => toast(message) }}>
       {children}
     </ToastContext.Provider>
   );
