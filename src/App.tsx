@@ -63,6 +63,7 @@ const RecoveryShell = () => {
 const App: React.FC = () => {
   // Simple hash-based routing
   const [currentRoute, setCurrentRoute] = React.useState<string>('dashboard');
+  const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
   
   React.useEffect(() => {
     const handleHashChange = () => {
@@ -83,6 +84,12 @@ const App: React.FC = () => {
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
+  
+  // Handle navigation
+  const handleNavigation = (route: string) => {
+    window.location.hash = `#/${route}`;
+    setIsMenuOpen(false);
+  };
   
   // Route components
   const renderRoute = () => {
@@ -191,6 +198,66 @@ const App: React.FC = () => {
 
   return (
     <div className="recovery-shell">
+      {/* Hamburger Menu */}
+      <div className="hamburger-menu">
+        <button 
+          className="hamburger-button"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          aria-label="Toggle navigation menu"
+        >
+          <span className="hamburger-line"></span>
+          <span className="hamburger-line"></span>
+          <span className="hamburger-line"></span>
+        </button>
+        
+        {isMenuOpen && (
+          <div className="menu-dropdown">
+            <button 
+              className={`menu-item ${currentRoute === 'dashboard' ? 'active' : ''}`}
+              onClick={() => handleNavigation('dashboard')}
+            >
+              Dashboard
+            </button>
+            <button 
+              className={`menu-item ${currentRoute === 'marketplace' ? 'active' : ''}`}
+              onClick={() => handleNavigation('marketplace')}
+            >
+              Marketplace
+            </button>
+            <button 
+              className={`menu-item ${currentRoute === 'ai' ? 'active' : ''}`}
+              onClick={() => handleNavigation('ai')}
+            >
+              AI
+            </button>
+            <button 
+              className={`menu-item ${currentRoute === 'projects' ? 'active' : ''}`}
+              onClick={() => handleNavigation('projects')}
+            >
+              Projects
+            </button>
+            <button 
+              className={`menu-item ${currentRoute === 'workspaces' ? 'active' : ''}`}
+              onClick={() => handleNavigation('workspaces')}
+            >
+              Workspaces
+            </button>
+            <button 
+              className={`menu-item ${currentRoute === 'resources' ? 'active' : ''}`}
+              onClick={() => handleNavigation('resources')}
+            >
+              Resources
+            </button>
+            <button 
+              className={`menu-item ${currentRoute === 'settings' ? 'active' : ''}`}
+              onClick={() => handleNavigation('settings')}
+            >
+              Settings
+            </button>
+          </div>
+        )}
+      </div>
+      
       {renderRoute()}
     </div>
   );
