@@ -4,36 +4,123 @@ import React from "react";
 const RecoveryShell = () => {
   return (
     <div className="recovery-shell">
-      <header className="recovery-header">
-        <h1 className="text-3xl font-bold text-center">ForgeOS Recovery Shell TEST</h1>
-        <p className="text-green-400 text-center mt-2">React is rendering successfully</p>
-      </header>
+      <div className="top-bar">
+        <div className="top-bar-left">
+          <button 
+            className="hamburger-button"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle navigation menu"
+          >
+            <span className="hamburger-line"></span>
+            <span className="hamburger-line"></span>
+            <span className="hamburger-line"></span>
+          </button>
+          <h1 className="brand-title">ForgeOS</h1>
+        </div>
+        <div className="top-bar-center">
+          <h2 className="page-title">Dashboard</h2>
+        </div>
+        <div className="top-bar-right">
+          <div className="status-indicator">
+            <div className="status-dot"></div>
+            <span className="status-text">Online</span>
+          </div>
+        </div>
+      </div>
       
-      <main className="recovery-main">
-        <div className="recovery-nav-card">
-          <h2 className="text-xl font-bold mb-4">Navigation</h2>
-          <p className="text-gray-300 mb-4">This is a recovery shell showing that the frontend is working.</p>
-          {/* Navigation buttons removed from main content */}
+      <div className="main-container">
+        <div className="activity-rail">
+          <button className="rail-button active" title="Dashboard">
+            <span className="rail-icon">🏠</span>
+          </button>
+          <button className="rail-button" title="Projects">
+            <span className="rail-icon">📁</span>
+          </button>
+          <button className="rail-button" title="AI">
+            <span className="rail-icon">🤖</span>
+          </button>
+          <button className="rail-button" title="Marketplace">
+            <span className="rail-icon">🏪</span>
+          </button>
+          <button className="rail-button" title="Workspaces">
+            <span className="rail-icon">💼</span>
+          </button>
+          <button className="rail-button" title="Resources">
+            <span className="rail-icon">📚</span>
+          </button>
+          <button className="rail-button" title="Settings">
+            <span className="rail-icon">⚙️</span>
+          </button>
         </div>
         
-        <div className="recovery-status-card">
-          <h2 className="text-xl font-bold mb-4">System Status</h2>
-          <div className="space-y-2">
-            <div className="recovery-status-item">
-              <div className="recovery-status-indicator"></div>
-              <span className="recovery-status-text">Frontend is running</span>
-            </div>
-            <div className="recovery-status-item">
-              <div className="recovery-status-indicator"></div>
-              <span className="recovery-status-text">React is rendering</span>
-            </div>
-            <div className="recovery-status-item">
-              <div className="recovery-status-indicator"></div>
-              <span className="recovery-status-text">Features are being restored</span>
+        <div className="workspace-area">
+          <div className="workspace-header">
+            <h3 className="workspace-title">Current Workspace</h3>
+          </div>
+          
+          <div className="workspace-content">
+            <div className="card-grid">
+              <div className="card">
+                <h4 className="card-title">AI Status</h4>
+                <p className="card-text">AI assistant is ready</p>
+                <div className="card-status">
+                  <span className="status-indicator online"></span>
+                  <span className="status-text">Online</span>
+                </div>
+              </div>
+              
+              <div className="card">
+                <h4 className="card-title">Projects</h4>
+                <p className="card-text">3 active projects</p>
+                <div className="card-actions">
+                  <button className="card-button">View All</button>
+                </div>
+              </div>
+              
+              <div className="card">
+                <h4 className="card-title">Extensions</h4>
+                <p className="card-text">5 installed extensions</p>
+                <div className="card-actions">
+                  <button className="card-button">Browse</button>
+                </div>
+              </div>
+              
+              <div className="card">
+                <h4 className="card-title">System Health</h4>
+                <p className="card-text">All systems operational</p>
+                <div className="card-status">
+                  <span className="status-indicator online"></span>
+                  <span className="status-text">Healthy</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </main>
+        
+        <div className="inspector-panel">
+          <div className="panel-header">
+            <h4 className="panel-title">ForgeOS Status</h4>
+          </div>
+          <div className="panel-content">
+            <div className="panel-item">
+              <span className="panel-label">Version:</span>
+              <span className="panel-value">v1.2.3</span>
+            </div>
+            <div className="panel-item">
+              <span className="panel-label">AI Status:</span>
+              <span className="panel-value">Active</span>
+            </div>
+            <div className="panel-item">
+              <span className="panel-label">Workspace:</span>
+              <span className="panel-value">Default</span>
+            </div>
+            <div className="panel-item">
+              <span className="panel-label">Restoration:</span>
+              <span className="panel-value">85% complete</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
