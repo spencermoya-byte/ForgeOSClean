@@ -1,5 +1,3 @@
-import axios from './axios';
-
 export interface AiModel {
   id: string;
   name: string;
