@@ -1,7 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -11,6 +7,16 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background-color: #111827;
   color: #f9fafb;
+  height: 100%;
+  overflow: auto;
+}
+
+html {
+  height: 100%;
+}
+
+#root {
+  height: 100%;
 }
 
 code {
@@ -30,11 +36,25 @@ code {
 
 /* Custom styles for forms */
 .form-input {
-  @apply w-full p-3 border rounded-lg bg-gray-700 text-white border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #4b5563;
+  border-radius: 0.5rem;
+  background-color: #374151;
+  color: #f9fafb;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.form-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
 }
 
 .form-label {
-  @apply block text-white mb-2;
+  display: block;
+  color: #f9fafb;
+  margin-bottom: 0.5rem;
 }
 
 /* Toastify custom styles */
@@ -72,15 +92,155 @@ code {
   overflow: hidden;
 }
 
+/* Recovery shell specific styles */
+.recovery-shell {
+  min-height: 100vh;
+  background-color: #111827;
+  color: #f9fafb;
+  display: flex;
+  flex-direction: column;
+}
+
+.recovery-header {
+  background-color: #1f2937;
+  padding: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.recovery-main {
+  flex: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+  width: 100%;
+}
+
+.recovery-nav-card {
+  background-color: #1f2937;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.recovery-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.recovery-nav-item {
+  background-color: #374151;
+  hover: background-color: #4b5563;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  text-align: center;
+  color: #f9fafb;
+  text-decoration: none;
+}
+
+.recovery-nav-item:hover {
+  background-color: #4b5563;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.recovery-nav-item.active {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.recovery-status-card {
+  background-color: #1f2937;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.recovery-status-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.recovery-status-indicator {
+  width: 0.75rem;
+  height: 0.75rem;
+  background-color: #10b981;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+.recovery-status-text {
+  color: #f9fafb;
+}
+
 /* Navigation button styles */
 .nav-row {
-  @apply flex flex-wrap gap-4;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
 .nav-button {
-  @apply bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 text-center no-underline;
+  background-color: #374151;
+  color: #f9fafb;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  min-width: 120px;
+}
+
+.nav-button:hover {
+  background-color: #4b5563;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .nav-button.active {
-  @apply bg-blue-600 text-white;
+  background-color: #3b82f6;
+  color: white;
+}
+
+/* Recovery page styles */
+.recovery-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.recovery-page-title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: #f9fafb;
+}
+
+.recovery-page-text {
+  color: #d1d5db;
+  margin-bottom: 1rem;
+}
+
+.recovery-button {
+  background-color: #3b82f6;
+  color: white;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.recovery-button:hover {
+  background-color: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }

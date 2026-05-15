@@ -3,14 +3,14 @@ import React from "react";
 // Safe recovery shell component
 const RecoveryShell = () => {
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
-      <header className="bg-gray-800 p-4 shadow-lg">
+    <div className="recovery-shell">
+      <header className="recovery-header">
         <h1 className="text-3xl font-bold text-center">ForgeOS Recovery Shell TEST</h1>
         <p className="text-green-400 text-center mt-2">React is rendering successfully</p>
       </header>
       
-      <main className="flex-1 container mx-auto p-4">
-        <div className="bg-gray-800 rounded-lg p-6 mb-6">
+      <main className="recovery-main">
+        <div className="recovery-nav-card">
           <h2 className="text-xl font-bold mb-4">Navigation</h2>
           <p className="text-gray-300 mb-4">This is a recovery shell showing that the frontend is working.</p>
           <div className="nav-row">
@@ -38,20 +38,20 @@ const RecoveryShell = () => {
           </div>
         </div>
         
-        <div className="bg-gray-800 rounded-lg p-6">
+        <div className="recovery-status-card">
           <h2 className="text-xl font-bold mb-4">System Status</h2>
           <div className="space-y-2">
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-              <span>Frontend is running</span>
+            <div className="recovery-status-item">
+              <div className="recovery-status-indicator"></div>
+              <span className="recovery-status-text">Frontend is running</span>
             </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-              <span>React is rendering</span>
+            <div className="recovery-status-item">
+              <div className="recovery-status-indicator"></div>
+              <span className="recovery-status-text">React is rendering</span>
             </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
-              <span>Features are being restored</span>
+            <div className="recovery-status-item">
+              <div className="recovery-status-indicator"></div>
+              <span className="recovery-status-text">Features are being restored</span>
             </div>
           </div>
         </div>
@@ -91,13 +91,13 @@ const App: React.FC = () => {
         return <RecoveryShell />;
       case 'marketplace':
         return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">Marketplace</h1>
-            <p className="text-gray-300 mb-4">Placeholder page — system restoration in progress</p>
-            <p className="text-gray-400 mb-6">This section will display the marketplace functionality once restored.</p>
+          <div className="recovery-page">
+            <h1 className="recovery-page-title">Marketplace</h1>
+            <p className="recovery-page-text mb-4">Placeholder page — system restoration in progress</p>
+            <p className="recovery-page-text mb-6">This section will display the marketplace functionality once restored.</p>
             <button 
               onClick={() => window.location.hash = '#/dashboard'}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+              className="recovery-button"
             >
               Back to Dashboard
             </button>
@@ -105,13 +105,13 @@ const App: React.FC = () => {
         );
       case 'ai':
         return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">AI</h1>
-            <p className="text-gray-300 mb-4">Placeholder page — system restoration in progress</p>
-            <p className="text-gray-400 mb-6">This section will display AI functionality once restored.</p>
+          <div className="recovery-page">
+            <h1 className="recovery-page-title">AI</h1>
+            <p className="recovery-page-text mb-4">Placeholder page — system restoration in progress</p>
+            <p className="recovery-page-text mb-6">This section will display AI functionality once restored.</p>
             <button 
               onClick={() => window.location.hash = '#/dashboard'}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+              className="recovery-button"
             >
               Back to Dashboard
             </button>
@@ -119,13 +119,13 @@ const App: React.FC = () => {
         );
       case 'projects':
         return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">Projects</h1>
-            <p className="text-gray-300 mb-4">Placeholder page — system restoration in progress</p>
-            <p className="text-gray-400 mb-6">This section will display project management functionality once restored.</p>
+          <div className="recovery-page">
+            <h1 className="recovery-page-title">Projects</h1>
+            <p className="recovery-page-text mb-4">Placeholder page — system restoration in progress</p>
+            <p className="recovery-page-text mb-6">This section will display project management functionality once restored.</p>
             <button 
               onClick={() => window.location.hash = '#/dashboard'}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+              className="recovery-button"
             >
               Back to Dashboard
             </button>
@@ -133,13 +133,13 @@ const App: React.FC = () => {
         );
       case 'workspaces':
         return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">Workspaces</h1>
-            <p className="text-gray-300 mb-4">Placeholder page — system restoration in progress</p>
-            <p className="text-gray-400 mb-6">This section will display workspace management functionality once restored.</p>
+          <div className="recovery-page">
+            <h1 className="recovery-page-title">Workspaces</h1>
+            <p className="recovery-page-text mb-4">Placeholder page — system restoration in progress</p>
+            <p className="recovery-page-text mb-6">This section will display workspace management functionality once restored.</p>
             <button 
               onClick={() => window.location.hash = '#/dashboard'}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+              className="recovery-button"
             >
               Back to Dashboard
             </button>
@@ -147,13 +147,13 @@ const App: React.FC = () => {
         );
       case 'resources':
         return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">Resources</h1>
-            <p className="text-gray-300 mb-4">Placeholder page — system restoration in progress</p>
-            <p className="text-gray-400 mb-6">This section will display resource management functionality once restored.</p>
+          <div className="recovery-page">
+            <h1 className="recovery-page-title">Resources</h1>
+            <p className="recovery-page-text mb-4">Placeholder page — system restoration in progress</p>
+            <p className="recovery-page-text mb-6">This section will display resource management functionality once restored.</p>
             <button 
               onClick={() => window.location.hash = '#/dashboard'}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+              className="recovery-button"
             >
               Back to Dashboard
             </button>
@@ -161,13 +161,13 @@ const App: React.FC = () => {
         );
       case 'settings':
         return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">Settings</h1>
-            <p className="text-gray-300 mb-4">Placeholder page — system restoration in progress</p>
-            <p className="text-gray-400 mb-6">This section will display application settings once restored.</p>
+          <div className="recovery-page">
+            <h1 className="recovery-page-title">Settings</h1>
+            <p className="recovery-page-text mb-4">Placeholder page — system restoration in progress</p>
+            <p className="recovery-page-text mb-6">This section will display application settings once restored.</p>
             <button 
               onClick={() => window.location.hash = '#/dashboard'}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+              className="recovery-button"
             >
               Back to Dashboard
             </button>
@@ -175,12 +175,12 @@ const App: React.FC = () => {
         );
       default:
         return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold mb-4">Page Not Found</h1>
-            <p className="text-gray-300 mb-4">The page you are looking for does not exist.</p>
+          <div className="recovery-page">
+            <h1 className="recovery-page-title">Page Not Found</h1>
+            <p className="recovery-page-text mb-4">The page you are looking for does not exist.</p>
             <button 
               onClick={() => window.location.hash = '#/dashboard'}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
+              className="recovery-button"
             >
               Back to Dashboard
             </button>
@@ -190,7 +190,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="recovery-shell">
       {renderRoute()}
     </div>
   );
