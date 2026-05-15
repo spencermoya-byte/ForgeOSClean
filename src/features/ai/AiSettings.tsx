@@ -18,10 +18,10 @@ const AiSettings: React.FC = () => {
           getAiProviderStatus()
         ]);
         
-        setModels(modelsData);
-        setProviders(providersData);
-        setModelStatus(modelStatusData);
-        setProviderStatus(providerStatusData);
+        setModels(modelsData as any[]);
+        setProviders(providersData as any[]);
+        setModelStatus(modelStatusData as any[]);
+        setProviderStatus(providerStatusData as any[]);
         setIsLoading(false);
       } catch (error) {
         console.error('Failed to fetch AI data:', error);
