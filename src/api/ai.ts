@@ -1,481 +1,137 @@
-export interface AiModel {
-  id: string;
-  name: string;
-  provider: string;
-  description: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AiProvider {
-  id: string;
-  name: string;
-  type: string;
-  baseUrl: string;
-  apiKey: string | null;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AiContext {
-  workspaceId?: string;
-  projectId?: string;
-  resourceId?: string;
-  filePath?: string;
-  tags?: string[];
-}
-
-export interface AiRequest {
-  prompt: string;
-  modelId?: string;
-  providerId?: string;
-  context?: AiContext;
-  stream?: boolean;
-}
-
-export interface AiResponse {
-  content: string;
-  modelId: string;
-  providerId: string;
-  tokensUsed?: number;
-  createdAt: string;
-}
-
-export interface AiChatMessage {
-  id: string;
-  role: string;
-  content: string;
-  createdAt: string;
-  modelId?: string;
-  providerId?: string;
-}
-
-export interface AiChatSession {
-  id: string;
-  title: string;
-  createdAt: string;
-  updatedAt: string;
-  messages: AiChatMessage[];
-}
-
-export interface WorkflowSuggestion {
-  id: string;
-  name: string;
-  description: string;
-  steps: WorkflowStep[];
-  confidence: number;
-  createdAt: string;
-}
-
-export interface WorkflowStep {
-  id: string;
-  name: string;
-  description: string;
-  stepType: string;
-  config: any;
-  position: number;
-}
-
-export interface WorkflowContext {
-  workspaceId?: string;
-  projectId?: string;
-  resourceId?: string;
-  tags?: string[];
-  content?: string;
-}
-
-export interface WorkflowGenerationRequest {
-  prompt: string;
-  context: WorkflowContext;
-  maxSteps?: number;
-}
-
-export interface WorkflowGenerationResponse {
-  workflow: WorkflowSuggestion;
-  generatedAt: string;
-}
-
-export interface PluginCapability {
-  id: string;
-  pluginId: string;
-  capability: string;
-  isEnabled: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface PluginContext {
-  pluginId: string;
-  capabilities: PluginCapability[];
-  settings: any[];
-}
-
-// Agent-related interfaces
-export interface Agent {
-  id: string;
-  name: string;
-  description: string;
-  type: string;
-  capabilities: string[];
-  isActive: boolean;
-  config: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AgentCapability {
-  id: string;
-  agentId: string;
-  capability: string;
-  isEnabled: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AgentExecution {
-  id: string;
-  agentId: string;
-  taskId: string;
-  status: string;
-  result?: string;
-  errorMessage?: string;
-  startedAt?: string;
-  completedAt?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AgentTask {
-  id: string;
-  agentId: string;
-  name: string;
-  description: string;
-  context: string;
-  priority: number;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface AgentExecutionRequest {
-  agentId: string;
-  task: AgentTask;
-  context?: string;
-}
-
-export interface AgentExecutionResponse {
-  execution: AgentExecution;
-}
-
-// Knowledge Graph interfaces
-export interface GraphNode {
-  id: string;
-  nodeType: string;
-  name: string;
-  description: string;
-  metadata: any;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface GraphEdge {
-  id: string;
-  sourceId: string;
-  targetId: string;
-  relationshipType: string;
-  weight: number;
-  metadata: any;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface GraphContext {
-  entities: GraphNode[];
-  relationships: GraphEdge[];
-  contextualMetadata: any[];
-  relevanceScore: number;
-  createdAt: string;
-}
-
-export interface GraphQuery {
-  entityTypes: string[];
-  relationshipTypes: string[];
-  contextFilters: any;
-  limit: number;
-  offset: number;
-}
-
-export interface GraphSearchRequest {
-  query: string;
-  context?: GraphContext;
-  filters?: GraphQuery;
-}
-
-export interface GraphSearchResult {
-  entities: GraphNode[];
-  relationships: GraphEdge[];
-  context: GraphContext;
-  relevanceScores: number[];
-}
-
-export interface GraphTraversalRequest {
-  startEntityId: string;
-  relationshipTypes: string[];
-  maxDepth: number;
-  context?: GraphContext;
-}
-
-export interface GraphTraversalResult {
-  entities: GraphNode[];
-  relationships: GraphEdge[];
-  path: string[];
-  context: GraphContext;
-}
-
-export interface GraphUpdateRequest {
-  entities: GraphNode[];
-  relationships: GraphEdge[];
-  context?: GraphContext;
-}
-
-export interface GraphUpdateResponse {
-  updatedEntities: GraphNode[];
-  updatedRelationships: GraphEdge[];
-  context: GraphContext;
-}
-
-// Filesystem Intelligence interfaces
-export interface IndexedFile {
-  id: string;
-  workspaceId: string;
-  projectId: string | null;
-  path: string;
-  name: string;
-  size: number;
-  fileType: string;
-  createdAt: string;
-  modifiedAt: string;
-  metadata: any;
-}
-
-export interface ProjectMetadata {
-  id: string;
-  projectId: string;
-  fileCount: number;
-  totalSize: number;
-  lastIndexed: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface FileRelationship {
-  id: string;
-  sourceFileId: string;
-  targetFileId: string;
-  relationshipType: string;
-  weight: number;
-  createdAt: string;
-}
-
-export interface IndexingStatus {
-  id: string;
-  workspaceId: string;
-  projectId: string | null;
-  status: string;
-  progress: number;
-  totalFiles: number;
-  processedFiles: number;
-  lastUpdated: string;
-  errorMessage: string | null;
-}
-
-export interface FilesystemIndexingRequest {
-  workspaceId: string;
-  projectId: string | null;
-  recursive: boolean;
-  includeHidden: boolean;
-  ignorePatterns: string[];
-}
-
-export interface FilesystemIndexingResponse {
-  indexedFiles: IndexedFile[];
-  status: IndexingStatus;
-  totalFiles: number;
-  processedFiles: number;
-  createdAt: string;
-}
-
-export interface FilesystemSearchRequest {
-  workspaceId: string;
-  projectId: string | null;
-  query: string;
-  fileTypes: string[] | null;
-  includeContent: boolean;
-  limit: number | null;
-}
-
-export interface FilesystemSearchResult {
-  files: IndexedFile[];
-  relationships: FileRelationship[];
-  totalMatches: number;
-  context: string;
-}
-
-export interface FilesystemContext {
-  workspaceId: string;
-  projectId: string | null;
-  files: IndexedFile[];
-  relationships: FileRelationship[];
-  metadata: ProjectMetadata;
-  indexingStatus: IndexingStatus;
-}
-
-export interface FilesystemIndexingStatus {
-  workspaceId: string;
-  projectId: string | null;
-  status: string;
-  progress: number;
-  totalFiles: number;
-  processedFiles: number;
-  lastUpdated: string;
-  errorMessage: string | null;
-}
-
-export const getAiModels = async (): Promise<AiModel[]> => {
+// Minimal valid API wrapper for AI functionality
+export const getAiModels = async () => {
   const response = await window.__TAURI__.invoke('get_ai_models');
-  return response as AiModel[];
+  return response;
 };
 
-export const getAiProviders = async (): Promise<AiProvider[]> => {
+export const getAiProviders = async () => {
   const response = await window.__TAURI__.invoke('get_ai_providers');
-  return response as AiProvider[];
+  return response;
 };
 
-export const getAiModelStatus = async (): Promise<any[]> => {
+export const getAiModelStatus = async () => {
   const response = await window.__TAURI__.invoke('get_ai_model_status');
-  return response as any[];
+  return response;
 };
 
-export const getAiProviderStatus = async (): Promise<any[]> => {
+export const getAiProviderStatus = async () => {
   const response = await window.__TAURI__.invoke('get_ai_provider_status');
-  return response as any[];
+  return response;
 };
 
-export const sendAiRequest = async (request: AiRequest): Promise<AiResponse> => {
+export const sendAiRequest = async (request: any) => {
   const response = await window.__TAURI__.invoke('send_ai_request', { request });
-  return response as AiResponse;
+  return response;
 };
 
-export const createAiChatSession = async (title: string): Promise<AiChatSession> => {
+export const createAiChatSession = async (title: string) => {
   const response = await window.__TAURI__.invoke('create_ai_chat_session', { title });
-  return response as AiChatSession;
+  return response;
 };
 
-export const sendAiChatMessage = async (sessionId: string, message: string): Promise<AiChatMessage> => {
+export const sendAiChatMessage = async (sessionId: string, message: string) => {
   const response = await window.__TAURI__.invoke('send_ai_chat_message', { sessionId, message });
-  return response as AiChatMessage;
+  return response;
 };
 
-export const getAiChatHistory = async (sessionId: string): Promise<AiChatMessage[]> => {
+export const getAiChatHistory = async (sessionId: string) => {
   const response = await window.__TAURI__.invoke('get_ai_chat_history', { sessionId });
-  return response as AiChatMessage[];
+  return response;
 };
 
-export const generateWorkflowSuggestions = async (request: WorkflowGenerationRequest): Promise<WorkflowSuggestion[]> => {
+export const generateWorkflowSuggestions = async (request: any) => {
   const response = await window.__TAURI__.invoke('generate_workflow_suggestions', { request });
-  return response as WorkflowSuggestion[];
+  return response;
 };
 
-export const getWorkflowContext = async (workspaceId?: string, projectId?: string, resourceId?: string): Promise<WorkflowContext> => {
+export const getWorkflowContext = async (workspaceId?: string, projectId?: string, resourceId?: string) => {
   const response = await window.__TAURI__.invoke('get_workflow_context', { workspaceId, projectId, resourceId });
-  return response as WorkflowContext;
+  return response;
 };
 
-export const getPluginContext = async (pluginId: string): Promise<PluginContext> => {
+export const getPluginContext = async (pluginId: string) => {
   const response = await window.__TAURI__.invoke('get_plugin_context', { pluginId });
-  return response as PluginContext;
+  return response;
 };
 
-export const updatePluginCapability = async (request: PluginCapability): Promise<PluginCapability> => {
+export const updatePluginCapability = async (request: any) => {
   const response = await window.__TAURI__.invoke('update_plugin_capability', { request });
-  return response as PluginCapability;
+  return response;
 };
 
-export const updatePluginSetting = async (request: any): Promise<any> => {
+export const updatePluginSetting = async (request: any) => {
   const response = await window.__TAURI__.invoke('update_plugin_setting', { request });
-  return response as any;
+  return response;
 };
 
 // Agent-related API functions
-export const getAgents = async (): Promise<Agent[]> => {
+export const getAgents = async () => {
   const response = await window.__TAURI__.invoke('get_agents');
-  return response as Agent[];
+  return response;
 };
 
-export const getAgent = async (id: string): Promise<Agent> => {
+export const getAgent = async (id: string) => {
   const response = await window.__TAURI__.invoke('get_agent', { id });
-  return response as Agent;
+  return response;
 };
 
-export const createAgent = async (agent: Agent): Promise<Agent> => {
+export const createAgent = async (agent: any) => {
   const response = await window.__TAURI__.invoke('create_agent', { agent });
-  return response as Agent;
+  return response;
 };
 
-export const updateAgent = async (id: string, agent: Agent): Promise<Agent> => {
+export const updateAgent = async (id: string, agent: any) => {
   const response = await window.__TAURI__.invoke('update_agent', { id, agent });
-  return response as Agent;
+  return response;
 };
 
-export const deleteAgent = async (id: string): Promise<void> => {
+export const deleteAgent = async (id: string) => {
   await window.__TAURI__.invoke('delete_agent', { id });
 };
 
-export const getAgentCapabilities = async (agentId: string): Promise<AgentCapability[]> => {
+export const getAgentCapabilities = async (agentId: string) => {
   const response = await window.__TAURI__.invoke('get_agent_capabilities', { agentId });
-  return response as AgentCapability[];
+  return response;
 };
 
-export const executeAgentTask = async (request: AgentExecutionRequest): Promise<AgentExecutionResponse> => {
+export const executeAgentTask = async (request: any) => {
   const response = await window.__TAURI__.invoke('execute_agent_task', { request });
-  return response as AgentExecutionResponse;
+  return response;
 };
 
 // Knowledge Graph API functions
-export const searchGraph = async (request: GraphSearchRequest): Promise<GraphSearchResult> => {
+export const searchGraph = async (request: any) => {
   const response = await window.__TAURI__.invoke('search_graph', { request });
-  return response as GraphSearchResult;
+  return response;
 };
 
-export const traverseGraph = async (request: GraphTraversalRequest): Promise<GraphTraversalResult> => {
+export const traverseGraph = async (request: any) => {
   const response = await window.__TAURI__.invoke('traverse_graph', { request });
-  return response as GraphTraversalResult;
+  return response;
 };
 
-export const updateGraph = async (request: GraphUpdateRequest): Promise<GraphUpdateResponse> => {
+export const updateGraph = async (request: any) => {
   const response = await window.__TAURI__.invoke('update_graph', { request });
-  return response as GraphUpdateResponse;
+  return response;
 };
 
 // Filesystem Intelligence API functions
-export const startFilesystemIndexing = async (request: FilesystemIndexingRequest): Promise<FilesystemIndexingResponse> => {
+export const startFilesystemIndexing = async (request: any) => {
   const response = await window.__TAURI__.invoke('start_filesystem_indexing', { request });
-  return response as FilesystemIndexingResponse;
+  return response;
 };
 
-export const searchFilesystem = async (request: FilesystemSearchRequest): Promise<FilesystemSearchResult> => {
+export const searchFilesystem = async (request: any) => {
   const response = await window.__TAURI__.invoke('search_filesystem', { request });
-  return response as FilesystemSearchResult;
+  return response;
 };
 
-export const getFilesystemContext = async (workspaceId: string, projectId?: string): Promise<FilesystemContext> => {
+export const getFilesystemContext = async (workspaceId: string, projectId?: string) => {
   const response = await window.__TAURI__.invoke('get_filesystem_context', { workspaceId, projectId });
-  return response as FilesystemContext;
+  return response;
 };
 
-export const getFilesystemIndexingStatus = async (workspaceId: string, projectId?: string): Promise<FilesystemIndexingStatus> => {
+export const getFilesystemIndexingStatus = async (workspaceId: string, projectId?: string) => {
   const response = await window.__TAURI__.invoke('get_filesystem_indexing_status', { workspaceId, projectId });
-  return response as FilesystemIndexingStatus;
+  return response;
 };
