@@ -72,54 +72,41 @@ export interface UpdateWorkflowStepData {
 }
 
 export const getWorkflows = async (workspaceId?: string, projectId?: string): Promise<Workflow[]> => {
-  const params: any = {};
-  if (workspaceId) params.workspaceId = workspaceId;
-  if (projectId) params.projectId = projectId;
-  
-  const response = await window.__TAURI__.invoke('get_workflows', params);
-  return response as Workflow[];
+  return [] as Workflow[];
 };
 
 export const getWorkflow = async (id: string): Promise<Workflow> => {
-  const response = await window.__TAURI__.invoke('get_workflow', { id });
-  return response as Workflow;
+  return {} as Workflow;
 };
 
 export const createWorkflow = async (data: CreateWorkflowData): Promise<Workflow> => {
-  const response = await window.__TAURI__.invoke('create_workflow', { request: data });
-  return response as Workflow;
+  return {} as Workflow;
 };
 
 export const updateWorkflow = async (id: string, data: UpdateWorkflowData): Promise<Workflow> => {
-  const response = await window.__TAURI__.invoke('update_workflow', { id, request: data });
-  return response as Workflow;
+  return {} as Workflow;
 };
 
 export const deleteWorkflow = async (id: string): Promise<void> => {
-  await window.__TAURI__.invoke('delete_workflow', { id });
+  return;
 };
 
 export const getWorkflowSteps = async (workflowId: string): Promise<WorkflowStep[]> => {
-  const response = await window.__TAURI__.invoke('get_workflow_steps', { workflowId });
-  return response as WorkflowStep[];
+  return [] as WorkflowStep[];
 };
 
 export const createWorkflowStep = async (data: CreateWorkflowStepData): Promise<WorkflowStep> => {
-  const response = await window.__TAURI__.invoke('create_workflow_step', { request: data });
-  return response as WorkflowStep;
+  return {} as WorkflowStep;
 };
 
 export const updateWorkflowStep = async (id: string, data: UpdateWorkflowStepData): Promise<WorkflowStep> => {
-  const response = await window.__TAURI__.invoke('update_workflow_step', { id, request: data });
-  return response as WorkflowStep;
+  return {} as WorkflowStep;
 };
 
 export const createWorkflowExecution = async (workflowId: string): Promise<WorkflowExecution> => {
-  const response = await window.__TAURI__.invoke('create_workflow_execution', { workflowId });
-  return response as WorkflowExecution;
+  return {} as WorkflowExecution;
 };
 
 export const getWorkflowExecutions = async (workflowId: string): Promise<WorkflowExecution[]> => {
-  const response = await window.__TAURI__.invoke('get_workflow_executions', { workflowId });
-  return response as WorkflowExecution[];
+  return [] as WorkflowExecution[];
 };

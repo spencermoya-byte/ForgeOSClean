@@ -25,25 +25,21 @@ export interface ResourceFilter {
 }
 
 export const getResource = async (id: string): Promise<Resource> => {
-  const response = await window.__TAURI__.invoke('get_resource', { id });
-  return response as Resource;
+  return {} as Resource;
 };
 
 export const getResources = async (filter?: ResourceFilter): Promise<{ resources: Resource[], total: number }> => {
-  const response = await window.__TAURI__.invoke('get_resources', filter || {});
-  return response as { resources: Resource[], total: number };
+  return { resources: [], total: 0 };
 };
 
 export const createResource = async (data: CreateResourceData): Promise<Resource> => {
-  const response = await window.__TAURI__.invoke('create_resource', { request: data });
-  return response as Resource;
+  return {} as Resource;
 };
 
 export const updateResource = async (id: string, data: UpdateResourceData): Promise<Resource> => {
-  const response = await window.__TAURI__.invoke('update_resource', { id, request: data });
-  return response as Resource;
+  return {} as Resource;
 };
 
 export const deleteResource = async (id: string): Promise<void> => {
-  await window.__TAURI__.invoke('delete_resource', { id });
+  return;
 };
