@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getWorkspaces, setActiveWorkspace, getActiveWorkspace } from '../../api/workspace';
-import { getProjects } from '../../api/project';
 
 interface WorkspaceSwitcherProps {
   className?: string;
