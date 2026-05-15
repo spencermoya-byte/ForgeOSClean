@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 import * as userApi from '../api/user';
 
 interface AuthContextType {
@@ -37,7 +37,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check for session on initial load
     const token = localStorage.getItem('token');
     if (token) {
-      userApi.setAuthToken(token);
       getUser().then((userData) => {
         setUser(userData);
         setIsAuthenticated(true);
@@ -60,7 +59,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
-    userApi.removeAuthToken();
     setUser(null);
     setIsAuthenticated(false);
   };
@@ -96,4 +94,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
+};
+
+export const useAuth = () => {
+  const context = React.useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
+  return context;
 };
