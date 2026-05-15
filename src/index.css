@@ -126,3 +126,16 @@ code {
 .recovery-status-text {
   @apply text-white;
 }
+
+/* Navigation button styles */
+.nav-row {
+  @apply flex flex-wrap gap-4;
+}
+
+.nav-button {
+  @apply bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 text-center;
+}
+
+.nav-button.active {
+  @apply bg-blue-600 text-white;
+}

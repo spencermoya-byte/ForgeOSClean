@@ -13,26 +13,26 @@ const RecoveryShell = () => {
         <div className="bg-gray-800 rounded-lg p-6 mb-6">
           <h2 className="text-xl font-bold mb-4">Navigation</h2>
           <p className="text-gray-300 mb-4">This is a recovery shell showing that the frontend is working.</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <a href="#/dashboard" className="bg-gray-700 hover:bg-gray-600 p-4 rounded-lg transition duration-200 text-center">
+          <div className="nav-row">
+            <a href="#/dashboard" className="nav-button">
               Dashboard
             </a>
-            <a href="#/marketplace" className="bg-gray-700 hover:bg-gray-600 p-4 rounded-lg transition duration-200 text-center">
+            <a href="#/marketplace" className="nav-button">
               Marketplace
             </a>
-            <a href="#/ai" className="bg-gray-700 hover:bg-gray-600 p-4 rounded-lg transition duration-200 text-center">
+            <a href="#/ai" className="nav-button">
               AI
             </a>
-            <a href="#/projects" className="bg-gray-700 hover:bg-gray-600 p-4 rounded-lg transition duration-200 text-center">
+            <a href="#/projects" className="nav-button">
               Projects
             </a>
-            <a href="#/workspaces" className="bg-gray-700 hover:bg-gray-600 p-4 rounded-lg transition duration-200 text-center">
+            <a href="#/workspaces" className="nav-button">
               Workspaces
             </a>
-            <a href="#/resources" className="bg-gray-700 hover:bg-gray-600 p-4 rounded-lg transition duration-200 text-center">
+            <a href="#/resources" className="nav-button">
               Resources
             </a>
-            <a href="#/settings" className="bg-gray-700 hover:bg-gray-600 p-4 rounded-lg transition duration-200 text-center">
+            <a href="#/settings" className="nav-button">
               Settings
             </a>
           </div>
