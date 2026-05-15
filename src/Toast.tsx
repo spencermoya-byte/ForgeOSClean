@@ -12,7 +12,7 @@ export const useToast = () => useContext(ToastContext);
 
 function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
-    <ToastContext.Provider value={{ addToast: toast.error }}>
+    <ToastContext.Provider value={{ addToast: (message) => toast.error(message) }}>
       {children}
     </ToastContext.Provider>
   );
