@@ -1,11 +1,11 @@
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm as useReactHookForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { ZodTypeAny } from "zod";
 
-const useCustomForm = <T extends z.ZodTypeAny>(schema: T) => {
-  return useForm<z.infer<T>>({
-    resolver: zodResolver(schema),
+export const useForm = (schema: ZodTypeAny) => {
+  return useReactHookForm<any>({
+    resolver: zodResolver(schema as any),
   });
 };
 
-export default useCustomForm;
+export default useForm;
