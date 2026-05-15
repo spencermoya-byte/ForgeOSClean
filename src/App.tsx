@@ -13,29 +13,7 @@ const RecoveryShell = () => {
         <div className="recovery-nav-card">
           <h2 className="text-xl font-bold mb-4">Navigation</h2>
           <p className="text-gray-300 mb-4">This is a recovery shell showing that the frontend is working.</p>
-          <div className="nav-row">
-            <a href="#/dashboard" className="nav-button">
-              Dashboard
-            </a>
-            <a href="#/marketplace" className="nav-button">
-              Marketplace
-            </a>
-            <a href="#/ai" className="nav-button">
-              AI
-            </a>
-            <a href="#/projects" className="nav-button">
-              Projects
-            </a>
-            <a href="#/workspaces" className="nav-button">
-              Workspaces
-            </a>
-            <a href="#/resources" className="nav-button">
-              Resources
-            </a>
-            <a href="#/settings" className="nav-button">
-              Settings
-            </a>
-          </div>
+          {/* Navigation buttons removed from main content */}
         </div>
         
         <div className="recovery-status-card">
@@ -103,7 +81,7 @@ const App: React.FC = () => {
             <p className="recovery-page-text mb-4">Placeholder page — system restoration in progress</p>
             <p className="recovery-page-text mb-6">This section will display the marketplace functionality once restored.</p>
             <button 
-              onClick={() => window.location.hash = '#/dashboard'}
+              onClick={() => handleNavigation('dashboard')}
               className="recovery-button"
             >
               Back to Dashboard
@@ -117,7 +95,7 @@ const App: React.FC = () => {
             <p className="recovery-page-text mb-4">Placeholder page — system restoration in progress</p>
             <p className="recovery-page-text mb-6">This section will display AI functionality once restored.</p>
             <button 
-              onClick={() => window.location.hash = '#/dashboard'}
+              onClick={() => handleNavigation('dashboard')}
               className="recovery-button"
             >
               Back to Dashboard
@@ -131,7 +109,7 @@ const App: React.FC = () => {
             <p className="recovery-page-text mb-4">Placeholder page — system restoration in progress</p>
             <p className="recovery-page-text mb-6">This section will display project management functionality once restored.</p>
             <button 
-              onClick={() => window.location.hash = '#/dashboard'}
+              onClick={() => handleNavigation('dashboard')}
               className="recovery-button"
             >
               Back to Dashboard
@@ -145,7 +123,7 @@ const App: React.FC = () => {
             <p className="recovery-page-text mb-4">Placeholder page — system restoration in progress</p>
             <p className="recovery-page-text mb-6">This section will display workspace management functionality once restored.</p>
             <button 
-              onClick={() => window.location.hash = '#/dashboard'}
+              onClick={() => handleNavigation('dashboard')}
               className="recovery-button"
             >
               Back to Dashboard
@@ -159,7 +137,7 @@ const App: React.FC = () => {
             <p className="recovery-page-text mb-4">Placeholder page — system restoration in progress</p>
             <p className="recovery-page-text mb-6">This section will display resource management functionality once restored.</p>
             <button 
-              onClick={() => window.location.hash = '#/dashboard'}
+              onClick={() => handleNavigation('dashboard')}
               className="recovery-button"
             >
               Back to Dashboard
@@ -173,7 +151,7 @@ const App: React.FC = () => {
             <p className="recovery-page-text mb-4">Placeholder page — system restoration in progress</p>
             <p className="recovery-page-text mb-6">This section will display application settings once restored.</p>
             <button 
-              onClick={() => window.location.hash = '#/dashboard'}
+              onClick={() => handleNavigation('dashboard')}
               className="recovery-button"
             >
               Back to Dashboard
@@ -186,7 +164,7 @@ const App: React.FC = () => {
             <h1 className="recovery-page-title">Page Not Found</h1>
             <p className="recovery-page-text mb-4">The page you are looking for does not exist.</p>
             <button 
-              onClick={() => window.location.hash = '#/dashboard'}
+              onClick={() => handleNavigation('dashboard')}
               className="recovery-button"
             >
               Back to Dashboard
