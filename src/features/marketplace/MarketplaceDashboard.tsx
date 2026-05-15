@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const MarketplaceDashboard: React.FC = () => {
   const [isInstalling, setIsInstalling] = useState<string | null>(null);
@@ -9,7 +8,6 @@ const MarketplaceDashboard: React.FC = () => {
   const [updateProgress, setUpdateProgress] = useState<Record<string, { progress: number; status: string }>>({});
   const [installedExtensions, setInstalledExtensions] = useState<any[]>([]);
   const [discoverExtensions, setDiscoverExtensions] = useState<any[]>([]);
-  const navigate = useNavigate();
 
   // Simulate installation with proper state management
   const installExtension = useCallback((extensionId: string) => {

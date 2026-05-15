@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../auth/authContext';
 
 const SettingsPage: React.FC = () => {
-  const { user, updatePassword } = useAuth();
+  const { updatePassword } = useAuth();
   const [newPassword, setNewPassword] = useState('');
 
   const handleUpdatePassword = async () => {

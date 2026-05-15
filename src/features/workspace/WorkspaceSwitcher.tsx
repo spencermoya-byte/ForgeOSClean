@@ -10,7 +10,6 @@ interface WorkspaceSwitcherProps {
 const WorkspaceSwitcher: React.FC<WorkspaceSwitcherProps> = ({ className = '' }) => {
   const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [activeWorkspace, setActiveWorkspaceState] = useState<any>(null);
-  const [projects, setProjects] = useState<any[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -22,11 +21,6 @@ const WorkspaceSwitcher: React.FC<WorkspaceSwitcherProps> = ({ className = '' })
         
         const activeWorkspace = await getActiveWorkspace();
         setActiveWorkspaceState(activeWorkspace);
-        
-        if (activeWorkspace) {
-          const fetchedProjects = await getProjects(activeWorkspace.id);
-          setProjects(fetchedProjects);
-        }
       } catch (error) {
         console.error('Failed to fetch workspace data:', error);
       }

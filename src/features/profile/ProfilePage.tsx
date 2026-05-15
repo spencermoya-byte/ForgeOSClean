@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/authContext';
 
 const ProfilePage: React.FC = () => {
-  const { user, getUserProfile, updateUserProfile } = useAuth();
+  const { user, updateUserProfile } = useAuth();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
 
