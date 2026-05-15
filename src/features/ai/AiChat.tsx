@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { createAiChatSession, sendAiChatMessage, getAiChatHistory } from '../../api/ai';
+import { createAiChatSession } from '../../api/ai';
 
 const AiChat: React.FC = () => {
   const [messages, setMessages] = useState<any[]>([]);
@@ -13,7 +13,8 @@ const AiChat: React.FC = () => {
     const initializeSession = async () => {
       try {
         const session = await createAiChatSession('New Chat');
-        setSessionId(session.id);
+        const typedSession = session as { id: string };
+        setSessionId(typedSession.id);
         setMessages([]);
       } catch (error) {
         console.error('Failed to initialize chat session:', error);
