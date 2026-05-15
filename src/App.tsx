@@ -5,7 +5,7 @@ const RecoveryShell = () => {
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col">
       <header className="bg-gray-800 p-4 shadow-lg">
-        <h1 className="text-3xl font-bold text-center">ForgeOS Recovery Shell</h1>
+        <h1 className="text-3xl font-bold text-center">ForgeOS Recovery Shell TEST</h1>
         <p className="text-green-400 text-center mt-2">React is rendering successfully</p>
       </header>
       
