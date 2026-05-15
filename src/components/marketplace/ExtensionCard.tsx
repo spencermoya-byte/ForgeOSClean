@@ -6,13 +6,13 @@ type ExtensionCardProps = {
 
 const ExtensionCard = ({ extension }: ExtensionCardProps) => {
   return (
-    <div className="extension-card">
-      <div className="extension-header">
-        <h3>{extension?.name || 'Extension Name'}</h3>
-      </div>
-      <div className="extension-body">
-        <p>{extension?.description || 'Extension description'}</p>
-      </div>
+    <div className="rounded-lg border border-gray-700 bg-gray-800 p-4">
+      <h3 className="text-lg font-semibold text-white">
+        {extension?.name || "Untitled Extension"}
+      </h3>
+      <p className="text-sm text-gray-400">
+        {extension?.description || "No description available."}
+      </p>
     </div>
   );
 };
