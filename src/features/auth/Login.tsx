@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../../auth/authContext';
+import { useNavigate } from 'react-router-dom';
 
 const loginSchema = z.object({
   username: z.string().min(1, 'Username is required'),
@@ -16,10 +17,18 @@ const Login: React.FC = () => {
     resolver: zodResolver(loginSchema),
   });
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const onSubmit = (data: LoginInput) => {
     // Simulate login
     login(data.username, data.password);
+  };
+
+  const handleDevLogin = () => {
+    // Temporary dev mode bypass
+    localStorage.setItem('forgeos_dev_auth', 'true');
+    // Navigate to dashboard
+    navigate('/dashboard');
   };
 
   return (
@@ -49,6 +58,15 @@ const Login: React.FC = () => {
         <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-700">
           Login
         </button>
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={handleDevLogin}
+            className="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-700"
+          >
+            Continue in Dev Mode
+          </button>
+        </div>
       </form>
     </div>
   );

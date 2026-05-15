@@ -9,6 +9,13 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isAuthenticated } = useAuth();
   
+  // Check for dev mode bypass
+  const isDevMode = localStorage.getItem('forgeos_dev_auth') === 'true';
+  
+  if (isDevMode) {
+    return <>{children}</>;
+  }
+  
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };
 

@@ -34,6 +34,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<any | null>(null);
 
   useEffect(() => {
+    // Check for dev mode bypass
+    const isDevMode = localStorage.getItem('forgeos_dev_auth') === 'true';
+    if (isDevMode) {
+      setIsAuthenticated(true);
+      setUser({
+        username: 'devuser',
+        email: 'dev@example.com'
+      });
+      return;
+    }
+    
     // Check for session on initial load
     const token = localStorage.getItem('token');
     if (token) {
@@ -59,6 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('forgeos_dev_auth');
     setUser(null);
     setIsAuthenticated(false);
   };
