@@ -93,7 +93,9 @@ const MarketplaceDashboard: React.FC = () => {
   // ... rest of existing code ...
   
   return (
-    // ... existing JSX ...
+  <div>
+    <h1>Marketplace</h1>
+  </div>
   );
 };
 
