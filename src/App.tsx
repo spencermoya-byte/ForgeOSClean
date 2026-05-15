@@ -62,12 +62,23 @@ const RecoveryShell = () => {
 
 const App: React.FC = () => {
   // Simple hash-based routing
-  const [currentRoute, setCurrentRoute] = React.useState(window.location.hash.slice(1) || 'dashboard');
+  const [currentRoute, setCurrentRoute] = React.useState<string>('dashboard');
   
   React.useEffect(() => {
     const handleHashChange = () => {
-      setCurrentRoute(window.location.hash.slice(1) || 'dashboard');
+      let hash = window.location.hash.slice(1) || 'dashboard';
+      
+      // Normalize empty or root hashes to dashboard
+      if (hash === '' || hash === '/' || hash === '#/' || hash === '#') {
+        hash = 'dashboard';
+        window.location.hash = '#/dashboard';
+      }
+      
+      setCurrentRoute(hash);
     };
+    
+    // Initialize on load
+    handleHashChange();
     
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
