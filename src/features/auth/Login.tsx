@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '../../auth/authContext';
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email'),
+  username: z.string().min(1, 'Username is required'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
@@ -19,7 +19,7 @@ const Login: React.FC = () => {
 
   const onSubmit = (data: LoginInput) => {
     // Simulate login
-    login(data);
+    login(data.username, data.password);
   };
 
   return (
@@ -27,14 +27,14 @@ const Login: React.FC = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-xl font-bold mb-4">Login</h2>
         <div className="mb-4">
-          <label htmlFor="email" className="block text-sm font-medium text-white">Email</label>
+          <label htmlFor="username" className="block text-sm font-medium text-white">Username</label>
           <input
-            id="email"
-            type="email"
-            {...register('email')}
+            id="username"
+            type="text"
+            {...register('username')}
             className="mt-1 block w-full p-2 border rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+          {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username.message}</p>}
         </div>
         <div className="mb-4">
           <label htmlFor="password" className="block text-sm font-medium text-white">Password</label>

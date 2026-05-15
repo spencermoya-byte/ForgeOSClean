@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from '../api/user';
+import * as userApi from '../api/user';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -23,7 +23,7 @@ const AuthContext = createContext<AuthContextType>({
   updatePassword: async () => {},
 });
 
-export const useAuth = () => useContext(AuthContext);
+export { AuthContext };
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check for session on initial load
     const token = localStorage.getItem('token');
     if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      userApi.setAuthToken(token);
       getUser().then((userData) => {
         setUser(userData);
         setIsAuthenticated(true);
@@ -48,42 +48,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (username: string, password: string) => {
-    await axios.login(username, password);
+    await userApi.login(username, password);
     const userData = await getUser();
     setUser(userData);
     setIsAuthenticated(true);
   };
 
   const register = async (username: string, password: string) => {
-    await axios.register(username, password);
+    await userApi.register(username, password);
   };
 
   const logout = () => {
     localStorage.removeItem('token');
-    delete axios.defaults.headers.common['Authorization'];
+    userApi.removeAuthToken();
     setUser(null);
     setIsAuthenticated(false);
   };
 
   const getUserProfile = async () => {
-    const profileData = await axios.getUserProfile();
+    const profileData = await userApi.getUserProfile();
     setUser(profileData);
     return profileData;
   };
 
   const updateUserProfile = async (newProfile: any) => {
-    const updatedProfile = await axios.updateUserProfile(newProfile);
+    const updatedProfile = await userApi.updateUserProfile(newProfile);
     setUser(updatedProfile);
     return updatedProfile;
   };
 
   const updatePassword = async (newPassword: string) => {
-    await axios.updatePassword(newPassword);
+    await userApi.updatePassword(newPassword);
   };
 
   const getUser = async () => {
     try {
-      const userData = await axios.getUserProfile();
+      const userData = await userApi.getUserProfile();
       return userData;
     } catch (error) {
       console.error('Failed to get user:', error);

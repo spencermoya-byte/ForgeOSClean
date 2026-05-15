@@ -1,8 +1,8 @@
 import { useQuery } from 'react-query';
-import userApi from '../api/user';
+import * as userApi from '../api/user';
 
 const useUser = () => {
-  return useQuery('user', userApi.getUser, {
+  return useQuery('user', userApi.getUserProfile, {
     staleTime: Infinity,
     refetchOnWindowFocus: false,
   });
