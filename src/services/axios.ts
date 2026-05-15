@@ -1,29 +1,22 @@
-import axios, { AxiosInstance } from 'axios';
+import axios from "axios";
 
-const instance: AxiosInstance = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'https://jsonplaceholder.typicode.com',
-  timeout: 10000,
+const api = axios.create({
+  baseURL:
+    import.meta.env.VITE_API_URL ||
+    "https://jsonplaceholder.typicode.com",
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-instance.interceptors.request.use(
-  (config) => {
-    // Add any request headers here
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
+api.interceptors.request.use(
+  (config) => config,
+  (error) => Promise.reject(error)
 );
 
-instance.interceptors.response.use(
+api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-export default instance;
+export default api;
