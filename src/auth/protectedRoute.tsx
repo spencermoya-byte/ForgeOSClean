@@ -16,7 +16,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     return <>{children}</>;
   }
   
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+  // If not authenticated and not in dev mode, redirect to login
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;
