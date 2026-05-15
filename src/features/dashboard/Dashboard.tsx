@@ -15,35 +15,32 @@ const Dashboard: React.FC = () => {
   const [aiModels, setAiModels] = useState<any[]>([]);
   const [aiProviders, setAiProviders] = useState<any[]>([]);
 
+  // Mock data for dev mode
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const fetchedWorkspaces = await getWorkspaces();
-        setWorkspaces(fetchedWorkspaces);
-        
-        const activeWorkspace = await getActiveWorkspace();
-        setActiveWorkspace(activeWorkspace);
-        
-        if (activeWorkspace) {
-          const fetchedProjects = await getProjects(activeWorkspace.id);
-          setProjects(fetchedProjects);
-          
-          const activeProject = await getActiveProject();
-          setActiveProject(activeProject);
-        }
-        
-        // Fetch AI data
-        const fetchedModels = await getAiModels();
-        setAiModels(fetchedModels as any[]);
-        
-        const fetchedProviders = await getAiProviders();
-        setAiProviders(fetchedProviders as any[]);
-      } catch (error) {
-        console.error('Failed to fetch dashboard data:', error);
-      }
-    };
-
-    fetchDashboardData();
+    // Simulate fetching data in dev mode
+    setWorkspaces([
+      { id: '1', name: 'Workspace 1', description: 'First workspace', path: '/workspace1' },
+      { id: '2', name: 'Workspace 2', description: 'Second workspace', path: '/workspace2' }
+    ]);
+    
+    setActiveWorkspace({ id: '1', name: 'Workspace 1' });
+    
+    setProjects([
+      { id: '1', name: 'Project 1', description: 'First project' },
+      { id: '2', name: 'Project 2', description: 'Second project' }
+    ]);
+    
+    setActiveProject({ id: '1', name: 'Project 1' });
+    
+    setAiModels([
+      { id: '1', name: 'Model 1', description: 'First AI model' },
+      { id: '2', name: 'Model 2', description: 'Second AI model' }
+    ]);
+    
+    setAiProviders([
+      { id: '1', name: 'Provider 1', type: 'API' },
+      { id: '2', name: 'Provider 2', type: 'Local' }
+    ]);
   }, []);
 
   return (
@@ -52,6 +49,7 @@ const Dashboard: React.FC = () => {
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold">ForgeOS Dashboard</h1>
           <div className="flex items-center space-x-4">
+            <span className="text-green-400">Dev Mode Active</span>
             <span>Hello, {user?.username || 'User'}</span>
             <button
               onClick={logout}
@@ -69,7 +67,13 @@ const Dashboard: React.FC = () => {
           <p className="text-gray-400 mb-4">Active Project: {activeProject?.name || 'None'}</p>
         </div>
 
-        {/* Stats section to use the unused variables */}
+        {/* Dev mode notice */}
+        <div className="bg-yellow-900 border border-yellow-700 text-yellow-300 p-4 rounded-lg mb-6">
+          <p className="font-semibold">Development Mode</p>
+          <p className="text-sm">This is a development build with placeholder data. Real functionality will be implemented later.</p>
+        </div>
+
+        {/* Stats section */}
         <div className="bg-gray-800 p-4 rounded-lg mb-6">
           <h3 className="text-lg font-semibold mb-2">Dashboard Stats</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -133,6 +137,29 @@ const Dashboard: React.FC = () => {
           >
             <h2 className="text-xl font-bold mb-2">Marketplace</h2>
             <p className="text-gray-300">Browse and manage extensions</p>
+          </div>
+        </div>
+
+        {/* Placeholder cards for key sections */}
+        <div className="mt-8">
+          <h3 className="text-xl font-bold mb-4">Quick Access</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <h4 className="font-semibold text-white mb-2">Projects</h4>
+              <p className="text-sm text-gray-300">{projects.length} projects</p>
+            </div>
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <h4 className="font-semibold text-white mb-2">Workspaces</h4>
+              <p className="text-sm text-gray-300">{workspaces.length} workspaces</p>
+            </div>
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <h4 className="font-semibold text-white mb-2">AI Models</h4>
+              <p className="text-sm text-gray-300">{aiModels.length} models</p>
+            </div>
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <h4 className="font-semibold text-white mb-2">Plugins</h4>
+              <p className="text-sm text-gray-300">0 plugins</p>
+            </div>
           </div>
         </div>
       </main>
