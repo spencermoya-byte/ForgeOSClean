@@ -1,5 +1,3 @@
-import axios from './axios';
-
 export interface Plugin {
   id: string;
   name: string;

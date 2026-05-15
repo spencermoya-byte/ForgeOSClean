@@ -1,5 +1,3 @@
-import axios from './axios';
-
 export interface Workspace {
   id: string;
   name: string;
