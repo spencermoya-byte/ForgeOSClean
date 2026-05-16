@@ -1,15 +1,16 @@
 import React from "react";
 import "./App.css";
+import { LayoutGrid, Sparkles, UserRound } from "lucide-react";
 
 type Route = "create" | "apps" | "account" | "workspace";
 type WorkspaceTab = "preview" | "ai-builder" | "plugins";
 
 const quickStarts = ["Website", "Desktop App", "AI Tool", "Automation", "API", "Game", "Utility"];
 
-const bottomNav: Array<{ route: Route; label: string; icon: string }> = [
-  { route: "apps", label: "Apps", icon: "▦" },
-  { route: "create", label: "Create", icon: "⌂" },
-  { route: "account", label: "Account", icon: "♙" },
+const bottomNav: Array<{ route: Route; label: string; icon: React.ReactNode }> = [
+  { route: "apps", label: "Apps", icon: <LayoutGrid size={20} strokeWidth={2} /> },
+  { route: "create", label: "Create", icon: <Sparkles size={20} strokeWidth={2} /> },
+  { route: "account", label: "Account", icon: <UserRound size={20} strokeWidth={2} /> },
 ];
 
 const workspaceTabs: Array<{ key: WorkspaceTab; label: string }> = [
@@ -88,7 +89,7 @@ export default function App() {
                 <button type="button" className="soft-button" onClick={() => action("Plan")}>
                   Plan
                 </button>
-                <button type="button" className="send-button" onClick={() => openWorkspace("Opening ForgeOS workspace...")}>
+                <button type="button" className="send-button" onClick={() => openWorkspace("Opening ForgeOS workspace.~")}>
                   →
                 </button>
               </div>
@@ -138,7 +139,7 @@ export default function App() {
             </div>
             <h2>Example Local App</h2>
             <p>Placeholder project card. Real persistence will be added later.</p>
-            <button type="button" className="soft-button" onClick={() => openWorkspace("Opening placeholder app...")}>
+            <button type="button" className="soft-button" onClick={() => openWorkspace("Opening placeholder app.~")}>
               Open
             </button>
           </div>
