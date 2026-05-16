@@ -141,14 +141,17 @@ const App: React.FC = () => {
       case 'workspace':
         return (
           <div className="workspace-shell">
-            {/* Workspace Top Bar */}
-            <div className="workspace-topbar">
-              <h2 className="workspace-title">Workspace</h2>
+            {/* Workspace Header */}
+            <div className="workspace-header">
+              <div className="workspace-header-info">
+                <h2 className="workspace-title">Workspace</h2>
+                <p className="project-name">My Project</p>
+              </div>
               <button className="back-button" onClick={() => navigate('projects')}>Back to Projects</button>
             </div>
             
             {/* Workspace Content */}
-            <div className="workspace-content">
+            <div className="workspace-main">
               {/* File Explorer Panel */}
               <div className="workspace-panel file-explorer">
                 <div className="panel-header">
@@ -156,6 +159,12 @@ const App: React.FC = () => {
                 </div>
                 <div className="panel-content">
                   <p>Project files will appear here</p>
+                  <ul className="file-tree">
+                    <li>src/</li>
+                    <li>components/</li>
+                    <li>assets/</li>
+                    <li>package.json</li>
+                  </ul>
                 </div>
               </div>
               
@@ -165,17 +174,28 @@ const App: React.FC = () => {
                   <h3>Editor</h3>
                 </div>
                 <div className="panel-content">
-                  <p>Editor shell — Monaco will be added later</p>
+                  <p>Editor shell — Monaco integration will be added later</p>
                 </div>
               </div>
               
               {/* AI Assistant Panel */}
               <div className="workspace-panel ai-assistant">
                 <div className="panel-header">
-                  <h3>AI Assistant</h3>
+                  <h3>ForgeOS AI</h3>
                 </div>
                 <div className="panel-content">
-                  <p>AI assistant shell — Ollama integration will be added later</p>
+                  <div className="ai-section">
+                    <h4>Architect</h4>
+                    <p>AI assistant shell — local model integration will be added later</p>
+                  </div>
+                  <div className="ai-section">
+                    <h4>Coder</h4>
+                    <p>AI assistant shell — local model integration will be added later</p>
+                  </div>
+                  <div className="ai-section">
+                    <h4>Context</h4>
+                    <p>AI assistant shell — local model integration will be added later</p>
+                  </div>
                 </div>
               </div>
             </div>
