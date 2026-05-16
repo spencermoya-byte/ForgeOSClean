@@ -855,8 +855,8 @@ code {
 /* Click feedback styles */
 .click-feedback {
   position: fixed;
-  top: 10px;
-  right: 10px;
+  bottom: 10px;
+  left: 10px;
   background-color: #3b82f6;
   color: white;
   padding: 10px 15px;
@@ -864,4 +864,6 @@ code {
   z-index: 9999;
   font-size: 0.9rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  max-width: 300px;
+  word-wrap: break-word;
 }
