@@ -1,33 +1,26 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 const App: React.FC = () => {
-  // State management
-  const [currentRoute, setCurrentRoute] = React.useState<string>('projects');
-  const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
-  const [feedbackMessage, setFeedbackMessage] = React.useState<string>('');
+  const [currentRoute, setCurrentRoute] = useState<string>('create');
+  const [feedbackMessage, setFeedbackMessage] = useState<string>('');
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
-  
+
   // Navigation items
   const navItems = [
-    { route: 'dashboard', label: 'Dashboard', icon: '🏠' },
-    { route: 'projects', label: 'Projects', icon: '📁' },
-    { route: 'ai', label: 'AI', icon: '🤖' },
-    { route: 'marketplace', label: 'Marketplace', icon: '🏪' },
-    { route: 'workspaces', label: 'Workspaces', icon: '💼' },
-    { route: 'resources', label: 'Resources', icon: '📚' },
-    { route: 'settings', label: 'Settings', icon: '⚙️' },
-    { route: 'workspace', label: 'Workspace', icon: '💻' },
+    { route: 'create', label: 'Create', icon: '➕' },
+    { route: 'apps', label: 'Apps', icon: '📁' },
     { route: 'account', label: 'Account', icon: '👤' },
   ];
-  
+
   // Normalize route names
   const normalizeRoute = (routeName: string): string => {
     if (routeName === '' || routeName === '/' || routeName === '#/' || routeName === '#') {
-      return 'projects';
+      return 'create';
     }
     return routeName;
   };
-  
+
   // Centralized navigation function
   const navigate = (routeName: string) => {
     const normalizedRoute = normalizeRoute(routeName);
@@ -35,31 +28,15 @@ const App: React.FC = () => {
     window.location.hash = `/${normalizedRoute}`;
     setIsMenuOpen(false);
   };
-  
+
   // Show placeholder feedback
   const placeholderAction = (label: string) => {
     setFeedbackMessage(`Placeholder action: ${label} is not connected yet.`);
     setTimeout(() => setFeedbackMessage(''), 3000);
   };
-  
-  // Get page title based on route
-  const getPageTitle = (route: string) => {
-    switch (route) {
-      case 'projects': return 'Projects';
-      case 'dashboard': return 'Dashboard';
-      case 'ai': return 'AI';
-      case 'marketplace': return 'Marketplace';
-      case 'workspaces': return 'Workspaces';
-      case 'resources': return 'Resources';
-      case 'settings': return 'Settings';
-      case 'workspace': return 'Workspace';
-      case 'account': return 'Account';
-      default: return 'ForgeOS';
-    }
-  };
-  
+
   // Handle click outside to close menu
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isMenuOpen) return;
 
     const handleClickOutside = (event: MouseEvent) => {
@@ -71,11 +48,11 @@ const App: React.FC = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isMenuOpen]);
-  
+
   // Handle hash changes
-  React.useEffect(() => {
+  useEffect(() => {
     const handleHashChange = () => {
-      let hash = window.location.hash.slice(1) || 'projects';
+      let hash = window.location.hash.slice(1) || 'create';
       const normalizedRoute = normalizeRoute(hash);
       setCurrentRoute(normalizedRoute);
     };
@@ -84,32 +61,35 @@ const App: React.FC = () => {
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
-  
+
   // Render page content based on route
   const renderPage = () => {
     switch (currentRoute) {
-      case 'projects':
+      case 'create':
         return (
-          <div className="projects-page">
-            <div className="projects-header">
-              <h1 className="projects-title">What do you want to build?</h1>
-              <p className="projects-subtitle">Describe your idea and ForgeOS will help you create it</p>
+          <div className="create-page">
+            <div className="workspace-pill">ForgeOS local workspace</div>
+            
+            <div className="create-header">
+              <h1 className="create-title">What do you want to build?</h1>
+              <p className="create-subtitle">Describe your idea and ForgeOS will help you create it</p>
             </div>
             
-            <div className="projects-prompt">
-              <div className="prompt-container">
-                <textarea 
-                  className="prompt-textarea"
-                  placeholder="Describe what you want ForgeOS to build..."
-                  rows={3}
-                ></textarea>
-                <button className="prompt-plus-button" onClick={() => placeholderAction("Attach files/photos")}>
-                  <span className="plus-icon">+</span>
-                </button>
-                <div className="prompt-controls">
-                  <button className="control-button" onClick={() => placeholderAction("Plan")}>Plan</button>
-                  <button className="control-button" onClick={() => placeholderAction("Send")}>Send</button>
-                </div>
+            <div className="prompt-container">
+              <textarea 
+                className="prompt-textarea"
+                placeholder="Describe what you want ForgeOS to build..."
+                rows={3}
+              ></textarea>
+              <button className="prompt-plus-button" onClick={() => placeholderAction("Attach files/photos")}>
+                <span className="plus-icon">+</span>
+              </button>
+              <div className="prompt-controls">
+                <button className="control-button" onClick={() => placeholderAction("Plan")}>Plan</button>
+                <button className="control-button" onClick={() => {
+                  placeholderAction("Send to workspace");
+                  navigate("workspace");
+                }}>Send</button>
               </div>
             </div>
             
@@ -140,12 +120,98 @@ const App: React.FC = () => {
               }}>
                 New Project
               </button>
-              <button className="project-button" onClick={() => {
-                placeholderAction("Opened placeholder existing workspace.");
-                navigate("workspace");
-              }}>
-                Open Existing Project
-              </button>
+            </div>
+          </div>
+        );
+        
+      case 'apps':
+        return (
+          <div className="apps-page">
+            <div className="apps-header">
+              <h1 className="apps-title">Apps</h1>
+            </div>
+            
+            <div className="apps-content">
+              <div className="apps-row">
+                <h2 className="apps-row-title">All Apps</h2>
+              </div>
+              
+              <div className="apps-grid">
+                <div className="app-card">
+                  <div className="app-card-header">
+                    <div className="app-icon">🚀</div>
+                    <div className="app-card-title">My Project</div>
+                  </div>
+                  <div className="app-card-footer">
+                    <span className="app-card-date">2023-05-15</span>
+                  </div>
+                </div>
+                
+                <div className="app-card">
+                  <div className="app-card-header">
+                    <div className="app-icon">🤖</div>
+                    <div className="app-card-title">AI Assistant</div>
+                  </div>
+                  <div className="app-card-footer">
+                    <span className="app-card-date">2023-05-10</span>
+                  </div>
+                </div>
+                
+                <div className="app-card">
+                  <div className="app-card-header">
+                    <div className="app-icon">🌐</div>
+                    <div className="app-card-title">Web App</div>
+                  </div>
+                  <div className="app-card-footer">
+                    <span className="app-card-date">2023-05-05</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+        
+      case 'account':
+        return (
+          <div className="account-page">
+            <div className="account-header">
+              <div className="avatar-container">
+                <div className="avatar">JD</div>
+              </div>
+              <div className="user-info">
+                <h2 className="user-name">John Doe</h2>
+                <p className="user-handle">@johndoe</p>
+              </div>
+            </div>
+            
+            <div className="settings-section">
+              <h3 className="section-title">Settings</h3>
+              <div className="settings-list">
+                <button className="setting-item" onClick={() => placeholderAction("Profile settings")}>
+                  <span className="setting-label">Profile</span>
+                  <span className="setting-arrow">→</span>
+                </button>
+                <button className="setting-item" onClick={() => placeholderAction("Theme settings")}>
+                  <span className="setting-label">Theme</span>
+                  <span className="setting-arrow">→</span>
+                </button>
+                <button className="setting-item" onClick={() => placeholderAction("Usage settings")}>
+                  <span className="setting-label">Usage</span>
+                  <span className="setting-arrow">→</span>
+                </button>
+                <button className="setting-item" onClick={() => placeholderAction("Notifications settings")}>
+                  <span className="setting-label">Notifications</span>
+                  <span className="setting-arrow">→</span>
+                </button>
+                <button className="setting-item" onClick={() => placeholderAction("Help settings")}>
+                  <span className="setting-label">Help</span>
+                  <span className="setting-arrow">→</span>
+                </button>
+              </div>
+            </div>
+            
+            <div className="account-footer">
+              <button className="logout-button" onClick={() => placeholderAction("Logout")}>Logout</button>
             </div>
           </div>
         );
@@ -290,120 +356,69 @@ export default App;`}
                 <span>Backend not connected</span>
               </div>
             </div>
-          </div>
-        );
-        
-      case 'account':
-        return (
-          <div className="account-page">
-            <div className="account-header">
-              <div className="avatar-container">
-                <div className="avatar">JD</div>
-              </div>
-              <div className="user-info">
-                <h2 className="user-name">John Doe</h2>
-                <p className="user-email">john.doe@example.com</p>
-              </div>
-            </div>
             
-            <div className="settings-section">
-              <h3 className="section-title">Settings</h3>
-              <div className="settings-list">
-                <button className="setting-item" onClick={() => placeholderAction("Profile settings")}>
-                  <span className="setting-label">Profile</span>
-                  <span className="setting-arrow">→</span>
-                </button>
-                <button className="setting-item" onClick={() => placeholderAction("Theme settings")}>
-                  <span className="setting-label">Theme</span>
-                  <span className="setting-arrow">→</span>
-                </button>
-                <button className="setting-item" onClick={() => placeholderAction("Usage settings")}>
-                  <span className="setting-label">Usage</span>
-                  <span className="setting-arrow">→</span>
-                </button>
-                <button className="setting-item" onClick={() => placeholderAction("Notifications settings")}>
-                  <span className="setting-label">Notifications</span>
-                  <span className="setting-arrow">→</span>
-                </button>
-                <button className="setting-item" onClick={() => placeholderAction("Help settings")}>
-                  <span className="setting-label">Help</span>
-                  <span className="setting-arrow">→</span>
-                </button>
-              </div>
-            </div>
-            
-            <div className="account-footer">
-              <button className="logout-button" onClick={() => placeholderAction("Logout")}>Logout</button>
-            </div>
-          </div>
-        );
-        
-      case 'dashboard':
-        return (
-          <div className="page-content">
-            <h1 className="page-title">Dashboard</h1>
-            <p className="page-description">Welcome to your ForgeOS dashboard. This is a placeholder page.</p>
-            <p className="page-placeholder">Dashboard functionality will be restored soon.</p>
-            <button className="back-button" onClick={() => navigate('projects')}>Back to Projects</button>
-          </div>
-        );
-        
-      case 'ai':
-        return (
-          <div className="page-content">
-            <h1 className="page-title">AI</h1>
-            <p className="page-description">AI capabilities for your projects.</p>
-            <p className="page-placeholder">AI functionality will be restored soon.</p>
-            <button className="back-button" onClick={() => navigate('projects')}>Back to Projects</button>
-          </div>
-        );
-        
-      case 'marketplace':
-        return (
-          <div className="page-content">
-            <h1 className="page-title">Marketplace</h1>
-            <p className="page-description">Browse extensions and tools for ForgeOS.</p>
-            <p className="page-placeholder">Marketplace functionality will be restored soon.</p>
-            <button className="back-button" onClick={() => navigate('projects')}>Back to Projects</button>
-          </div>
-        );
-        
-      case 'workspaces':
-        return (
-          <div className="page-content">
-            <h1 className="page-title">Workspaces</h1>
-            <p className="page-description">Manage your workspaces and projects.</p>
-            <p className="page-placeholder">Workspaces functionality will be restored soon.</p>
-            <button className="back-button" onClick={() => navigate('projects')}>Back to Projects</button>
-          </div>
-        );
-        
-      case 'resources':
-        return (
-          <div className="page-content">
-            <h1 className="page-title">Resources</h1>
-            <p className="page-description">Access documentation and resources.</p>
-            <p className="page-placeholder">Resources functionality will be restored soon.</p>
-            <button className="back-button" onClick={() => navigate('projects')}>Back to Projects</button>
-          </div>
-        );
-        
-      case 'settings':
-        return (
-          <div className="page-content">
-            <h1 className="page-title">Settings</h1>
-            <p className="page-description">Configure your ForgeOS environment.</p>
-            <p className="page-placeholder">Settings functionality will be restored soon.</p>
-            <button className="back-button" onClick={() => navigate('projects')}>Back to Projects</button>
+            <button className="back-button" onClick={() => navigate('create')}>
+              Back to Create
+            </button>
           </div>
         );
         
       default:
         return (
-          <div className="page-content">
-            <h1 className="page-title">ForgeOS</h1>
-            <p className="page-description">Welcome to ForgeOS</p>
-            <button className="back-button" onClick={() => navigate('projects')}>Back to Projects</button>
+          <div className="create-page">
+            <div className="workspace-pill">ForgeOS local workspace</div>
+            
+            <div className="create-header">
+              <h1 className="create-title">What do you want to build?</h1>
+              <p className="create-subtitle">Describe your idea and ForgeOS will help you create it</p>
+            </div>
+            
+            <div className="prompt-container">
+              <textarea 
+                className="prompt-textarea"
+                placeholder="Describe what you want ForgeOS to build..."
+                rows={3}
+              ></textarea>
+              <button className="prompt-plus-button" onClick={() => placeholderAction("Attach files/photos")}>
+                <span className="plus-icon">+</span>
+              </button>
+              <div className="prompt-controls">
+                <button className="control-button" onClick={() => placeholderAction("Plan")}>Plan</button>
+                <button className="control-button" onClick={() => {
+                  placeholderAction("Send to workspace");
+                  navigate("workspace");
+                }}>Send</button>
+              </div>
+            </div>
+            
+            <div className="quick-start">
+              <h2 className="section-title">Quick Start</h2>
+              <div className="quick-start-pills">
+                <button className="pill-button" onClick={() => placeholderAction("Website project")}>Website</button>
+                <button className="pill-button" onClick={() => placeholderAction("Desktop App project")}>Desktop App</button>
+                <button className="pill-button" onClick={() => placeholderAction("AI Tool project")}>AI Tool</button>
+                <button className="pill-button" onClick={() => placeholderAction("Automation project")}>Automation</button>
+                <button className="pill-button" onClick={() => placeholderAction("API project")}>API</button>
+                <button className="pill-button" onClick={() => placeholderAction("Game project")}>Game</button>
+                <button className="pill-button" onClick={() => placeholderAction("Utility project")}>Utility</button>
+              </div>
+            </div>
+            
+            <div className="recent-projects">
+              <h2 className="section-title">Recent Projects</h2>
+              <div className="projects-placeholder">
+                <p>No recent projects found</p>
+              </div>
+            </div>
+            
+            <div className="project-actions">
+              <button className="project-button" onClick={() => {
+                placeholderAction("Opened new workspace shell.");
+                navigate("workspace");
+              }}>
+                New Project
+              </button>
+            </div>
           </div>
         );
     }
@@ -411,113 +426,25 @@ export default App;`}
 
   return (
     <div className="app-container">
-      {/* Header */}
-      <header className="app-topbar">
-        <div className="topbar-left">
-          <button
-            type="button"
-            className="hamburger-button"
-            aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
-            onClick={(event) => {
-              event.stopPropagation();
-              setIsMenuOpen((open) => !open);
-            }}
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
-          <span className="topbar-brand">ForgeOS</span>
-        </div>
-
-        <div className="topbar-center">
-          {getPageTitle(currentRoute)}
-        </div>
-
-        <div className="topbar-right">
-          <span className="status-dot"></span>
-          <span>Frontend Active</span>
-        </div>
-      </header>
-      
-      {/* Hamburger dropdown menu */}
-      {isMenuOpen && (
-        <nav className="hamburger-dropdown" aria-label="Main navigation" ref={menuRef}>
-          {navItems.map((item) => (
-            <button
-              key={item.route}
-              type="button"
-              className={
-                currentRoute === item.route
-                  ? "hamburger-menu-item active"
-                  : "hamburger-menu-item"
-              }
-              onClick={() => navigate(item.route)}
-            >
-              <span className="hamburger-menu-icon">{item.icon}</span>
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </nav>
-      )}
-      
       {/* Main content */}
-      <div className="main-container">
-        {/* Left rail */}
-        <div className="activity-rail">
-          {navItems.map((item) => (
-            <button
-              key={item.route}
-              className={`rail-button ${currentRoute === item.route ? 'active' : ''}`}
-              title={item.label}
-              onClick={() => navigate(item.route)}
-              type="button"
-            >
-              <span className="rail-icon">{item.icon}</span>
-            </button>
-          ))}
-        </div>
-        
-        {/* Workspace area */}
-        <div className="workspace-area">
-          <div className="workspace-header">
-            <h2 className="workspace-title">{getPageTitle(currentRoute)}</h2>
-          </div>
-          
-          <div className="workspace-content">
-            {renderPage()}
-          </div>
-        </div>
-        
-        {/* Right status panel */}
-        <div className="inspector-panel">
-          <div className="panel-header">
-            <h4 className="panel-title">ForgeOS Restoration Status</h4>
-          </div>
-          <div className="panel-content">
-            <div className="panel-item">
-              <span className="panel-label">Shell:</span>
-              <span className="panel-value status-active">Active</span>
-            </div>
-            <div className="panel-item">
-              <span className="panel-label">Routing:</span>
-              <span className="panel-value status-active">Safe hash mode</span>
-            </div>
-            <div className="panel-item">
-              <span className="panel-label">Projects:</span>
-              <span className="panel-value status-placeholder">Placeholder actions</span>
-            </div>
-            <div className="panel-item">
-              <span className="panel-label">Backend:</span>
-              <span className="panel-value status-not-connected">Not connected</span>
-            </div>
-            <div className="panel-item">
-              <span className="panel-label">Feature modules:</span>
-              <span className="panel-value status-not-connected">Not connected</span>
-            </div>
-          </div>
-        </div>
+      <div className="main-content">
+        {renderPage()}
       </div>
+      
+      {/* Bottom Navigation */}
+      <nav className="bottom-nav">
+        {navItems.map((item) => (
+          <button
+            key={item.route}
+            className={`nav-button ${currentRoute === item.route ? 'active' : ''}`}
+            onClick={() => navigate(item.route)}
+            type="button"
+          >
+            <span className="nav-icon">{item.icon}</span>
+            <span className="nav-label">{item.label}</span>
+          </button>
+        ))}
+      </nav>
       
       {/* Feedback toast */}
       {feedbackMessage && (
