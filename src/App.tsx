@@ -2,7 +2,7 @@ import React from "react";
 import "./App.css";
 
 type Route = "create" | "apps" | "account" | "workspace";
-type WorkspaceTab = "agent" | "preview" | "console" | "git" | "publish" | "more";
+type WorkspaceTab = "preview" | "ai-builder" | "plugins";
 
 const quickStarts = ["Website", "Desktop App", "AI Tool", "Automation", "API", "Game", "Utility"];
 
@@ -13,12 +13,9 @@ const bottomNav: Array<{ route: Route; label: string; icon: string }> = [
 ];
 
 const workspaceTabs: Array<{ key: WorkspaceTab; label: string }> = [
-  { key: "agent", label: "Agent" },
   { key: "preview", label: "Preview" },
-  { key: "console", label: "Console" },
-  { key: "git", label: "Git" },
-  { key: "publish", label: "Publish" },
-  { key: "more", label: "More" },
+  { key: "ai-builder", label: "AI Builder" },
+  { key: "plugins", label: "Plugins" },
 ];
 
 function normalizeRoute(value: string): Route {
@@ -31,7 +28,7 @@ function normalizeRoute(value: string): Route {
 
 export default function App() {
   const [route, setRoute] = React.useState<Route>(() => normalizeRoute(window.location.hash || "create"));
-  const [workspaceTab, setWorkspaceTab] = React.useState<WorkspaceTab>("agent");
+  const [workspaceTab, setWorkspaceTab] = React.useState<WorkspaceTab>("ai-builder");
   const [toast, setToast] = React.useState("");
 
   React.useEffect(() => {
@@ -185,106 +182,110 @@ export default function App() {
       return (
         <section className="workspace-panel large-panel">
           <div className="placeholder-icon">▭</div>
-          <h2>Preview will appear here</h2>
+          <h2>Live preview will appear here</h2>
           <p>Run your project to see a live preview once execution is connected.</p>
         </section>
       );
     }
 
-    if (workspaceTab === "console") {
+    if (workspaceTab === "ai-builder") {
       return (
-        <section className="workspace-panel terminal-panel">
-          <h2>Console</h2>
-          <pre>{`> ForgeOS console shell
-> Command execution will be added later.
-> Ready.`}</pre>
-        </section>
-      );
-    }
-
-    if (workspaceTab === "git") {
-      return (
-        <section className="workspace-panel large-panel">
-          <h2>Git</h2>
-          <p>Branches, commits, diffs, and sync controls will appear here later.</p>
-          <div className="mini-grid">
-            <div>Current branch: main</div>
-            <div>Changes: placeholder</div>
-            <div>Remote: not connected</div>
+        <section className="workspace-panel ai-builder-panel">
+          <h2>AI Builder</h2>
+          <div className="ai-builder-content">
+            <div className="ai-builder-input">
+              <textarea placeholder="Describe what you want to build..." />
+              <button type="button" className="send-button" onClick={() => action("AI build request")}>
+                →
+              </button>
+            </div>
+            <div className="ai-builder-response">
+              <div className="ai-response-message">
+                <strong>ForgeOS Agent</strong>
+                <p>Understood. I'll help you build that. What's your project structure?</p>
+              </div>
+              <div className="ai-response-message">
+                <strong>You</strong>
+                <p>Let's create a React app with a todo list feature.</p>
+              </div>
+              <div className="ai-response-message">
+                <strong>ForgeOS Agent</strong>
+                <p>Great! I'll generate the project structure and files for a React todo app.</p>
+              </div>
+            </div>
           </div>
         </section>
       );
     }
 
-    if (workspaceTab === "publish") {
+    if (workspaceTab === "plugins") {
       return (
-        <section className="workspace-panel large-panel">
-          <h2>Publish</h2>
-          <p>Deployment, visibility, domains, and release settings will be added later.</p>
-          <button type="button" className="primary-button" onClick={() => action("Publish placeholder")}>
-            Publish Placeholder
-          </button>
-        </section>
-      );
-    }
-
-    if (workspaceTab === "more") {
-      return (
-        <section className="workspace-panel large-panel">
-          <h2>More</h2>
-          <p>Workspace settings, resources, extensions, and advanced tools will appear here.</p>
-          <div className="mini-grid">
-            <div>Resources</div>
-            <div>Extensions</div>
-            <div>Settings</div>
+        <section className="workspace-panel plugins-panel">
+          <h2>Plugins</h2>
+          <div className="plugins-content">
+            <div className="pending-changes">
+              <h3>Pending Changes</h3>
+              <div className="change-item">
+                <div className="change-description">Added new component: TodoItem</div>
+                <div className="change-meta">
+                  <span className="duration">2m</span>
+                  <span className="time">10:30 AM</span>
+                </div>
+              </div>
+              <div className="change-item">
+                <div className="change-description">Updated package.json dependencies</div>
+                <div className="change-meta">
+                  <span className="duration">5m</span>
+                  <span className="time">10:25 AM</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="commit-timeline">
+              <h3>GitHub Commit Timeline</h3>
+              <div className="timeline-item">
+                <div className="timeline-header">
+                  <div className="timeline-title">feat: add todo list feature</div>
+                  <div className="timeline-time">Yesterday, 10:15 AM</div>
+                </div>
+                <div className="timeline-changes">
+                  <div className="change-file">src/components/TodoList.tsx</div>
+                  <div className="change-file">src/components/TodoItem.tsx</div>
+                  <div className="change-file">src/App.tsx</div>
+                </div>
+              </div>
+              <div className="timeline-item">
+                <div className="timeline-header">
+                  <div className="timeline-title">chore: update dependencies</div>
+                  <div className="timeline-time">2 days ago</div>
+                </div>
+                <div className="timeline-changes">
+                  <div className="change-file">package.json</div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
       );
     }
 
     return (
-      <section className="workspace-grid">
-        <aside className="agent-panel">
-          <h2>Agent</h2>
-          <div className="agent-message">
-            <strong>ForgeOS Agent</strong>
-            <p>I’m your local AI agent. How can I help you build today?</p>
-          </div>
-
-          <div className="agent-steps">
-            <span>Planning project structure</span>
-            <span>Preparing editor shell</span>
-            <span>Waiting for model integration</span>
-          </div>
-
-          <div className="agent-input">
-            <input placeholder="Ask the agent anything..." />
-            <button type="button" onClick={() => action("Agent send")}>
+      <section className="workspace-panel ai-builder-panel">
+        <h2>AI Builder</h2>
+        <div className="ai-builder-content">
+          <div className="ai-builder-input">
+            <textarea placeholder="Describe what you want to build..." />
+            <button type="button" className="send-button" onClick={() => action("AI build request")}>
               →
             </button>
           </div>
-        </aside>
-
-        <section className="editor-panel">
-          <div className="editor-tab">main.tsx</div>
-          <pre className="code-preview">{`1  // Your code will appear here
-2
-3  function App() {
-4    return <ForgeOS />;
-5  }`}</pre>
-
-          <div className="console-strip">
-            <span>Console</span>
-            <code>&gt; Ready.</code>
-            <span className="status-green" />
+          <div className="ai-builder-response">
+            <div className="ai-response-message">
+              <strong>ForgeOS Agent</strong>
+              <p>Understood. I'll help you build that. What's your project structure?</p>
+            </div>
           </div>
-        </section>
-
-        <aside className="preview-panel">
-          <div className="placeholder-icon">▭</div>
-          <h2>Preview</h2>
-          <p>Your running app preview will appear here later.</p>
-        </aside>
+        </div>
       </section>
     );
   }
@@ -331,12 +332,12 @@ export default function App() {
 
         {renderWorkspaceContent()}
 
-        <div className="workspace-bottom-nav">
+        <div className="workspace-dock">
           {workspaceTabs.map((tab) => (
             <button
               key={tab.key}
               type="button"
-              className={workspaceTab === tab.key ? "bottom-tab active" : "bottom-tab"}
+              className={workspaceTab === tab.key ? "dock-tab active" : "dock-tab"}
               onClick={() => {
                 setWorkspaceTab(tab.key);
                 action(`${tab.label} selected`);
