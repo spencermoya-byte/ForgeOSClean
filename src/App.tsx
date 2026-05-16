@@ -408,7 +408,21 @@ const App: React.FC = () => {
   const [currentRoute, setCurrentRoute] = React.useState<string>('projects');
   const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
   const [clickFeedback, setClickFeedback] = React.useState<string>('');
+  const [lastClicked, setLastClicked] = React.useState<string>('');
+  const [lastAction, setLastAction] = React.useState<string>('');
   const menuRef = React.useRef<HTMLDivElement>(null);
+  
+  React.useEffect(() => {
+    // Global click logger
+    const handler = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      console.log("GLOBAL CLICK:", target.tagName, target.className, target.textContent?.slice(0, 50));
+      setLastClicked(`${target.tagName} ${target.className}`);
+    };
+
+    document.addEventListener("click", handler, true);
+    return () => document.removeEventListener("click", handler, true);
+  }, []);
   
   React.useEffect(() => {
     const handleHashChange = () => {
@@ -461,17 +475,35 @@ const App: React.FC = () => {
     
     // Update click feedback
     setClickFeedback(`Clicked: ${normalizedRoute.charAt(0).toUpperCase() + normalizedRoute.slice(1)}`);
+    setLastAction(`Navigated to ${normalizedRoute}`);
   };
   
   // Show placeholder feedback for actions
   const showPlaceholderFeedback = (actionName: string) => {
     alert(`Placeholder action: ${actionName} is not connected yet.`);
     setClickFeedback(`Clicked: ${actionName}`);
+    setLastAction(`Placeholder action: ${actionName}`);
   };
   
   // Handle navigation
   const handleNavigation = (route: string) => {
     navigate(route);
+  };
+  
+  // Test button handlers
+  const testHamburgerClick = () => {
+    console.log("TEST HAMBURGER CLICK");
+    setLastAction("Hamburger clicked");
+  };
+  
+  const testProjectsClick = () => {
+    console.log("TEST PROJECTS CLICK");
+    setLastAction("Projects rail button clicked");
+  };
+  
+  const testNewProjectClick = () => {
+    console.log("TEST NEW PROJECT CLICK");
+    setLastAction("New Project button clicked");
   };
   
   // Route components
@@ -593,9 +625,17 @@ const App: React.FC = () => {
         </div>
       </div>
       
-      {/* Debug click feedback */}
-      <div className="click-feedback">
-        {clickFeedback}
+      {/* Debug panel */}
+      <div className="debug-panel">
+        <div className="debug-item">
+          <strong>Last Clicked:</strong> {lastClicked}
+        </div>
+        <div className="debug-item">
+          <strong>Last Action:</strong> {lastAction}
+        </div>
+        <div className="debug-item">
+          <strong>Current Route:</strong> {currentRoute}
+        </div>
       </div>
       
       {renderRoute()}
