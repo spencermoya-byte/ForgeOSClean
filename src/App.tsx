@@ -1,9 +1,9 @@
 import React from "react";
 import "./App.css";
-import { LayoutGrid, Sparkles, UserRound } from "lucide-react";
+import { LayoutGrid, Sparkles, UserRound, Share2, Play, Settings, Monitor, Smartphone, Globe } from "lucide-react";
 
 type Route = "create" | "apps" | "account" | "workspace";
-type WorkspaceTab = "preview" | "ai-builder" | "plugins";
+type WorkspaceTab = "preview" | "builder" | "plugins";
 
 const quickStarts = ["Website", "Desktop App", "AI Tool", "Automation", "API", "Game", "Utility"];
 
@@ -15,7 +15,7 @@ const bottomNav: Array<{ route: Route; label: string; icon: React.ReactNode }> =
 
 const workspaceTabs: Array<{ key: WorkspaceTab; label: string }> = [
   { key: "preview", label: "Preview" },
-  { key: "ai-builder", label: "AI Builder" },
+  { key: "builder", label: "Builder" },
   { key: "plugins", label: "Plugins" },
 ];
 
@@ -29,7 +29,7 @@ function normalizeRoute(value: string): Route {
 
 export default function App() {
   const [route, setRoute] = React.useState<Route>(() => normalizeRoute(window.location.hash || "create"));
-  const [workspaceTab, setWorkspaceTab] = React.useState<WorkspaceTab>("ai-builder");
+  const [workspaceTab, setWorkspaceTab] = React.useState<WorkspaceTab>("builder");
   const [toast, setToast] = React.useState("");
 
   React.useEffect(() => {
@@ -173,112 +173,419 @@ export default function App() {
   function renderWorkspaceContent() {
     if (workspaceTab === "preview") {
       return (
-        <section className="workspace-panel large-panel">
-          <div className="placeholder-icon">▭</div>
-          <h2>Live preview will appear here</h2>
-          <p>Run your project to see a live preview once execution is connected.</p>
+        <section className="workspace-grid">
+          <aside className="preview-panel">
+            <h2>Live Preview</h2>
+            <div className="preview-placeholder">
+              <div className="preview-icon">▭</div>
+              <p>Your app preview will appear here.</p>
+              <p className="preview-subtext">Run your project to preview changes.</p>
+              
+              <div className="device-toggle">
+                <button className="device-btn active">
+                  <Monitor size={16} />
+                </button>
+                <button className="device-btn">
+                  <Smartphone size={16} />
+                </button>
+                <button className="device-btn">
+                  <Globe size={16} />
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          <section className="builder-panel">
+            <div className="ai-builder-content">
+              <div className="ai-builder-header">
+                <h2>Build with Vivus</h2>
+                <p>Describe what you want to build.</p>
+              </div>
+              
+              <div className="ai-builder-input">
+                <textarea placeholder="Describe what you want to build..." />
+                <button type="button" className="send-button" onClick={() => action("AI build request")}>
+                  →
+                </button>
+              </div>
+              
+              <div className="ai-conversation">
+                <div className="ai-message">
+                  <strong>Vivus</strong>
+                  <p>What would you like to build today?</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <aside className="plugins-panel">
+            <h2>Project Activity</h2>
+            <div className="plugins-content">
+              <div className="pending-changes">
+                <h3>Pending Changes</h3>
+                <div className="change-item">
+                  <div className="change-description">UI improvements pending</div>
+                  <div className="change-meta">
+                    <span className="duration">2m</span>
+                    <span className="time">10:30 AM</span>
+                  </div>
+                </div>
+                <div className="change-item">
+                  <div className="change-description">Workspace initialization</div>
+                  <div className="change-meta">
+                    <span className="duration">5m</span>
+                    <span className="time">10:25 AM</span>
+                  </div>
+                </div>
+                <div className="change-item">
+                  <div className="change-description">Plugin sync pending</div>
+                  <div className="change-meta">
+                    <span className="duration">10m</span>
+                    <span className="time">10:20 AM</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="commit-timeline">
+                <h3>Commit Timeline</h3>
+                <div className="timeline-item">
+                  <div className="timeline-header">
+                    <div className="timeline-title">2 min ago</div>
+                    <div className="timeline-time">Workspace created</div>
+                  </div>
+                  <div className="timeline-duration">Duration: 1m 42s</div>
+                </div>
+                <div className="timeline-item">
+                  <div className="timeline-header">
+                    <div className="timeline-title">15 min ago</div>
+                    <div className="timeline-time">UI refinement pass</div>
+                  </div>
+                  <div className="timeline-duration">Duration: 4m 11s</div>
+                </div>
+                <div className="timeline-item">
+                  <div className="timeline-header">
+                    <div className="timeline-title">Yesterday</div>
+                    <div className="timeline-time">Create screen redesign</div>
+                  </div>
+                  <div className="timeline-duration">Duration: 22m</div>
+                </div>
+              </div>
+            </div>
+          </aside>
         </section>
       );
     }
 
-    if (workspaceTab === "ai-builder") {
+    if (workspaceTab === "builder") {
       return (
-        <section className="workspace-panel ai-builder-panel">
-          <h2>AI Builder</h2>
-          <div className="ai-builder-content">
-            <div className="ai-builder-input">
-              <textarea placeholder="Describe what you want to build..." />
-              <button type="button" className="send-button" onClick={() => action("AI build request")}>
-                →
-              </button>
-            </div>
-            <div className="ai-builder-response">
-              <div className="ai-response-message">
-                <strong>Vivus Agent</strong>
-                <p>Understood. I'll help you build that. What's your project structure?</p>
-              </div>
-              <div className="ai-response-message">
-                <strong>You</strong>
-                <p>Let's create a React app with a todo list feature.</p>
-              </div>
-              <div className="ai-response-message">
-                <strong>Vivus Agent</strong>
-                <p>Great! I'll generate the project structure and files for a React todo app.</p>
+        <section className="workspace-grid">
+          <aside className="preview-panel">
+            <h2>Live Preview</h2>
+            <div className="preview-placeholder">
+              <div className="preview-icon">▭</div>
+              <p>Your app preview will appear here.</p>
+              <p className="preview-subtext">Run your project to preview changes.</p>
+              
+              <div className="device-toggle">
+                <button className="device-btn active">
+                  <Monitor size={16} />
+                </button>
+                <button className="device-btn">
+                  <Smartphone size={16} />
+                </button>
+                <button className="device-btn">
+                  <Globe size={16} />
+                </button>
               </div>
             </div>
-          </div>
+          </aside>
+
+          <section className="builder-panel">
+            <div className="ai-builder-content">
+              <div className="ai-builder-header">
+                <h2>Build with Vivus</h2>
+                <p>Describe what you want to build.</p>
+              </div>
+              
+              <div className="ai-builder-input">
+                <textarea placeholder="Describe what you want to build..." />
+                <button type="button" className="send-button" onClick={() => action("AI build request")}>
+                  →
+                </button>
+              </div>
+              
+              <div className="ai-conversation">
+                <div className="ai-message">
+                  <strong>Vivus</strong>
+                  <p>What would you like to build today?</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <aside className="plugins-panel">
+            <h2>Project Activity</h2>
+            <div className="plugins-content">
+              <div className="pending-changes">
+                <h3>Pending Changes</h3>
+                <div className="change-item">
+                  <div className="change-description">UI improvements pending</div>
+                  <div className="change-meta">
+                    <span className="duration">2m</span>
+                    <span className="time">10:30 AM</span>
+                  </div>
+                </div>
+                <div className="change-item">
+                  <div className="change-description">Workspace initialization</div>
+                  <div className="change-meta">
+                    <span className="duration">5m</span>
+                    <span className="time">10:25 AM</span>
+                  </div>
+                </div>
+                <div className="change-item">
+                  <div className="change-description">Plugin sync pending</div>
+                  <div className="change-meta">
+                    <span className="duration">10m</span>
+                    <span className="time">10:20 AM</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="commit-timeline">
+                <h3>Commit Timeline</h3>
+                <div className="timeline-item">
+                  <div className="timeline-header">
+                    <div className="timeline-title">2 min ago</div>
+                    <div className="timeline-time">Workspace created</div>
+                  </div>
+                  <div className="timeline-duration">Duration: 1m 42s</div>
+                </div>
+                <div className="timeline-item">
+                  <div className="timeline-header">
+                    <div className="timeline-title">15 min ago</div>
+                    <div className="timeline-time">UI refinement pass</div>
+                  </div>
+                  <div className="timeline-duration">Duration: 4m 11s</div>
+                </div>
+                <div className="timeline-item">
+                  <div className="timeline-header">
+                    <div className="timeline-title">Yesterday</div>
+                    <div className="timeline-time">Create screen redesign</div>
+                  </div>
+                  <div className="timeline-duration">Duration: 22m</div>
+                </div>
+              </div>
+            </div>
+          </aside>
         </section>
       );
     }
 
     if (workspaceTab === "plugins") {
       return (
-        <section className="workspace-panel plugins-panel">
-          <h2>Plugins</h2>
+        <section className="workspace-grid">
+          <aside className="preview-panel">
+            <h2>Live Preview</h2>
+            <div className="preview-placeholder">
+              <div className="preview-icon">▭</div>
+              <p>Your app preview will appear here.</p>
+              <p className="preview-subtext">Run your project to preview changes.</p>
+              
+              <div className="device-toggle">
+                <button className="device-btn active">
+                  <Monitor size={16} />
+                </button>
+                <button className="device-btn">
+                  <Smartphone size={16} />
+                </button>
+                <button className="device-btn">
+                  <Globe size={16} />
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          <section className="builder-panel">
+            <div className="ai-builder-content">
+              <div className="ai-builder-header">
+                <h2>Build with Vivus</h2>
+                <p>Describe what you want to build.</p>
+              </div>
+              
+              <div className="ai-builder-input">
+                <textarea placeholder="Describe what you want to build..." />
+                <button type="button" className="send-button" onClick={() => action("AI build request")}>
+                  →
+                </button>
+              </div>
+              
+              <div className="ai-conversation">
+                <div className="ai-message">
+                  <strong>Vivus</strong>
+                  <p>What would you like to build today?</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <aside className="plugins-panel">
+            <h2>Project Activity</h2>
+            <div className="plugins-content">
+              <div className="pending-changes">
+                <h3>Pending Changes</h3>
+                <div className="change-item">
+                  <div className="change-description">UI improvements pending</div>
+                  <div className="change-meta">
+                    <span className="duration">2m</span>
+                    <span className="time">10:30 AM</span>
+                  </div>
+                </div>
+                <div className="change-item">
+                  <div className="change-description">Workspace initialization</div>
+                  <div className="change-meta">
+                    <span className="duration">5m</span>
+                    <span className="time">10:25 AM</span>
+                  </div>
+                </div>
+                <div className="change-item">
+                  <div className="change-description">Plugin sync pending</div>
+                  <div className="change-meta">
+                    <span className="duration">10m</span>
+                    <span className="time">10:20 AM</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="commit-timeline">
+                <h3>Commit Timeline</h3>
+                <div className="timeline-item">
+                  <div className="timeline-header">
+                    <div className="timeline-title">2 min ago</div>
+                    <div className="timeline-time">Workspace created</div>
+                  </div>
+                  <div className="timeline-duration">Duration: 1m 42s</div>
+                </div>
+                <div className="timeline-item">
+                  <div className="timeline-header">
+                    <div className="timeline-title">15 min ago</div>
+                    <div className="timeline-time">UI refinement pass</div>
+                  </div>
+                  <div className="timeline-duration">Duration: 4m 11s</div>
+                </div>
+                <div className="timeline-item">
+                  <div className="timeline-header">
+                    <div className="timeline-title">Yesterday</div>
+                    <div className="timeline-time">Create screen redesign</div>
+                  </div>
+                  <div className="timeline-duration">Duration: 22m</div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </section>
+      );
+    }
+
+    return (
+      <section className="workspace-grid">
+        <aside className="preview-panel">
+          <h2>Live Preview</h2>
+          <div className="preview-placeholder">
+            <div className="preview-icon">▭</div>
+            <p>Your app preview will appear here.</p>
+            <p className="preview-subtext">Run your project to preview changes.</p>
+            
+            <div className="device-toggle">
+              <button className="device-btn active">
+                <Monitor size={16} />
+              </button>
+              <button className="device-btn">
+                <Smartphone size={16} />
+              </button>
+              <button className="device-btn">
+                <Globe size={16} />
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <section className="builder-panel">
+          <div className="ai-builder-content">
+            <div className="ai-builder-header">
+              <h2>Build with Vivus</h2>
+              <p>Describe what you want to build.</p>
+            </div>
+            
+            <div className="ai-builder-input">
+              <textarea placeholder="Describe what you want to build..." />
+              <button type="button" className="send-button" onClick={() => action("AI build request")}>
+                →
+              </button>
+            </div>
+            
+            <div className="ai-conversation">
+              <div className="ai-message">
+                <strong>Vivus</strong>
+                <p>What would you like to build today?</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside className="plugins-panel">
+          <h2>Project Activity</h2>
           <div className="plugins-content">
             <div className="pending-changes">
               <h3>Pending Changes</h3>
               <div className="change-item">
-                <div className="change-description">Added new component: TodoItem</div>
+                <div className="change-description">UI improvements pending</div>
                 <div className="change-meta">
                   <span className="duration">2m</span>
                   <span className="time">10:30 AM</span>
                 </div>
               </div>
               <div className="change-item">
-                <div className="change-description">Updated package.json dependencies</div>
+                <div className="change-description">Workspace initialization</div>
                 <div className="change-meta">
                   <span className="duration">5m</span>
                   <span className="time">10:25 AM</span>
                 </div>
               </div>
+              <div className="change-item">
+                <div className="change-description">Plugin sync pending</div>
+                <div className="change-meta">
+                  <span className="duration">10m</span>
+                  <span className="time">10:20 AM</span>
+                </div>
+              </div>
             </div>
             
             <div className="commit-timeline">
-              <h3>GitHub Commit Timeline</h3>
+              <h3>Commit Timeline</h3>
               <div className="timeline-item">
                 <div className="timeline-header">
-                  <div className="timeline-title">feat: add todo list feature</div>
-                  <div className="timeline-time">Yesterday, 10:15 AM</div>
+                  <div className="timeline-title">2 min ago</div>
+                  <div className="timeline-time">Workspace created</div>
                 </div>
-                <div className="timeline-changes">
-                  <div className="change-file">src/components/TodoList.tsx</div>
-                  <div className="change-file">src/components/TodoItem.tsx</div>
-                  <div className="change-file">src/App.tsx</div>
-                </div>
+                <div className="timeline-duration">Duration: 1m 42s</div>
               </div>
               <div className="timeline-item">
                 <div className="timeline-header">
-                  <div className="timeline-title">chore: update dependencies</div>
-                  <div className="timeline-time">2 days ago</div>
+                  <div className="timeline-title">15 min ago</div>
+                  <div className="timeline-time">UI refinement pass</div>
                 </div>
-                <div className="timeline-changes">
-                  <div className="change-file">package.json</div>
+                <div className="timeline-duration">Duration: 4m 11s</div>
+              </div>
+              <div className="timeline-item">
+                <div className="timeline-header">
+                  <div className="timeline-title">Yesterday</div>
+                  <div className="timeline-time">Create screen redesign</div>
                 </div>
+                <div className="timeline-duration">Duration: 22m</div>
               </div>
             </div>
           </div>
-        </section>
-      );
-    }
-
-    return (
-      <section className="workspace-panel ai-builder-panel">
-        <h2>AI Builder</h2>
-        <div className="ai-builder-content">
-          <div className="ai-builder-input">
-            <textarea placeholder="Describe what you want to build..." />
-            <button type="button" className="send-button" onClick={() => action("AI build request")}>
-              →
-            </button>
-          </div>
-          <div className="ai-builder-response">
-            <div className="ai-response-message">
-              <strong>Vivus Agent</strong>
-              <p>Understood. I'll help you build that. What's your project structure?</p>
-            </div>
-          </div>
-        </div>
+        </aside>
       </section>
     );
   }
@@ -290,19 +597,19 @@ export default function App() {
           <div className="workspace-brand">
             <div className="logo-box">V</div>
             <button type="button" className="project-name" onClick={() => action("Project menu")}>
-              My Project⌄
+              Untitled Project⌄
             </button>
           </div>
 
           <div className="workspace-actions">
-            <button type="button" className="soft-button" onClick={() => navigate("create")}>
-              Back to Create
-            </button>
             <button type="button" className="soft-button" onClick={() => action("Share")}>
-              Share
+              <Share2 size={16} />
             </button>
-            <button type="button" className="primary-button" onClick={() => action("Run")}>
-              Run
+            <button type="button" className="soft-button" onClick={() => action("Run")}>
+              <Play size={16} />
+            </button>
+            <button type="button" className="soft-button" onClick={() => action("Settings")}>
+              <Settings size={16} />
             </button>
           </div>
         </header>
