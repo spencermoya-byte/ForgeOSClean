@@ -30,25 +30,53 @@ const RecoveryShell = () => {
       
       <div className="main-container">
         <div className="activity-rail">
-          <button className="rail-button active" title="Dashboard">
+          <button 
+            className="rail-button active" 
+            title="Dashboard"
+            onClick={() => handleNavigation('dashboard')}
+          >
             <span className="rail-icon">🏠</span>
           </button>
-          <button className="rail-button" title="Projects">
+          <button 
+            className="rail-button" 
+            title="Projects"
+            onClick={() => handleNavigation('projects')}
+          >
             <span className="rail-icon">📁</span>
           </button>
-          <button className="rail-button" title="AI">
+          <button 
+            className="rail-button" 
+            title="AI"
+            onClick={() => handleNavigation('ai')}
+          >
             <span className="rail-icon">🤖</span>
           </button>
-          <button className="rail-button" title="Marketplace">
+          <button 
+            className="rail-button" 
+            title="Marketplace"
+            onClick={() => handleNavigation('marketplace')}
+          >
             <span className="rail-icon">🏪</span>
           </button>
-          <button className="rail-button" title="Workspaces">
+          <button 
+            className="rail-button" 
+            title="Workspaces"
+            onClick={() => handleNavigation('workspaces')}
+          >
             <span className="rail-icon">💼</span>
           </button>
-          <button className="rail-button" title="Resources">
+          <button 
+            className="rail-button" 
+            title="Resources"
+            onClick={() => handleNavigation('resources')}
+          >
             <span className="rail-icon">📚</span>
           </button>
-          <button className="rail-button" title="Settings">
+          <button 
+            className="rail-button" 
+            title="Settings"
+            onClick={() => handleNavigation('settings')}
+          >
             <span className="rail-icon">⚙️</span>
           </button>
         </div>
@@ -171,25 +199,53 @@ const ProjectsHome = () => {
       
       <div className="main-container">
         <div className="activity-rail">
-          <button className="rail-button" title="Dashboard">
+          <button 
+            className="rail-button" 
+            title="Dashboard"
+            onClick={() => handleNavigation('dashboard')}
+          >
             <span className="rail-icon">🏠</span>
           </button>
-          <button className="rail-button active" title="Projects">
+          <button 
+            className="rail-button active" 
+            title="Projects"
+            onClick={() => handleNavigation('projects')}
+          >
             <span className="rail-icon">📁</span>
           </button>
-          <button className="rail-button" title="AI">
+          <button 
+            className="rail-button" 
+            title="AI"
+            onClick={() => handleNavigation('ai')}
+          >
             <span className="rail-icon">🤖</span>
           </button>
-          <button className="rail-button" title="Marketplace">
+          <button 
+            className="rail-button" 
+            title="Marketplace"
+            onClick={() => handleNavigation('marketplace')}
+          >
             <span className="rail-icon">🏪</span>
           </button>
-          <button className="rail-button" title="Workspaces">
+          <button 
+            className="rail-button" 
+            title="Workspaces"
+            onClick={() => handleNavigation('workspaces')}
+          >
             <span className="rail-icon">💼</span>
           </button>
-          <button className="rail-button" title="Resources">
+          <button 
+            className="rail-button" 
+            title="Resources"
+            onClick={() => handleNavigation('resources')}
+          >
             <span className="rail-icon">📚</span>
           </button>
-          <button className="rail-button" title="Settings">
+          <button 
+            className="rail-button" 
+            title="Settings"
+            onClick={() => handleNavigation('settings')}
+          >
             <span className="rail-icon">⚙️</span>
           </button>
         </div>
