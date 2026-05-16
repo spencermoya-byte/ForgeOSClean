@@ -55,6 +55,7 @@ button {
   width: min(760px, 100%);
   justify-self: center;
   text-align: center;
+  margin-top: -40px;
 }
 
 .workspace-pill {
