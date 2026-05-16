@@ -6,6 +6,15 @@ const RecoveryShell = () => {
     <div className="recovery-shell">
       <div className="top-bar">
         <div className="top-bar-left">
+          <button 
+            className="hamburger-button"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Open navigation menu"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
           <h1 className="brand-title">ForgeOS</h1>
         </div>
         <div className="top-bar-center">
@@ -173,6 +182,15 @@ const ProjectsHome = () => {
     <div className="recovery-shell">
       <div className="top-bar">
         <div className="top-bar-left">
+          <button 
+            className="hamburger-button"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Open navigation menu"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
           <h1 className="brand-title">ForgeOS</h1>
         </div>
         <div className="top-bar-center">
@@ -551,71 +569,28 @@ const App: React.FC = () => {
 
   return (
     <div className="recovery-shell">
-      {/* Floating hamburger menu */}
-      <div className="floating-menu-root" ref={menuRef}>
-        <button 
-          className="hamburger-button force-visible"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          aria-label="Open navigation menu"
-        >
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-        
-        {isMenuOpen && (
-          <div className="hamburger-dropdown">
-            <button 
-              className={`menu-item ${currentRoute === 'dashboard' ? 'active' : ''}`}
-              onClick={() => handleNavigation('dashboard')}
-              type="button"
-            >
-              Dashboard
-            </button>
-            <button 
-              className={`menu-item ${currentRoute === 'projects' ? 'active' : ''}`}
-              onClick={() => handleNavigation('projects')}
-              type="button"
-            >
-              Projects
-            </button>
-            <button 
-              className={`menu-item ${currentRoute === 'marketplace' ? 'active' : ''}`}
-              onClick={() => handleNavigation('marketplace')}
-              type="button"
-            >
-              Marketplace
-            </button>
-            <button 
-              className={`menu-item ${currentRoute === 'ai' ? 'active' : ''}`}
-              onClick={() => handleNavigation('ai')}
-              type="button"
-            >
-              AI
-            </button>
-            <button 
-              className={`menu-item ${currentRoute === 'workspaces' ? 'active' : ''}`}
-              onClick={() => handleNavigation('workspaces')}
-              type="button"
-            >
-              Workspaces
-            </button>
-            <button 
-              className={`menu-item ${currentRoute === 'resources' ? 'active' : ''}`}
-              onClick={() => handleNavigation('resources')}
-              type="button"
-            >
-              Resources
-            </button>
-            <button 
-              className={`menu-item ${currentRoute === 'settings' ? 'active' : ''}`}
-              onClick={() => handleNavigation('settings')}
-              type="button"
-            >
-              Settings
-            </button>
+      <div className="top-bar">
+        <div className="top-bar-left">
+          <button 
+            className="hamburger-button"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Open navigation menu"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+          <h1 className="brand-title">ForgeOS</h1>
+        </div>
+        <div className="top-bar-center">
+          <h2 className="page-title">Projects</h2>
+        </div>
+        <div className="top-bar-right">
+          <div className="status-indicator">
+            <div className="status-dot"></div>
+            <span className="status-text">Online</span>
           </div>
-        )}
+        </div>
       </div>
       
       {/* Debug click feedback */}
