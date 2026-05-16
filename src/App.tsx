@@ -1,9 +1,10 @@
 import React from "react";
 import "./App.css";
-import { LayoutGrid, Sparkles, UserRound, Share2, Play, Settings, Monitor, Smartphone, Globe } from "lucide-react";
+import { LayoutGrid, Sparkles, UserRound, Share2, Play, Settings, Monitor, Smartphone, Globe, Plus, X } from "lucide-react";
 
 type Route = "create" | "apps" | "account" | "workspace";
 type WorkspaceTab = "preview" | "builder" | "plugins";
+type OpenPlugin = "builder" | "preview" | "plugins" | "console" | "git" | "publish";
 
 const quickStarts = ["Website", "Desktop App", "AI Tool", "Automation", "API", "Game", "Utility"];
 
@@ -19,6 +20,15 @@ const workspaceTabs: Array<{ key: WorkspaceTab; label: string }> = [
   { key: "plugins", label: "Plugins" },
 ];
 
+const availablePlugins = [
+  { id: "builder", label: "AI Builder" },
+  { id: "preview", label: "Live Preview" },
+  { id: "plugins", label: "Plugins" },
+  { id: "console", label: "Console" },
+  { id: "git", label: "Git Timeline" },
+  { id: "publish", label: "Publish" },
+];
+
 function normalizeRoute(value: string): Route {
   const cleaned = value.replace("#", "").replace("/", "").trim().toLowerCase();
   if (cleaned === "apps") return "apps";
@@ -30,6 +40,8 @@ function normalizeRoute(value: string): Route {
 export default function App() {
   const [route, setRoute] = React.useState<Route>(() => normalizeRoute(window.location.hash || "create"));
   const [workspaceTab, setWorkspaceTab] = React.useState<WorkspaceTab>("builder");
+  const [openPlugins, setOpenPlugins] = React.useState<OpenPlugin[]>(["builder", "preview", "plugins"]);
+  const [showPluginLauncher, setShowPluginLauncher] = React.useState(false);
   const [toast, setToast] = React.useState("");
 
   React.useEffect(() => {
@@ -56,6 +68,34 @@ export default function App() {
   function openWorkspace(label: string) {
     setToast(label);
     navigate("workspace");
+  }
+
+  function switchWorkspaceTab(tab: WorkspaceTab) {
+    setWorkspaceTab(tab);
+    action(`${tab} selected`);
+  }
+
+  function openPlugin(pluginId: OpenPlugin) {
+    if (!openPlugins.includes(pluginId)) {
+      setOpenPlugins([...openPlugins, pluginId]);
+    }
+    setWorkspaceTab(pluginId as WorkspaceTab);
+    setShowPluginLauncher(false);
+    action(`${pluginId} opened`);
+  }
+
+  function closePlugin(pluginId: OpenPlugin) {
+    if (openPlugins.length <= 1) return;
+    
+    const newPlugins = openPlugins.filter(id => id !== pluginId);
+    setOpenPlugins(newPlugins);
+    
+    if (workspaceTab === pluginId) {
+      // Switch to the first remaining plugin
+      setWorkspaceTab(newPlugins[0] as WorkspaceTab);
+    }
+    
+    action(`${pluginId} closed`);
   }
 
   function renderCreate() {
@@ -602,6 +642,9 @@ export default function App() {
           </div>
 
           <div className="workspace-actions">
+            <button type="button" className="soft-button" onClick={() => navigate("create")}>
+              Back to Create
+            </button>
             <button type="button" className="soft-button" onClick={() => action("Share")}>
               <Share2 size={16} />
             </button>
@@ -620,10 +663,7 @@ export default function App() {
               key={tab.key}
               type="button"
               className={workspaceTab === tab.key ? "workspace-tab active" : "workspace-tab"}
-              onClick={() => {
-                setWorkspaceTab(tab.key);
-                action(`${tab.label} selected`);
-              }}
+              onClick={() => switchWorkspaceTab(tab.key)}
             >
               {tab.label}
             </button>
@@ -633,20 +673,64 @@ export default function App() {
         {renderWorkspaceContent()}
 
         <div className="workspace-dock">
-          {workspaceTabs.map((tab) => (
+          {openPlugins.map((pluginId) => (
             <button
-              key={tab.key}
+              key={pluginId}
               type="button"
-              className={workspaceTab === tab.key ? "dock-tab active" : "dock-tab"}
-              onClick={() => {
-                setWorkspaceTab(tab.key);
-                action(`${tab.label} selected`);
-              }}
+              className={`dock-tab ${workspaceTab === pluginId ? "active" : ""}`}
+              onClick={() => switchWorkspaceTab(pluginId as WorkspaceTab)}
             >
-              {tab.label}
+              {availablePlugins.find(p => p.id === pluginId)?.label}
+              {openPlugins.length > 1 && (
+                <button
+                  type="button"
+                  className="dock-tab-close"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    closePlugin(pluginId);
+                  }}
+                >
+                  <X size={12} />
+                </button>
+              )}
             </button>
           ))}
+          
+          <button
+            type="button"
+            className="dock-plugin-launcher"
+            onClick={() => setShowPluginLauncher(!showPluginLauncher)}
+          >
+            <Plus size={16} />
+          </button>
         </div>
+
+        {showPluginLauncher && (
+          <div className="plugin-launcher">
+            <div className="plugin-launcher-header">
+              <h3>Open Plugin</h3>
+              <button
+                type="button"
+                className="plugin-launcher-close"
+                onClick={() => setShowPluginLauncher(false)}
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="plugin-launcher-content">
+              {availablePlugins.map((plugin) => (
+                <button
+                  key={plugin.id}
+                  type="button"
+                  className="plugin-launcher-item"
+                  onClick={() => openPlugin(plugin.id as OpenPlugin)}
+                >
+                  {plugin.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
     );
   }

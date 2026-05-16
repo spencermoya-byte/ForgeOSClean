@@ -830,6 +830,8 @@ button {
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(18px);
   z-index: 50;
+  max-width: 90%;
+  overflow-x: auto;
 }
 
 .dock-tab {
@@ -844,6 +846,8 @@ button {
   background: transparent;
   cursor: pointer;
   transition: all 0.2s ease;
+  position: relative;
+  white-space: nowrap;
 }
 
 .dock-tab.active {
@@ -856,6 +860,121 @@ button {
 
 .dock-tab:hover {
   transform: translateY(-1px);
+  background: rgba(124, 58, 237, 0.18);
+}
+
+.dock-tab-close {
+  position: absolute;
+  right: -6px;
+  top: -6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #374151;
+  border: 1px solid #1f2937;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.dock-tab-close:hover {
+  opacity: 1;
+  background: #ef4444;
+}
+
+.dock-plugin-launcher {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.28);
+  border: 1px solid rgba(167, 139, 250, 0.52);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: 4px;
+  transition: all 0.2s ease;
+}
+
+.dock-plugin-launcher:hover {
+  background: rgba(124, 58, 237, 0.4);
+  transform: scale(1.05);
+}
+
+/* Plugin Launcher */
+.plugin-launcher {
+  position: fixed;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 240px;
+  background: rgba(12, 14, 26, 0.95);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(18px);
+  z-index: 60;
+  overflow: hidden;
+}
+
+.plugin-launcher-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  background: rgba(13, 16, 26, 0.7);
+}
+
+.plugin-launcher-header h3 {
+  margin: 0;
+  font-size: 14px;
+  color: #f8fafc;
+}
+
+.plugin-launcher-close {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.plugin-launcher-close:hover {
+  background: rgba(148, 163, 184, 0.14);
+  color: #f8fafc;
+}
+
+.plugin-launcher-content {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+}
+
+.plugin-launcher-item {
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  color: #f8fafc;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.plugin-launcher-item:hover {
   background: rgba(124, 58, 237, 0.18);
 }
 
