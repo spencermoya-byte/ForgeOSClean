@@ -141,7 +141,7 @@ const RecoveryShell = () => {
   );
 };
 
-// Projects Home Screen Component
+// Projects Home Screen Component - Redesigned
 const ProjectsHome = () => {
   return (
     <div className="recovery-shell">
@@ -201,22 +201,50 @@ const ProjectsHome = () => {
           
           <div className="workspace-content">
             <div className="projects-home-container">
-              <div className="projects-header">
-                <h2 className="projects-title">Projects</h2>
-                <p className="projects-subtitle">Start a new project or continue your work</p>
+              {/* Greeting and Creation Prompt */}
+              <div className="creation-prompt">
+                <h1 className="creation-title">What do you want to build?</h1>
+                <p className="creation-subtitle">Describe your idea and ForgeOS will help you create it</p>
+                
+                <div className="creation-input-container">
+                  <textarea 
+                    className="creation-input"
+                    placeholder="Describe what you want ForgeOS to build..."
+                    rows={3}
+                  ></textarea>
+                  <div className="creation-controls">
+                    <button className="control-button">Plan</button>
+                    <button className="control-button">Attach Context</button>
+                    <button className="control-button">Select Model</button>
+                  </div>
+                </div>
               </div>
               
-              <div className="projects-actions">
-                <button className="projects-button primary">
-                  New Project
-                </button>
-                <button className="projects-button secondary">
-                  Open Existing Project
-                </button>
+              {/* Quick Start Categories */}
+              <div className="quick-start-section">
+                <h3 className="section-title">Quick Start</h3>
+                <div className="quick-start-buttons">
+                  <button className="quick-start-button">Desktop App</button>
+                  <button className="quick-start-button">Website</button>
+                  <button className="quick-start-button">AI Tool</button>
+                  <button className="quick-start-button">Automation</button>
+                  <button className="quick-start-button">API</button>
+                  <button className="quick-start-button">CAD Tool</button>
+                  <button className="quick-start-button">Game</button>
+                  <button className="quick-start-button">Utility</button>
+                </div>
               </div>
               
-              <div className="projects-section">
-                <h3 className="projects-section-title">Recent Projects</h3>
+              {/* Project Actions */}
+              <div className="project-actions">
+                <button className="action-button primary">New Project</button>
+                <button className="action-button secondary">Open Existing Project</button>
+                <button className="action-button secondary">Import Project</button>
+              </div>
+              
+              {/* Recent Projects */}
+              <div className="recent-projects-section">
+                <h3 className="section-title">Recent Projects</h3>
                 <div className="projects-grid">
                   <div className="project-card placeholder">
                     <div className="project-card-content">
@@ -251,8 +279,6 @@ const ProjectsHome = () => {
                     </div>
                   </div>
                 </div>
-                
-                <p className="projects-note">Project persistence will be restored later</p>
               </div>
             </div>
           </div>
