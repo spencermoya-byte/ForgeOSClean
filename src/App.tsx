@@ -410,7 +410,7 @@ export default App;`}
   };
 
   return (
-    <div className="recovery-shell">
+    <div className="app-container">
       {/* Header */}
       <header className="app-topbar">
         <div className="topbar-left">
