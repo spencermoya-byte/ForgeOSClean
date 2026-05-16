@@ -223,18 +223,20 @@ const App: React.FC = () => {
                     <span>10</span>
                   </div>
                   <div className="editor-text">
-                    <div className="line"><span className="keyword">import</span> <span className="identifier">React</span> <span className="keyword">from</span> <span className="string">"react"</span>;</div>
-                    <div className="line"><span className="keyword">import</span> <span className="identifier">"./App.css"</span>;</div>
-                    <div className="line"></div>
-                    <div className="line"><span className="keyword">const</span> <span className="identifier">App</span>: <span className="identifier">React</span>.<span className="identifier">FC</span> = () => {</div>
-                    <div className="line">&nbsp;&nbsp;<span className="keyword">return</span> (</div>
-                    <div className="line">&nbsp;&nbsp;&nbsp;&nbsp;&lt;div className="workspace-shell"&gt;</div>
-                    <div className="line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;h1&gt;ForgeOS Workspace&lt;/h1&gt;</div>
-                    <div className="line">&nbsp;&nbsp;&nbsp;&nbsp;&lt;/div&gt;</div>
-                    <div className="line">&nbsp;&nbsp;);</div>
-                    <div className="line">};</div>
-                    <div className="line"></div>
-                    <div className="line"><span className="keyword">export</span> <span className="keyword">default</span> <span className="identifier">App</span>;</div>
+                    <pre className="editor-code">
+{`import React from "react";
+import "./App.css";
+
+const App: React.FC = () => {
+  return (
+    <div className="workspace-shell">
+      <h1>ForgeOS Workspace</h1>
+    </div>
+  );
+};
+
+export default App;`}
+</pre>
                   </div>
                 </div>
               </div>
