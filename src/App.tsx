@@ -121,16 +121,14 @@ const App: React.FC = () => {
             
             <div className="project-actions">
               <button className="project-button" onClick={() => {
-                setFeedbackMessage("Opened new workspace shell.");
-                setTimeout(() => setFeedbackMessage(''), 3000);
-                navigate('workspace');
+                placeholderAction("Opened new workspace shell.");
+                navigate("workspace");
               }}>
                 New Project
               </button>
               <button className="project-button" onClick={() => {
-                setFeedbackMessage("Opened placeholder existing workspace.");
-                setTimeout(() => setFeedbackMessage(''), 3000);
-                navigate('workspace');
+                placeholderAction("Opened placeholder existing workspace.");
+                navigate("workspace");
               }}>
                 Open Existing Project
               </button>
