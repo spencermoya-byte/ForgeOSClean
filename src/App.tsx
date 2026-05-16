@@ -16,6 +16,7 @@ const App: React.FC = () => {
     { route: 'workspaces', label: 'Workspaces', icon: '💼' },
     { route: 'resources', label: 'Resources', icon: '📚' },
     { route: 'settings', label: 'Settings', icon: '⚙️' },
+    { route: 'workspace', label: 'Workspace', icon: '💻' }, // Added workspace route
   ];
   
   // Normalize route names
@@ -50,6 +51,7 @@ const App: React.FC = () => {
       case 'workspaces': return 'Workspaces';
       case 'resources': return 'Resources';
       case 'settings': return 'Settings';
+      case 'workspace': return 'Workspace';
       default: return 'ForgeOS';
     }
   };
@@ -114,6 +116,77 @@ const App: React.FC = () => {
               <h2 className="section-title">Recent Projects</h2>
               <div className="projects-placeholder">
                 <p>No recent projects found</p>
+              </div>
+            </div>
+            
+            <div className="project-actions">
+              <button className="project-button" onClick={() => {
+                setFeedbackMessage("Opened new workspace shell.");
+                setTimeout(() => setFeedbackMessage(''), 3000);
+                navigate('workspace');
+              }}>
+                New Project
+              </button>
+              <button className="project-button" onClick={() => {
+                setFeedbackMessage("Opened placeholder existing workspace.");
+                setTimeout(() => setFeedbackMessage(''), 3000);
+                navigate('workspace');
+              }}>
+                Open Existing Project
+              </button>
+            </div>
+          </div>
+        );
+        
+      case 'workspace':
+        return (
+          <div className="workspace-shell">
+            {/* Workspace Top Bar */}
+            <div className="workspace-topbar">
+              <h2 className="workspace-title">Workspace</h2>
+              <button className="back-button" onClick={() => navigate('projects')}>Back to Projects</button>
+            </div>
+            
+            {/* Workspace Content */}
+            <div className="workspace-content">
+              {/* File Explorer Panel */}
+              <div className="workspace-panel file-explorer">
+                <div className="panel-header">
+                  <h3>Explorer</h3>
+                </div>
+                <div className="panel-content">
+                  <p>Project files will appear here</p>
+                </div>
+              </div>
+              
+              {/* Editor Panel */}
+              <div className="workspace-panel editor">
+                <div className="panel-header">
+                  <h3>Editor</h3>
+                </div>
+                <div className="panel-content">
+                  <p>Editor shell — Monaco will be added later</p>
+                </div>
+              </div>
+              
+              {/* AI Assistant Panel */}
+              <div className="workspace-panel ai-assistant">
+                <div className="panel-header">
+                  <h3>AI Assistant</h3>
+                </div>
+                <div className="panel-content">
+                  <p>AI assistant shell — Ollama integration will be added later</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Terminal Panel */}
+            <div className="workspace-terminal">
+              <div className="panel-header">
+                <h3>Terminal</h3>
+              </div>
+              <div className="panel-content">
+                <p>Terminal shell — command execution will be added later</p>
               </div>
             </div>
           </div>
