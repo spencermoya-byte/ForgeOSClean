@@ -55,7 +55,7 @@ button {
   width: min(760px, 100%);
   justify-self: center;
   text-align: center;
-  margin-top: -60px;
+  margin-top: -85px;
 }
 
 .workspace-pill {
@@ -90,7 +90,7 @@ button {
 }
 
 .hero-subtitle {
-  margin: 14px 0 32px;
+  margin: 14px 0 44px;
   color: #b8b0c9;
   font-size: 15px;
 }
@@ -137,7 +137,7 @@ button {
 
 .composer {
   position: relative;
-  min-height: 110px;
+  min-height: 95px;
   border: 1px solid rgba(168, 85, 247, 0.64);
   border-radius: 14px;
   background:
@@ -152,7 +152,7 @@ button {
 
 .composer textarea {
   width: 100%;
-  min-height: 110px;
+  min-height: 95px;
   padding: 14px 16px 50px;
   resize: vertical;
   border: 0;
@@ -277,8 +277,8 @@ button {
   z-index: 50;
   display: flex;
   align-items: center;
-  gap: 3px;
-  padding: 5px;
+  gap: 2px;
+  padding: 4px;
   border: 1px solid rgba(167, 139, 250, 0.2);
   border-radius: 999px;
   background: rgba(12, 14, 23, 0.78);
@@ -288,12 +288,12 @@ button {
 
 .bottom-nav-item,
 .bottom-tab {
-  min-width: 88px;
+  min-width: 84px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 9px 12px;
+  gap: 6px;
+  padding: 8px 10px;
   border-radius: 999px;
   color: #d4cfe0;
   background: transparent;
