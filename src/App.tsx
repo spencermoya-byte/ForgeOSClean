@@ -1,459 +1,385 @@
-import React, { useState, useEffect } from "react";
-
-const App: React.FC = () => {
-  const [currentRoute, setCurrentRoute] = useState<string>('create');
-  const [feedbackMessage, setFeedbackMessage] = useState<string>('');
-  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
-  const menuRef = React.useRef<HTMLDivElement>(null);
-
-  // Navigation items
-  const navItems = [
-    { route: 'create', label: 'Create', icon: '➕' },
-    { route: 'apps', label: 'Apps', icon: '📁' },
-    { route: 'account', label: 'Account', icon: '👤' },
-  ];
-
-  // Normalize route names
-  const normalizeRoute = (routeName: string): string => {
-    if (routeName === '' || routeName === '/' || routeName === '#/' || routeName === '#') {
-      return 'create';
-    }
-    return routeName;
-  };
-
-  // Centralized navigation function
-  const navigate = (routeName: string) => {
-    const normalizedRoute = normalizeRoute(routeName);
-    setCurrentRoute(normalizedRoute);
-    window.location.hash = `/${normalizedRoute}`;
-    setIsMenuOpen(false);
-  };
-
-  // Show placeholder feedback
-  const placeholderAction = (label: string) => {
-    setFeedbackMessage(`Placeholder action: ${label} is not connected yet.`);
-    setTimeout(() => setFeedbackMessage(''), 3000);
-  };
-
-  // Handle click outside to close menu
-  useEffect(() => {
-    if (!isMenuOpen) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isMenuOpen]);
-
-  // Handle hash changes
-  useEffect(() => {
-    const handleHashChange = () => {
-      let hash = window.location.hash.slice(1) || 'create';
-      const normalizedRoute = normalizeRoute(hash);
-      setCurrentRoute(normalizedRoute);
-    };
-    
-    handleHashChange();
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-
-  // Render page content based on route
-  const renderPage = () => {
-    switch (currentRoute) {
-      case 'create':
-        return (
-          <div className="create-page">
-            <div className="workspace-pill">ForgeOS local workspace</div>
-            
-            <div className="create-header">
-              <h1 className="create-title">What do you want to build?</h1>
-              <p className="create-subtitle">Describe your idea and ForgeOS will help you create it</p>
-            </div>
-            
-            <div className="prompt-container">
-              <textarea 
-                className="prompt-textarea"
-                placeholder="Describe what you want ForgeOS to build..."
-                rows={3}
-              ></textarea>
-              <button className="prompt-plus-button" onClick={() => placeholderAction("Attach files/photos")}>
-                <span className="plus-icon">+</span>
-              </button>
-              <div className="prompt-controls">
-                <button className="control-button" onClick={() => placeholderAction("Plan")}>Plan</button>
-                <button className="control-button" onClick={() => {
-                  placeholderAction("Send to workspace");
-                  navigate("workspace");
-                }}>Send</button>
-              </div>
-            </div>
-            
-            <div className="quick-start">
-              <h2 className="section-title">Quick Start</h2>
-              <div className="quick-start-pills">
-                <button className="pill-button" onClick={() => placeholderAction("Website project")}>Website</button>
-                <button className="pill-button" onClick={() => placeholderAction("Desktop App project")}>Desktop App</button>
-                <button className="pill-button" onClick={() => placeholderAction("AI Tool project")}>AI Tool</button>
-                <button className="pill-button" onClick={() => placeholderAction("Automation project")}>Automation</button>
-                <button className="pill-button" onClick={() => placeholderAction("API project")}>API</button>
-                <button className="pill-button" onClick={() => placeholderAction("Game project")}>Game</button>
-                <button className="pill-button" onClick={() => placeholderAction("Utility project")}>Utility</button>
-              </div>
-            </div>
-            
-            <div className="recent-projects">
-              <h2 className="section-title">Recent Projects</h2>
-              <div className="projects-placeholder">
-                <p>No recent projects found</p>
-              </div>
-            </div>
-            
-            <div className="project-actions">
-              <button className="project-button" onClick={() => {
-                placeholderAction("Opened new workspace shell.");
-                navigate("workspace");
-              }}>
-                New Project
-              </button>
-            </div>
-          </div>
-        );
-        
-      case 'apps':
-        return (
-          <div className="apps-page">
-            <div className="apps-header">
-              <h1 className="apps-title">Apps</h1>
-            </div>
-            
-            <div className="apps-content">
-              <div className="apps-row">
-                <h2 className="apps-row-title">All Apps</h2>
-              </div>
-              
-              <div className="apps-grid">
-                <div className="app-card">
-                  <div className="app-card-header">
-                    <div className="app-icon">🚀</div>
-                    <div className="app-card-title">My Project</div>
-                  </div>
-                  <div className="app-card-footer">
-                    <span className="app-card-date">2023-05-15</span>
-                  </div>
-                </div>
-                
-                <div className="app-card">
-                  <div className="app-card-header">
-                    <div className="app-icon">🤖</div>
-                    <div className="app-card-title">AI Assistant</div>
-                  </div>
-                  <div className="app-card-footer">
-                    <span className="app-card-date">2023-05-10</span>
-                  </div>
-                </div>
-                
-                <div className="app-card">
-                  <div className="app-card-header">
-                    <div className="app-icon">🌐</div>
-                    <div className="app-card-title">Web App</div>
-                  </div>
-                  <div className="app-card-footer">
-                    <span className="app-card-date">2023-05-05</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-        
-      case 'account':
-        return (
-          <div className="account-page">
-            <div className="account-header">
-              <div className="avatar-container">
-                <div className="avatar">JD</div>
-              </div>
-              <div className="user-info">
-                <h2 className="user-name">John Doe</h2>
-                <p className="user-handle">@johndoe</p>
-              </div>
-            </div>
-            
-            <div className="settings-section">
-              <h3 className="section-title">Settings</h3>
-              <div className="settings-list">
-                <button className="setting-item" onClick={() => placeholderAction("Profile settings")}>
-                  <span className="setting-label">Profile</span>
-                  <span className="setting-arrow">→</span>
-                </button>
-                <button className="setting-item" onClick={() => placeholderAction("Theme settings")}>
-                  <span className="setting-label">Theme</span>
-                  <span className="setting-arrow">→</span>
-                </button>
-                <button className="setting-item" onClick={() => placeholderAction("Usage settings")}>
-                  <span className="setting-label">Usage</span>
-                  <span className="setting-arrow">→</span>
-                </button>
-                <button className="setting-item" onClick={() => placeholderAction("Notifications settings")}>
-                  <span className="setting-label">Notifications</span>
-                  <span className="setting-arrow">→</span>
-                </button>
-                <button className="setting-item" onClick={() => placeholderAction("Help settings")}>
-                  <span className="setting-label">Help</span>
-                  <span className="setting-arrow">→</span>
-                </button>
-              </div>
-            </div>
-            
-            <div className="account-footer">
-              <button className="logout-button" onClick={() => placeholderAction("Logout")}>Logout</button>
-            </div>
-          </div>
-        );
-        
-      case 'workspace':
-        return (
-          <div className="workspace-shell">
-            {/* Workspace Top Bar */}
-            <div className="workspace-topbar">
-              <div className="topbar-left">
-                <span className="project-name">My Project</span>
-                <button className="upgrade-button" onClick={() => placeholderAction("Upgrade")}>Upgrade</button>
-              </div>
-              
-              <div className="topbar-tabs">
-                <button className="tab-button active" onClick={() => placeholderAction("Agent tab")}>Agent</button>
-                <button className="tab-button" onClick={() => placeholderAction("Preview tab")}>Preview</button>
-                <button className="tab-button" onClick={() => placeholderAction("Console tab")}>Console</button>
-                <button className="tab-button" onClick={() => placeholderAction("Git tab")}>Git</button>
-                <button className="tab-button" onClick={() => placeholderAction("Diff/Settings tab")}>Diff</button>
-              </div>
-              
-              <div className="topbar-right">
-                <button className="invite-button" onClick={() => placeholderAction("Invite")}>Invite</button>
-                <button className="publish-button" onClick={() => placeholderAction("Publish")}>Publish</button>
-              </div>
-            </div>
-            
-            {/* Main workspace content */}
-            <div className="workspace-content">
-              {/* Left AI Agent Panel */}
-              <div className="agent-panel">
-                <div className="agent-header">
-                  <h3>ForgeOS AI Agent</h3>
-                </div>
-                
-                <div className="agent-task">
-                  <div className="task-title">Planning project structure</div>
-                  <div className="task-progress">
-                    <div className="progress-bar" style={{ width: '40%' }}></div>
-                  </div>
-                </div>
-                
-                <div className="agent-progress">
-                  <div className="progress-step">
-                    <span className="step-status">✓</span>
-                    <span className="step-text">Project structure planned</span>
-                  </div>
-                  <div className="progress-step">
-                    <span className="step-status">✓</span>
-                    <span className="step-text">Editor shell prepared</span>
-                  </div>
-                  <div className="progress-step">
-                    <span className="step-status">○</span>
-                    <span className="step-text">Waiting for model integration</span>
-                  </div>
-                </div>
-                
-                <div className="agent-input-area">
-                  <button className="input-plus-button" onClick={() => placeholderAction("Add file")}>
-                    <span className="plus-icon">+</span>
-                  </button>
-                  <input 
-                    type="text" 
-                    className="agent-input" 
-                    placeholder="What would you like to do next?"
-                  />
-                  <button className="plan-button" onClick={() => placeholderAction("Plan")}>Plan</button>
-                  <button className="send-button" onClick={() => placeholderAction("Send")}>Send</button>
-                </div>
-              </div>
-              
-              {/* Center Editor Panel */}
-              <div className="editor-panel">
-                <div className="editor-header">
-                  <span className="file-path">client/src/App.tsx</span>
-                </div>
-                <div className="editor-content">
-                  <div className="line-numbers">
-                    <span>1</span>
-                    <span>2</span>
-                    <span>3</span>
-                    <span>4</span>
-                    <span>5</span>
-                    <span>6</span>
-                    <span>7</span>
-                    <span>8</span>
-                    <span>9</span>
-                    <span>10</span>
-                  </div>
-                  <div className="editor-text">
-                    <pre className="editor-code">
-{`import React from "react";
+import React from "react";
 import "./App.css";
 
-const App: React.FC = () => {
-  return (
-    <div className="workspace-shell">
-      <h1>ForgeOS Workspace</h1>
-    </div>
-  );
-};
+type Route = "create" | "apps" | "account" | "workspace";
+type WorkspaceTab = "agent" | "preview" | "console" | "git" | "publish" | "more";
 
-export default App;`}
-</pre>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Right Tab Panel */}
-              <div className="tab-panel">
-                <div className="tab-header">
-                  <button className="tab-button active" onClick={() => placeholderAction("Preview tab")}>Preview</button>
-                  <button className="tab-button" onClick={() => placeholderAction("Console tab")}>Console</button>
-                  <button className="tab-button" onClick={() => placeholderAction("Git tab")}>Git</button>
-                  <button className="tab-button" onClick={() => placeholderAction("Diff tab")}>Diff</button>
-                </div>
-                <div className="tab-content">
-                  <div className="tab-placeholder">
-                    <p>Tab content placeholder</p>
-                  </div>
-                </div>
+const quickStarts = ["Website", "Desktop App", "AI Tool", "Automation", "API", "Game", "Utility"];
+
+const bottomNav: Array<{ route: Route; label: string; icon: string }> = [
+  { route: "apps", label: "Apps", icon: "▦" },
+  { route: "create", label: "Create", icon: "⌂" },
+  { route: "account", label: "Account", icon: "♙" },
+];
+
+const workspaceTabs: Array<{ key: WorkspaceTab; label: string }> = [
+  { key: "agent", label: "Agent" },
+  { key: "preview", label: "Preview" },
+  { key: "console", label: "Console" },
+  { key: "git", label: "Git" },
+  { key: "publish", label: "Publish" },
+  { key: "more", label: "More" },
+];
+
+function normalizeRoute(value: string): Route {
+  const cleaned = value.replace("#", "").replace("/", "").trim().toLowerCase();
+  if (cleaned === "apps") return "apps";
+  if (cleaned === "account") return "account";
+  if (cleaned === "workspace") return "workspace";
+  return "create";
+}
+
+export default function App() {
+  const [route, setRoute] = React.useState<Route>(() => normalizeRoute(window.location.hash || "create"));
+  const [workspaceTab, setWorkspaceTab] = React.useState<WorkspaceTab>("agent");
+  const [toast, setToast] = React.useState("");
+
+  React.useEffect(() => {
+    const handleHash = () => setRoute(normalizeRoute(window.location.hash || "create"));
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
+
+  React.useEffect(() => {
+    if (!toast) return;
+    const id = window.setTimeout(() => setToast(""), 2600);
+    return () => window.clearTimeout(id);
+  }, [toast]);
+
+  function navigate(nextRoute: Route) {
+    setRoute(nextRoute);
+    window.location.hash = `/${nextRoute}`;
+  }
+
+  function action(label: string) {
+    setToast(`Placeholder action: ${label}`);
+  }
+
+  function openWorkspace(label: string) {
+    setToast(label);
+    navigate("workspace");
+  }
+
+  function renderCreate() {
+    return (
+      <main className="create-screen">
+        <section className="create-hero">
+          <div className="workspace-pill">
+            <span className="live-dot" />
+            ForgeOS local workspace
+          </div>
+
+          <h1>What do you want to build?</h1>
+          <p className="hero-subtitle">Create anything. ForgeOS is your local AI-powered canvas.</p>
+
+          <div className="quick-pill-row">
+            {quickStarts.map((item) => (
+              <button key={item} type="button" className="quick-pill" onClick={() => action(`${item} selected`)}>
+                {item}
+              </button>
+            ))}
+          </div>
+
+          <div className="composer">
+            <textarea placeholder="Describe your idea..." />
+            <div className="composer-footer">
+              <button type="button" className="composer-plus" onClick={() => action("Attach files/photos")}>
+                +
+              </button>
+
+              <div className="composer-actions">
+                <button type="button" className="soft-button" onClick={() => action("Plan")}>
+                  Plan
+                </button>
+                <button type="button" className="send-button" onClick={() => openWorkspace("Opening ForgeOS workspace...")}>
+                  →
+                </button>
               </div>
             </div>
-            
-            {/* Bottom Status Bar */}
-            <div className="workspace-statusbar">
-              <div className="status-item">
-                <span className="status-dot"></span>
-                <span>Workspace shell active</span>
-              </div>
-              <div className="status-item">
-                <span className="status-dot"></span>
-                <span>Editor placeholder</span>
-              </div>
-              <div className="status-item">
-                <span className="status-dot"></span>
-                <span>AI placeholder</span>
-              </div>
-              <div className="status-item">
-                <span className="status-dot status-not-connected"></span>
-                <span>Backend not connected</span>
-              </div>
+          </div>
+
+          <section className="recent-block">
+            <h2>Recent Projects</h2>
+            <div className="empty-recent">
+              <p>No recent projects yet.</p>
+              <span>Start a new project to see it here.</span>
             </div>
-            
-            <button className="back-button" onClick={() => navigate('create')}>
-              Back to Create
+          </section>
+        </section>
+
+        <aside className="forge-card">
+          <div className="forge-card-icon">✦</div>
+          <h2>ForgeOS</h2>
+          <p>Your local AI engineering workspace.</p>
+
+          <div className="forge-feature">
+            <strong>100% local</strong>
+            <span>Your data stays on your machine.</span>
+          </div>
+
+          <div className="forge-feature">
+            <strong>AI native</strong>
+            <span>Built for agent-assisted development.</span>
+          </div>
+
+          <div className="forge-feature">
+            <strong>Expandable</strong>
+            <span>Designed for models, tools, and workflows.</span>
+          </div>
+        </aside>
+      </main>
+    );
+  }
+
+  function renderApps() {
+    return (
+      <main className="simple-page">
+        <div className="page-shell">
+          <h1>Apps</h1>
+
+          <button type="button" className="list-row" onClick={() => action("All Apps")}>
+            <span>▦</span>
+            <strong>All Apps</strong>
+            <em>›</em>
+          </button>
+
+          <div className="app-card">
+            <div className="app-preview">
+              <span>ForgeOS project preview</span>
+            </div>
+            <h2>Example Local App</h2>
+            <p>Placeholder project card. Real persistence will be added later.</p>
+            <button type="button" className="soft-button" onClick={() => openWorkspace("Opening placeholder app...")}>
+              Open
             </button>
           </div>
-        );
-        
-      default:
-        return (
-          <div className="create-page">
-            <div className="workspace-pill">ForgeOS local workspace</div>
-            
-            <div className="create-header">
-              <h1 className="create-title">What do you want to build?</h1>
-              <p className="create-subtitle">Describe your idea and ForgeOS will help you create it</p>
-            </div>
-            
-            <div className="prompt-container">
-              <textarea 
-                className="prompt-textarea"
-                placeholder="Describe what you want ForgeOS to build..."
-                rows={3}
-              ></textarea>
-              <button className="prompt-plus-button" onClick={() => placeholderAction("Attach files/photos")}>
-                <span className="plus-icon">+</span>
+        </div>
+      </main>
+    );
+  }
+
+  function renderAccount() {
+    return (
+      <main className="simple-page">
+        <div className="account-shell">
+          <div className="avatar">SM</div>
+          <h1>Spencer Moya</h1>
+          <p>@smgunner14</p>
+          <p>smgunner14@gmail.com</p>
+
+          <div className="account-section">
+            {["Profile", "Theme - Dark", "Usage", "Notifications", "Help"].map((item) => (
+              <button key={item} type="button" className="account-row" onClick={() => action(item)}>
+                <span>{item}</span>
+                <em>›</em>
               </button>
-              <div className="prompt-controls">
-                <button className="control-button" onClick={() => placeholderAction("Plan")}>Plan</button>
-                <button className="control-button" onClick={() => {
-                  placeholderAction("Send to workspace");
-                  navigate("workspace");
-                }}>Send</button>
-              </div>
-            </div>
-            
-            <div className="quick-start">
-              <h2 className="section-title">Quick Start</h2>
-              <div className="quick-start-pills">
-                <button className="pill-button" onClick={() => placeholderAction("Website project")}>Website</button>
-                <button className="pill-button" onClick={() => placeholderAction("Desktop App project")}>Desktop App</button>
-                <button className="pill-button" onClick={() => placeholderAction("AI Tool project")}>AI Tool</button>
-                <button className="pill-button" onClick={() => placeholderAction("Automation project")}>Automation</button>
-                <button className="pill-button" onClick={() => placeholderAction("API project")}>API</button>
-                <button className="pill-button" onClick={() => placeholderAction("Game project")}>Game</button>
-                <button className="pill-button" onClick={() => placeholderAction("Utility project")}>Utility</button>
-              </div>
-            </div>
-            
-            <div className="recent-projects">
-              <h2 className="section-title">Recent Projects</h2>
-              <div className="projects-placeholder">
-                <p>No recent projects found</p>
-              </div>
-            </div>
-            
-            <div className="project-actions">
-              <button className="project-button" onClick={() => {
-                placeholderAction("Opened new workspace shell.");
-                navigate("workspace");
-              }}>
-                New Project
-              </button>
-            </div>
+            ))}
           </div>
-        );
+        </div>
+      </main>
+    );
+  }
+
+  function renderWorkspaceContent() {
+    if (workspaceTab === "preview") {
+      return (
+        <section className="workspace-panel large-panel">
+          <div className="placeholder-icon">▭</div>
+          <h2>Preview will appear here</h2>
+          <p>Run your project to see a live preview once execution is connected.</p>
+        </section>
+      );
     }
-  };
+
+    if (workspaceTab === "console") {
+      return (
+        <section className="workspace-panel terminal-panel">
+          <h2>Console</h2>
+          <pre>{`> ForgeOS console shell
+> Command execution will be added later.
+> Ready.`}</pre>
+        </section>
+      );
+    }
+
+    if (workspaceTab === "git") {
+      return (
+        <section className="workspace-panel large-panel">
+          <h2>Git</h2>
+          <p>Branches, commits, diffs, and sync controls will appear here later.</p>
+          <div className="mini-grid">
+            <div>Current branch: main</div>
+            <div>Changes: placeholder</div>
+            <div>Remote: not connected</div>
+          </div>
+        </section>
+      );
+    }
+
+    if (workspaceTab === "publish") {
+      return (
+        <section className="workspace-panel large-panel">
+          <h2>Publish</h2>
+          <p>Deployment, visibility, domains, and release settings will be added later.</p>
+          <button type="button" className="primary-button" onClick={() => action("Publish placeholder")}>
+            Publish Placeholder
+          </button>
+        </section>
+      );
+    }
+
+    if (workspaceTab === "more") {
+      return (
+        <section className="workspace-panel large-panel">
+          <h2>More</h2>
+          <p>Workspace settings, resources, extensions, and advanced tools will appear here.</p>
+          <div className="mini-grid">
+            <div>Resources</div>
+            <div>Extensions</div>
+            <div>Settings</div>
+          </div>
+        </section>
+      );
+    }
+
+    return (
+      <section className="workspace-grid">
+        <aside className="agent-panel">
+          <h2>Agent</h2>
+          <div className="agent-message">
+            <strong>ForgeOS Agent</strong>
+            <p>I’m your local AI agent. How can I help you build today?</p>
+          </div>
+
+          <div className="agent-steps">
+            <span>Planning project structure</span>
+            <span>Preparing editor shell</span>
+            <span>Waiting for model integration</span>
+          </div>
+
+          <div className="agent-input">
+            <input placeholder="Ask the agent anything..." />
+            <button type="button" onClick={() => action("Agent send")}>
+              →
+            </button>
+          </div>
+        </aside>
+
+        <section className="editor-panel">
+          <div className="editor-tab">main.tsx</div>
+          <pre className="code-preview">{`1  // Your code will appear here
+2
+3  function App() {
+4    return <ForgeOS />;
+5  }`}</pre>
+
+          <div className="console-strip">
+            <span>Console</span>
+            <code>&gt; Ready.</code>
+            <span className="status-green" />
+          </div>
+        </section>
+
+        <aside className="preview-panel">
+          <div className="placeholder-icon">▭</div>
+          <h2>Preview</h2>
+          <p>Your running app preview will appear here later.</p>
+        </aside>
+      </section>
+    );
+  }
+
+  function renderWorkspace() {
+    return (
+      <main className="workspace-screen">
+        <header className="workspace-topbar">
+          <div className="workspace-brand">
+            <div className="logo-box">F</div>
+            <button type="button" className="project-name" onClick={() => action("Project menu")}>
+              My Project⌄
+            </button>
+          </div>
+
+          <div className="workspace-actions">
+            <button type="button" className="soft-button" onClick={() => navigate("create")}>
+              Back to Create
+            </button>
+            <button type="button" className="soft-button" onClick={() => action("Share")}>
+              Share
+            </button>
+            <button type="button" className="primary-button" onClick={() => action("Run")}>
+              Run
+            </button>
+          </div>
+        </header>
+
+        <nav className="workspace-tabs">
+          {workspaceTabs.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              className={workspaceTab === tab.key ? "workspace-tab active" : "workspace-tab"}
+              onClick={() => {
+                setWorkspaceTab(tab.key);
+                action(`${tab.label} selected`);
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+
+        {renderWorkspaceContent()}
+
+        <div className="workspace-bottom-nav">
+          {workspaceTabs.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              className={workspaceTab === tab.key ? "bottom-tab active" : "bottom-tab"}
+              onClick={() => {
+                setWorkspaceTab(tab.key);
+                action(`${tab.label} selected`);
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </main>
+    );
+  }
+
+  function renderPage() {
+    if (route === "apps") return renderApps();
+    if (route === "account") return renderAccount();
+    if (route === "workspace") return renderWorkspace();
+    return renderCreate();
+  }
+
+  const showBottomNav = route !== "workspace";
 
   return (
-    <div className="app-container">
-      {/* Main content */}
-      <div className="main-content">
-        {renderPage()}
-      </div>
-      
-      {/* Bottom Navigation */}
-      <nav className="bottom-nav">
-        {navItems.map((item) => (
-          <button
-            key={item.route}
-            className={`nav-button ${currentRoute === item.route ? 'active' : ''}`}
-            onClick={() => navigate(item.route)}
-            type="button"
-          >
-            <span className="nav-icon">{item.icon}</span>
-            <span className="nav-label">{item.label}</span>
-          </button>
-        ))}
-      </nav>
-      
-      {/* Feedback toast */}
-      {feedbackMessage && (
-        <div className="feedback-toast">
-          {feedbackMessage}
-        </div>
+    <div className="app">
+      {renderPage()}
+
+      {showBottomNav && (
+        <nav className="bottom-nav" aria-label="Main navigation">
+          {bottomNav.map((item) => (
+            <button
+              key={item.route}
+              type="button"
+              className={route === item.route ? "bottom-nav-item active" : "bottom-nav-item"}
+              onClick={() => navigate(item.route)}
+            >
+              <span>{item.icon}</span>
+              <strong>{item.label}</strong>
+            </button>
+          ))}
+        </nav>
       )}
+
+      {toast && <div className="toast">{toast}</div>}
     </div>
   );
-};
-
-export default App;
+}
