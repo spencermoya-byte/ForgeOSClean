@@ -407,6 +407,7 @@ const App: React.FC = () => {
   // Simple hash-based routing
   const [currentRoute, setCurrentRoute] = React.useState<string>('projects');
   const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
+  const menuRef = React.useRef<HTMLDivElement>(null);
   
   React.useEffect(() => {
     const handleHashChange = () => {
@@ -427,6 +428,23 @@ const App: React.FC = () => {
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
+  
+  // Handle click outside to close menu
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    if (isMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMenuOpen]);
   
   // Centralized navigation function
   const navigate = (routeName: string) => {
@@ -547,7 +565,7 @@ const App: React.FC = () => {
   return (
     <div className="recovery-shell">
       {/* Hamburger Menu */}
-      <div className="hamburger-menu">
+      <div className="hamburger-menu" ref={menuRef}>
         <button 
           className="hamburger-button"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
