@@ -6,15 +6,6 @@ const RecoveryShell = () => {
     <div className="recovery-shell">
       <div className="top-bar">
         <div className="top-bar-left">
-          <button 
-            className="hamburger-button"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Open navigation menu"
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
           <h1 className="brand-title">ForgeOS</h1>
         </div>
         <div className="top-bar-center">
@@ -182,15 +173,6 @@ const ProjectsHome = () => {
     <div className="recovery-shell">
       <div className="top-bar">
         <div className="top-bar-left">
-          <button 
-            className="hamburger-button"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Open navigation menu"
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
           <h1 className="brand-title">ForgeOS</h1>
         </div>
         <div className="top-bar-center">
@@ -564,10 +546,10 @@ const App: React.FC = () => {
 
   return (
     <div className="recovery-shell">
-      {/* Hamburger Menu */}
-      <div className="hamburger-menu" ref={menuRef}>
+      {/* Floating hamburger menu */}
+      <div className="floating-menu-root" ref={menuRef}>
         <button 
-          className="hamburger-button"
+          className="hamburger-button force-visible"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="Open navigation menu"
         >
@@ -577,7 +559,7 @@ const App: React.FC = () => {
         </button>
         
         {isMenuOpen && (
-          <div className="menu-dropdown">
+          <div className="hamburger-dropdown">
             <button 
               className={`menu-item ${currentRoute === 'dashboard' ? 'active' : ''}`}
               onClick={() => handleNavigation('dashboard')}
