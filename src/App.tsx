@@ -277,19 +277,21 @@ const ProjectsHome = () => {
                 <p className="creation-subtitle">Describe your idea and ForgeOS will help you create it</p>
                 
                 <div className="creation-input-container">
-                  <textarea 
-                    className="creation-input"
-                    placeholder="Describe what you want ForgeOS to build..."
-                    rows={3}
-                  ></textarea>
+                  <div className="creation-input-shell">
+                    <textarea 
+                      className="creation-input"
+                      placeholder="Describe what you want ForgeOS to build..."
+                      rows={3}
+                    ></textarea>
+                    <button className="input-plus-button" onClick={() => showPlaceholderFeedback("Attach files/photos")} aria-label="Attach files">
+                      <span className="plus-icon">+</span>
+                    </button>
+                  </div>
                   <div className="creation-controls">
                     <button className="control-button" onClick={() => showPlaceholderFeedback("Plan")}>Plan</button>
                     <button className="control-button" onClick={() => showPlaceholderFeedback("Attach Context")}>Attach Context</button>
                     <button className="control-button" onClick={() => showPlaceholderFeedback("Select Model")}>Select Model</button>
                   </div>
-                  <button className="plus-button" onClick={() => showPlaceholderFeedback("Attach files/photos")} aria-label="Attach files">
-                    <span className="plus-icon">+</span>
-                  </button>
                 </div>
               </div>
               

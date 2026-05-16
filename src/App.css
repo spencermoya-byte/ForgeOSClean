@@ -289,10 +289,16 @@ code {
   margin: 1.5rem 0;
 }
 
+.creation-input-shell {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
 .creation-input {
   width: 100%;
   min-height: 120px;
   padding: 1rem;
+  padding-bottom: 36px;
   border-radius: 0.75rem;
   background-color: #1f2937;
   border: 1px solid #374151;
@@ -307,6 +313,31 @@ code {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.input-plus-button {
+  position: absolute;
+  left: 16px;
+  bottom: 14px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #374151;
+  border: 1px solid #4b5563;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.input-plus-button:hover {
+  background-color: #4b5563;
+}
+
+.plus-icon {
+  font-size: 16px;
+  color: #f9fafb;
 }
 
 .creation-controls {
