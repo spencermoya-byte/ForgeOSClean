@@ -336,20 +336,6 @@ const App: React.FC = () => {
             </button>
           </div>
         );
-      case 'projects':
-        return (
-          <div className="recovery-page">
-            <h1 className="recovery-page-title">Projects</h1>
-            <p className="recovery-page-text mb-4">Placeholder page — system restoration in progress</p>
-            <p className="recovery-page-text mb-6">This section will display project management functionality once restored.</p>
-            <button 
-              onClick={() => handleNavigation('dashboard')}
-              className="recovery-button"
-            >
-              Back to Dashboard
-            </button>
-          </div>
-        );
       case 'workspaces':
         return (
           <div className="recovery-page">
@@ -447,12 +433,6 @@ const App: React.FC = () => {
               onClick={() => handleNavigation('ai')}
             >
               AI
-            </button>
-            <button 
-              className={`menu-item ${currentRoute === 'projects' ? 'active' : ''}`}
-              onClick={() => handleNavigation('projects')}
-            >
-              Projects
             </button>
             <button 
               className={`menu-item ${currentRoute === 'workspaces' ? 'active' : ''}`}
