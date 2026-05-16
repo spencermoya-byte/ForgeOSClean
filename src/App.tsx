@@ -64,11 +64,11 @@ export default function App() {
         <section className="create-hero">
           <div className="workspace-pill">
             <span className="live-dot" />
-            ForgeOS local workspace
+            Vivus local workspace
           </div>
 
           <h1>What do you want to build?</h1>
-          <p className="hero-subtitle">Create anything. ForgeOS is your local AI-powered canvas.</p>
+          <p className="hero-subtitle">Create anything. Vivus is your local AI-powered canvas.</p>
 
           <div className="quick-pill-row">
             {quickStarts.map((item) => (
@@ -89,7 +89,7 @@ export default function App() {
                 <button type="button" className="soft-button" onClick={() => action("Plan")}>
                   Plan
                 </button>
-                <button type="button" className="send-button" onClick={() => openWorkspace("Opening ForgeOS workspace.~")}>
+                <button type="button" className="send-button" onClick={() => openWorkspace("Opening Vivus workspace.~")}>
                   →
                 </button>
               </div>
@@ -99,7 +99,7 @@ export default function App() {
 
         <aside className="forge-card">
           <div className="forge-card-icon">✦</div>
-          <h2>ForgeOS</h2>
+          <h2>Vivus</h2>
           <p>Your local AI engineering workspace.</p>
 
           <div className="forge-feature">
@@ -135,7 +135,7 @@ export default function App() {
 
           <div className="app-card">
             <div className="app-preview">
-              <span>ForgeOS project preview</span>
+              <span>Vivus project preview</span>
             </div>
             <h2>Example Local App</h2>
             <p>Placeholder project card. Real persistence will be added later.</p>
@@ -194,7 +194,7 @@ export default function App() {
             </div>
             <div className="ai-builder-response">
               <div className="ai-response-message">
-                <strong>ForgeOS Agent</strong>
+                <strong>Vivus Agent</strong>
                 <p>Understood. I'll help you build that. What's your project structure?</p>
               </div>
               <div className="ai-response-message">
@@ -202,7 +202,7 @@ export default function App() {
                 <p>Let's create a React app with a todo list feature.</p>
               </div>
               <div className="ai-response-message">
-                <strong>ForgeOS Agent</strong>
+                <strong>Vivus Agent</strong>
                 <p>Great! I'll generate the project structure and files for a React todo app.</p>
               </div>
             </div>
@@ -274,7 +274,7 @@ export default function App() {
           </div>
           <div className="ai-builder-response">
             <div className="ai-response-message">
-              <strong>ForgeOS Agent</strong>
+              <strong>Vivus Agent</strong>
               <p>Understood. I'll help you build that. What's your project structure?</p>
             </div>
           </div>
@@ -288,7 +288,7 @@ export default function App() {
       <main className="workspace-screen">
         <header className="workspace-topbar">
           <div className="workspace-brand">
-            <div className="logo-box">F</div>
+            <div className="logo-box">V</div>
             <button type="button" className="project-name" onClick={() => action("Project menu")}>
               My Project⌄
             </button>
