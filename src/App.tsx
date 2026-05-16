@@ -125,19 +125,164 @@ const RecoveryShell = () => {
   );
 };
 
+// Projects Home Screen Component
+const ProjectsHome = () => {
+  return (
+    <div className="recovery-shell">
+      <div className="top-bar">
+        <div className="top-bar-left">
+          <button 
+            className="hamburger-button"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle navigation menu"
+          >
+            <span className="hamburger-line"></span>
+            <span className="hamburger-line"></span>
+            <span className="hamburger-line"></span>
+          </button>
+          <h1 className="brand-title">ForgeOS</h1>
+        </div>
+        <div className="top-bar-center">
+          <h2 className="page-title">Projects</h2>
+        </div>
+        <div className="top-bar-right">
+          <div className="status-indicator">
+            <div className="status-dot"></div>
+            <span className="status-text">Online</span>
+          </div>
+        </div>
+      </div>
+      
+      <div className="main-container">
+        <div className="activity-rail">
+          <button className="rail-button" title="Dashboard">
+            <span className="rail-icon">🏠</span>
+          </button>
+          <button className="rail-button active" title="Projects">
+            <span className="rail-icon">📁</span>
+          </button>
+          <button className="rail-button" title="AI">
+            <span className="rail-icon">🤖</span>
+          </button>
+          <button className="rail-button" title="Marketplace">
+            <span className="rail-icon">🏪</span>
+          </button>
+          <button className="rail-button" title="Workspaces">
+            <span className="rail-icon">💼</span>
+          </button>
+          <button className="rail-button" title="Resources">
+            <span className="rail-icon">📚</span>
+          </button>
+          <button className="rail-button" title="Settings">
+            <span className="rail-icon">⚙️</span>
+          </button>
+        </div>
+        
+        <div className="workspace-area">
+          <div className="workspace-header">
+            <h3 className="workspace-title">Projects</h3>
+          </div>
+          
+          <div className="workspace-content">
+            <div className="projects-home-container">
+              <div className="projects-header">
+                <h2 className="projects-title">Projects</h2>
+                <p className="projects-subtitle">Start a new project or continue your work</p>
+              </div>
+              
+              <div className="projects-actions">
+                <button className="projects-button primary">
+                  New Project
+                </button>
+                <button className="projects-button secondary">
+                  Open Existing Project
+                </button>
+              </div>
+              
+              <div className="projects-section">
+                <h3 className="projects-section-title">Recent Projects</h3>
+                <div className="projects-grid">
+                  <div className="project-card placeholder">
+                    <div className="project-card-content">
+                      <div className="project-icon">📁</div>
+                      <h4 className="project-card-title">Project Placeholder</h4>
+                      <p className="project-card-description">This is a placeholder for a real project</p>
+                      <div className="project-card-footer">
+                        <span className="project-card-date">Last opened: Today</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="project-card placeholder">
+                    <div className="project-card-content">
+                      <div className="project-icon">📁</div>
+                      <h4 className="project-card-title">Another Placeholder</h4>
+                      <p className="project-card-description">Example project for demonstration</p>
+                      <div className="project-card-footer">
+                        <span className="project-card-date">Last opened: Yesterday</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="project-card placeholder">
+                    <div className="project-card-content">
+                      <div className="project-icon">📁</div>
+                      <h4 className="project-card-title">Sample Project</h4>
+                      <p className="project-card-description">This project is a template</p>
+                      <div className="project-card-footer">
+                        <span className="project-card-date">Last opened: 2 days ago</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <p className="projects-note">Project persistence will be restored later</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="inspector-panel">
+          <div className="panel-header">
+            <h4 className="panel-title">ForgeOS Status</h4>
+          </div>
+          <div className="panel-content">
+            <div className="panel-item">
+              <span className="panel-label">Version:</span>
+              <span className="panel-value">v1.2.3</span>
+            </div>
+            <div className="panel-item">
+              <span className="panel-label">AI Status:</span>
+              <span className="panel-value">Active</span>
+            </div>
+            <div className="panel-item">
+              <span className="panel-label">Workspace:</span>
+              <span className="panel-value">Default</span>
+            </div>
+            <div className="panel-item">
+              <span className="panel-label">Restoration:</span>
+              <span className="panel-value">85% complete</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   // Simple hash-based routing
-  const [currentRoute, setCurrentRoute] = React.useState<string>('dashboard');
+  const [currentRoute, setCurrentRoute] = React.useState<string>('projects');
   const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
   
   React.useEffect(() => {
     const handleHashChange = () => {
-      let hash = window.location.hash.slice(1) || 'dashboard';
+      let hash = window.location.hash.slice(1) || 'projects';
       
-      // Normalize empty or root hashes to dashboard
+      // Normalize empty or root hashes to projects
       if (hash === '' || hash === '/' || hash === '#/' || hash === '#') {
-        hash = 'dashboard';
-        window.location.hash = '#/dashboard';
+        hash = 'projects';
+        window.location.hash = '#/projects';
       }
       
       setCurrentRoute(hash);
@@ -159,6 +304,8 @@ const App: React.FC = () => {
   // Route components
   const renderRoute = () => {
     switch (currentRoute) {
+      case 'projects':
+        return <ProjectsHome />;
       case 'dashboard':
         return <RecoveryShell />;
       case 'marketplace':
@@ -282,6 +429,12 @@ const App: React.FC = () => {
               onClick={() => handleNavigation('dashboard')}
             >
               Dashboard
+            </button>
+            <button 
+              className={`menu-item ${currentRoute === 'projects' ? 'active' : ''}`}
+              onClick={() => handleNavigation('projects')}
+            >
+              Projects
             </button>
             <button 
               className={`menu-item ${currentRoute === 'marketplace' ? 'active' : ''}`}

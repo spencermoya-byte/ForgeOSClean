@@ -227,6 +227,150 @@ code {
   overflow: auto;
 }
 
+/* Projects Home Styles */
+.projects-home-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.projects-header {
+  margin-bottom: 1rem;
+}
+
+.projects-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+}
+
+.projects-subtitle {
+  color: #d1d5db;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.projects-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.projects-button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-size: 1rem;
+}
+
+.projects-button.primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.projects-button.primary:hover {
+  background-color: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.projects-button.secondary {
+  background-color: #374151;
+  color: #f9fafb;
+}
+
+.projects-button.secondary:hover {
+  background-color: #4b5563;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.projects-section {
+  margin-top: 1rem;
+}
+
+.projects-section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  color: #f9fafb;
+}
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.project-card {
+  background-color: #1f2937;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  border: 1px solid #374151;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.project-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  border-color: #4b5563;
+}
+
+.project-card.placeholder {
+  background-color: #1f2937;
+  border: 1px dashed #4b5563;
+}
+
+.project-card-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.project-icon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.project-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+  color: #f9fafb;
+}
+
+.project-card-description {
+  color: #d1d5db;
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+.project-card-footer {
+  margin-top: auto;
+}
+
+.project-card-date {
+  color: #9ca3af;
+  font-size: 0.8rem;
+}
+
+.projects-note {
+  color: #9ca3af;
+  font-size: 0.8rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+/* Card styles */
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
