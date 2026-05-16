@@ -139,72 +139,139 @@ const App: React.FC = () => {
       case 'workspace':
         return (
           <div className="workspace-shell">
-            {/* Workspace Header */}
-            <div className="workspace-header">
-              <div className="workspace-header-info">
-                <h2 className="workspace-title">Workspace</h2>
-                <p className="project-name">My Project</p>
-              </div>
-              <button className="back-button" onClick={() => navigate('projects')}>Back to Projects</button>
-            </div>
-            
-            {/* Workspace Content */}
-            <div className="workspace-main">
-              {/* File Explorer Panel */}
-              <div className="workspace-panel file-explorer">
-                <div className="panel-header">
-                  <h3>Explorer</h3>
-                </div>
-                <div className="panel-content">
-                  <p>Project files will appear here</p>
-                  <ul className="file-tree">
-                    <li>src/</li>
-                    <li>components/</li>
-                    <li>assets/</li>
-                    <li>package.json</li>
-                  </ul>
-                </div>
+            {/* Workspace Top Bar */}
+            <div className="workspace-topbar">
+              <div className="topbar-left">
+                <span className="project-name">My Project</span>
+                <button className="upgrade-button" onClick={() => placeholderAction("Upgrade")}>Upgrade</button>
               </div>
               
-              {/* Editor Panel */}
-              <div className="workspace-panel editor">
-                <div className="panel-header">
-                  <h3>Editor</h3>
-                </div>
-                <div className="panel-content">
-                  <p>Editor shell — Monaco integration will be added later</p>
-                </div>
+              <div className="topbar-tabs">
+                <button className="tab-button active" onClick={() => placeholderAction("Agent tab")}>Agent</button>
+                <button className="tab-button" onClick={() => placeholderAction("Preview tab")}>Preview</button>
+                <button className="tab-button" onClick={() => placeholderAction("Console tab")}>Console</button>
+                <button className="tab-button" onClick={() => placeholderAction("Git tab")}>Git</button>
+                <button className="tab-button" onClick={() => placeholderAction("Diff/Settings tab")}>Diff</button>
               </div>
               
-              {/* AI Assistant Panel */}
-              <div className="workspace-panel ai-assistant">
-                <div className="panel-header">
-                  <h3>ForgeOS AI</h3>
-                </div>
-                <div className="panel-content">
-                  <div className="ai-section">
-                    <h4>Architect</h4>
-                    <p>AI assistant shell — local model integration will be added later</p>
-                  </div>
-                  <div className="ai-section">
-                    <h4>Coder</h4>
-                    <p>AI assistant shell — local model integration will be added later</p>
-                  </div>
-                  <div className="ai-section">
-                    <h4>Context</h4>
-                    <p>AI assistant shell — local model integration will be added later</p>
-                  </div>
-                </div>
+              <div className="topbar-right">
+                <button className="invite-button" onClick={() => placeholderAction("Invite")}>Invite</button>
+                <button className="publish-button" onClick={() => placeholderAction("Publish")}>Publish</button>
               </div>
             </div>
             
-            {/* Terminal Panel */}
-            <div className="workspace-terminal">
-              <div className="panel-header">
-                <h3>Terminal</h3>
+            {/* Main workspace content */}
+            <div className="workspace-content">
+              {/* Left AI Agent Panel */}
+              <div className="agent-panel">
+                <div className="agent-header">
+                  <h3>ForgeOS AI Agent</h3>
+                </div>
+                
+                <div className="agent-task">
+                  <div className="task-title">Planning project structure</div>
+                  <div className="task-progress">
+                    <div className="progress-bar" style={{ width: '40%' }}></div>
+                  </div>
+                </div>
+                
+                <div className="agent-progress">
+                  <div className="progress-step">
+                    <span className="step-status">✓</span>
+                    <span className="step-text">Project structure planned</span>
+                  </div>
+                  <div className="progress-step">
+                    <span className="step-status">✓</span>
+                    <span className="step-text">Editor shell prepared</span>
+                  </div>
+                  <div className="progress-step">
+                    <span className="step-status">○</span>
+                    <span className="step-text">Waiting for model integration</span>
+                  </div>
+                </div>
+                
+                <div className="agent-input-area">
+                  <button className="input-plus-button" onClick={() => placeholderAction("Add file")}>
+                    <span className="plus-icon">+</span>
+                  </button>
+                  <input 
+                    type="text" 
+                    className="agent-input" 
+                    placeholder="What would you like to do next?"
+                  />
+                  <button className="plan-button" onClick={() => placeholderAction("Plan")}>Plan</button>
+                  <button className="send-button" onClick={() => placeholderAction("Send")}>Send</button>
+                </div>
               </div>
-              <div className="panel-content">
-                <p>Terminal shell — command execution will be added later</p>
+              
+              {/* Center Editor Panel */}
+              <div className="editor-panel">
+                <div className="editor-header">
+                  <span className="file-path">client/src/App.tsx</span>
+                </div>
+                <div className="editor-content">
+                  <div className="line-numbers">
+                    <span>1</span>
+                    <span>2</span>
+                    <span>3</span>
+                    <span>4</span>
+                    <span>5</span>
+                    <span>6</span>
+                    <span>7</span>
+                    <span>8</span>
+                    <span>9</span>
+                    <span>10</span>
+                  </div>
+                  <div className="editor-text">
+                    <div className="line"><span className="keyword">import</span> <span className="identifier">React</span> <span className="keyword">from</span> <span className="string">"react"</span>;</div>
+                    <div className="line"><span className="keyword">import</span> <span className="identifier">"./App.css"</span>;</div>
+                    <div className="line"></div>
+                    <div className="line"><span className="keyword">const</span> <span className="identifier">App</span>: <span className="identifier">React</span>.<span className="identifier">FC</span> = () => {</div>
+                    <div className="line">&nbsp;&nbsp;<span className="keyword">return</span> (</div>
+                    <div className="line">&nbsp;&nbsp;&nbsp;&nbsp;&lt;div className="workspace-shell"&gt;</div>
+                    <div className="line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;h1&gt;ForgeOS Workspace&lt;/h1&gt;</div>
+                    <div className="line">&nbsp;&nbsp;&nbsp;&nbsp;&lt;/div&gt;</div>
+                    <div className="line">&nbsp;&nbsp;);</div>
+                    <div className="line">};</div>
+                    <div className="line"></div>
+                    <div className="line"><span className="keyword">export</span> <span className="keyword">default</span> <span className="identifier">App</span>;</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Right Tab Panel */}
+              <div className="tab-panel">
+                <div className="tab-header">
+                  <button className="tab-button active" onClick={() => placeholderAction("Preview tab")}>Preview</button>
+                  <button className="tab-button" onClick={() => placeholderAction("Console tab")}>Console</button>
+                  <button className="tab-button" onClick={() => placeholderAction("Git tab")}>Git</button>
+                  <button className="tab-button" onClick={() => placeholderAction("Diff tab")}>Diff</button>
+                </div>
+                <div className="tab-content">
+                  <div className="tab-placeholder">
+                    <p>Tab content placeholder</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Bottom Status Bar */}
+            <div className="workspace-statusbar">
+              <div className="status-item">
+                <span className="status-dot"></span>
+                <span>Workspace shell active</span>
+              </div>
+              <div className="status-item">
+                <span className="status-dot"></span>
+                <span>Editor placeholder</span>
+              </div>
+              <div className="status-item">
+                <span className="status-dot"></span>
+                <span>AI placeholder</span>
+              </div>
+              <div className="status-item">
+                <span className="status-dot status-not-connected"></span>
+                <span>Backend not connected</span>
               </div>
             </div>
           </div>
