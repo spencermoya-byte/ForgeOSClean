@@ -10,7 +10,10 @@ const RecoveryShell = () => {
             type="button"
             className="hamburger-button"
             aria-label="Open navigation menu"
-            onClick={() => setIsMenuOpen((open) => !open)}
+            onClick={(event) => {
+              event.stopPropagation();
+              setIsMenuOpen((open) => !open);
+            }}
           >
             <span></span>
             <span></span>
@@ -188,7 +191,10 @@ const ProjectsHome = () => {
             type="button"
             className="hamburger-button"
             aria-label="Open navigation menu"
-            onClick={() => setIsMenuOpen((open) => !open)}
+            onClick={(event) => {
+              event.stopPropagation();
+              setIsMenuOpen((open) => !open);
+            }}
           >
             <span></span>
             <span></span>
@@ -411,22 +417,18 @@ const App: React.FC = () => {
   // Simple hash-based routing
   const [currentRoute, setCurrentRoute] = React.useState<string>('projects');
   const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
-  const [clickFeedback, setClickFeedback] = React.useState<string>('');
-  const [lastClicked, setLastClicked] = React.useState<string>('');
-  const [lastAction, setLastAction] = React.useState<string>('');
   const menuRef = React.useRef<HTMLDivElement>(null);
   
-  React.useEffect(() => {
-    // Global click logger
-    const handler = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      console.log("GLOBAL CLICK:", target.tagName, target.className, target.textContent?.slice(0, 50));
-      setLastClicked(`${target.tagName} ${target.className}`);
-    };
-
-    document.addEventListener("click", handler, true);
-    return () => document.removeEventListener("click", handler, true);
-  }, []);
+  // Navigation items
+  const navItems = [
+    { route: 'dashboard', label: 'Dashboard', icon: '🏠' },
+    { route: 'projects', label: 'Projects', icon: '📁' },
+    { route: 'ai', label: 'AI', icon: '🤖' },
+    { route: 'marketplace', label: 'Marketplace', icon: '🏪' },
+    { route: 'workspaces', label: 'Workspaces', icon: '💼' },
+    { route: 'resources', label: 'Resources', icon: '📚' },
+    { route: 'settings', label: 'Settings', icon: '⚙️' },
+  ];
   
   React.useEffect(() => {
     const handleHashChange = () => {
@@ -450,19 +452,16 @@ const App: React.FC = () => {
   
   // Handle click outside to close menu
   React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    if (!isMenuOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
       }
     };
 
-    if (isMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [isMenuOpen]);
   
   // Centralized navigation function
@@ -476,17 +475,11 @@ const App: React.FC = () => {
     setCurrentRoute(normalizedRoute);
     window.location.hash = `/${normalizedRoute}`;
     setIsMenuOpen(false);
-    
-    // Update click feedback
-    setClickFeedback(`Clicked: ${normalizedRoute.charAt(0).toUpperCase() + normalizedRoute.slice(1)}`);
-    setLastAction(`Navigated to ${normalizedRoute}`);
   };
   
   // Show placeholder feedback for actions
   const showPlaceholderFeedback = (actionName: string) => {
     alert(`Placeholder action: ${actionName} is not connected yet.`);
-    setClickFeedback(`Clicked: ${actionName}`);
-    setLastAction(`Placeholder action: ${actionName}`);
   };
   
   // Handle navigation
@@ -594,8 +587,11 @@ const App: React.FC = () => {
           <button
             type="button"
             className="hamburger-button"
-            aria-label="Open navigation menu"
-            onClick={() => setIsMenuOpen((open) => !open)}
+            aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            onClick={(event) => {
+              event.stopPropagation();
+              setIsMenuOpen((open) => !open);
+            }}
           >
             <span></span>
             <span></span>
@@ -621,18 +617,26 @@ const App: React.FC = () => {
         </div>
       </header>
       
-      {/* Debug panel */}
-      <div className="debug-panel">
-        <div className="debug-item">
-          <strong>Last Clicked:</strong> {lastClicked}
-        </div>
-        <div className="debug-item">
-          <strong>Last Action:</strong> {lastAction}
-        </div>
-        <div className="debug-item">
-          <strong>Current Route:</strong> {currentRoute}
-        </div>
-      </div>
+      {/* Hamburger dropdown menu */}
+      {isMenuOpen && (
+        <nav className="hamburger-dropdown" aria-label="Main navigation" ref={menuRef}>
+          {navItems.map((item) => (
+            <button
+              key={item.route}
+              type="button"
+              className={
+                currentRoute === item.route
+                  ? "hamburger-menu-item active"
+                  : "hamburger-menu-item"
+              }
+              onClick={() => navigate(item.route)}
+            >
+              <span className="hamburger-menu-icon">{item.icon}</span>
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </nav>
+      )}
       
       {renderRoute()}
     </div>
