@@ -498,6 +498,27 @@ code {
   font-weight: 500;
 }
 
+/* Status value styles */
+.status-ready {
+  color: #10b981;
+}
+
+.status-active {
+  color: #10b981;
+}
+
+.status-placeholder {
+  color: #f59e0b;
+}
+
+.status-not-connected {
+  color: #6b7280;
+}
+
+.status-deferred {
+  color: #f59e0b;
+}
+
 /* Navigation button styles */
 .nav-row {
   display: flex;

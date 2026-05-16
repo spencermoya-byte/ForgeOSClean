@@ -99,24 +99,40 @@ const RecoveryShell = () => {
         
         <div className="inspector-panel">
           <div className="panel-header">
-            <h4 className="panel-title">ForgeOS Status</h4>
+            <h4 className="panel-title">ForgeOS Restoration Status</h4>
           </div>
           <div className="panel-content">
             <div className="panel-item">
-              <span className="panel-label">Version:</span>
-              <span className="panel-value">v1.2.3</span>
+              <span className="panel-label">Shell Renders:</span>
+              <span className="panel-value status-ready">Ready</span>
             </div>
             <div className="panel-item">
-              <span className="panel-label">AI Status:</span>
-              <span className="panel-value">Active</span>
+              <span className="panel-label">Safe Routing:</span>
+              <span className="panel-value status-active">Active</span>
             </div>
             <div className="panel-item">
-              <span className="panel-label">Workspace:</span>
-              <span className="panel-value">Default</span>
+              <span className="panel-label">Projects Home:</span>
+              <span className="panel-value status-placeholder">Placeholder</span>
             </div>
             <div className="panel-item">
-              <span className="panel-label">Restoration:</span>
-              <span className="panel-value">85% complete</span>
+              <span className="panel-label">Hamburger Menu:</span>
+              <span className="panel-value status-active">Active</span>
+            </div>
+            <div className="panel-item">
+              <span className="panel-label">Left Rail Nav:</span>
+              <span className="panel-value status-active">Active</span>
+            </div>
+            <div className="panel-item">
+              <span className="panel-label">Project Persistence:</span>
+              <span className="panel-value status-deferred">Deferred</span>
+            </div>
+            <div className="panel-item">
+              <span className="panel-label">Backend Connection:</span>
+              <span className="panel-value status-not-connected">Not connected</span>
+            </div>
+            <div className="panel-item">
+              <span className="panel-label">Feature Modules:</span>
+              <span className="panel-value status-not-connected">Not connected</span>
             </div>
           </div>
         </div>
@@ -244,24 +260,40 @@ const ProjectsHome = () => {
         
         <div className="inspector-panel">
           <div className="panel-header">
-            <h4 className="panel-title">ForgeOS Status</h4>
+            <h4 className="panel-title">ForgeOS Restoration Status</h4>
           </div>
           <div className="panel-content">
             <div className="panel-item">
-              <span className="panel-label">Version:</span>
-              <span className="panel-value">v1.2.3</span>
+              <span className="panel-label">Shell Renders:</span>
+              <span className="panel-value status-ready">Ready</span>
             </div>
             <div className="panel-item">
-              <span className="panel-label">AI Status:</span>
-              <span className="panel-value">Active</span>
+              <span className="panel-label">Safe Routing:</span>
+              <span className="panel-value status-active">Active</span>
             </div>
             <div className="panel-item">
-              <span className="panel-label">Workspace:</span>
-              <span className="panel-value">Default</span>
+              <span className="panel-label">Projects Home:</span>
+              <span className="panel-value status-placeholder">Placeholder</span>
             </div>
             <div className="panel-item">
-              <span className="panel-label">Restoration:</span>
-              <span className="panel-value">85% complete</span>
+              <span className="panel-label">Hamburger Menu:</span>
+              <span className="panel-value status-active">Active</span>
+            </div>
+            <div className="panel-item">
+              <span className="panel-label">Left Rail Nav:</span>
+              <span className="panel-value status-active">Active</span>
+            </div>
+            <div className="panel-item">
+              <span className="panel-label">Project Persistence:</span>
+              <span className="panel-value status-deferred">Deferred</span>
+            </div>
+            <div className="panel-item">
+              <span className="panel-label">Backend Connection:</span>
+              <span className="panel-value status-not-connected">Not connected</span>
+            </div>
+            <div className="panel-item">
+              <span className="panel-label">Feature Modules:</span>
+              <span className="panel-value status-not-connected">Not connected</span>
             </div>
           </div>
         </div>
