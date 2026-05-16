@@ -94,14 +94,6 @@ export default function App() {
               </div>
             </div>
           </div>
-
-          <section className="recent-block">
-            <h2>Recent Projects</h2>
-            <div className="empty-recent">
-              <p>No recent projects yet.</p>
-              <span>Start a new project to see it here.</span>
-            </div>
-          </section>
         </section>
 
         <aside className="forge-card">

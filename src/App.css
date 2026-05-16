@@ -42,11 +42,11 @@ button {
 
 .create-screen {
   min-height: 100vh;
-  padding: 48px 32px 96px;
+  padding: 32px 24px 72px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
   align-items: center;
-  gap: 52px;
+  gap: 32px;
   max-width: 1280px;
   margin: 0 auto;
 }
@@ -59,11 +59,11 @@ button {
 
 .workspace-pill {
   width: fit-content;
-  margin: 0 auto 24px;
+  margin: 0 auto 12px;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
+  gap: 8px;
+  padding: 8px 12px;
   border: 1px solid rgba(167, 139, 250, 0.22);
   border-radius: 999px;
   color: #ede9fe;
@@ -74,8 +74,8 @@ button {
 
 .live-dot,
 .status-green {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 999px;
   background: #22c55e;
   box-shadow: 0 0 18px rgba(34, 197, 94, 0.65);
@@ -83,23 +83,23 @@ button {
 
 .create-hero h1 {
   margin: 0;
-  font-size: clamp(34px, 5vw, 56px);
+  font-size: clamp(30px, 5vw, 48px);
   letter-spacing: -0.06em;
-  line-height: 1.02;
+  line-height: 1.1;
 }
 
 .hero-subtitle {
-  margin: 16px 0 28px;
+  margin: 12px 0 16px;
   color: #b8b0c9;
-  font-size: 17px;
+  font-size: 16px;
 }
 
 .quick-pill-row {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 24px;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .quick-pill,
@@ -116,7 +116,7 @@ button {
 }
 
 .quick-pill {
-  padding: 10px 16px;
+  padding: 8px 12px;
   border: 1px solid rgba(167, 139, 250, 0.24);
   border-radius: 12px;
   color: #f5f3ff;
@@ -136,9 +136,9 @@ button {
 
 .composer {
   position: relative;
-  min-height: 168px;
+  min-height: 140px;
   border: 1px solid rgba(168, 85, 247, 0.64);
-  border-radius: 18px;
+  border-radius: 16px;
   background:
     radial-gradient(circle at bottom right, rgba(124, 58, 237, 0.14), transparent 24rem),
     rgba(17, 20, 31, 0.86);
@@ -151,8 +151,8 @@ button {
 
 .composer textarea {
   width: 100%;
-  min-height: 168px;
-  padding: 22px 24px 70px;
+  min-height: 140px;
+  padding: 18px 20px 60px;
   resize: vertical;
   border: 0;
   outline: 0;
@@ -168,9 +168,9 @@ button {
 
 .composer-footer {
   position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 14px;
+  left: 12px;
+  right: 12px;
+  bottom: 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -182,22 +182,22 @@ button {
 }
 
 .composer-plus {
-  width: 38px;
-  height: 38px;
+  width: 32px;
+  height: 32px;
   border: 1px solid rgba(167, 139, 250, 0.36);
   border-radius: 11px;
   color: #f5f3ff;
   background: rgba(255, 255, 255, 0.065);
-  font-size: 22px;
+  font-size: 20px;
 }
 
 .composer-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .soft-button {
-  padding: 10px 16px;
+  padding: 8px 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 11px;
   color: #f8fafc;
@@ -212,50 +212,19 @@ button {
 }
 
 .primary-button {
-  padding: 10px 16px;
+  padding: 8px 12px;
   border-radius: 11px;
 }
 
 .send-button {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 12px;
   font-size: 20px;
 }
 
-.recent-block {
-  margin-top: 34px;
-  text-align: left;
-}
-
-.recent-block h2 {
-  margin: 0 0 14px;
-  font-size: 16px;
-}
-
-.empty-recent {
-  min-height: 84px;
-  display: grid;
-  place-items: center;
-  padding: 20px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  border-radius: 15px;
-  color: #b8b0c9;
-  background: rgba(255, 255, 255, 0.035);
-  text-align: center;
-}
-
-.empty-recent p {
-  margin: 0;
-}
-
-.empty-recent span {
-  font-size: 14px;
-  color: #8f879d;
-}
-
 .forge-card {
-  padding: 28px;
+  padding: 24px;
   border: 1px solid rgba(167, 139, 250, 0.18);
   border-radius: 22px;
   background: rgba(15, 18, 29, 0.72);
@@ -274,11 +243,11 @@ button {
 }
 
 .forge-card-icon {
-  width: 58px;
-  height: 58px;
+  width: 52px;
+  height: 52px;
   border-radius: 16px;
-  font-size: 28px;
-  margin-bottom: 18px;
+  font-size: 24px;
+  margin-bottom: 16px;
 }
 
 .forge-card h2 {
@@ -293,8 +262,8 @@ button {
 .forge-feature {
   display: grid;
   gap: 3px;
-  margin-top: 20px;
-  padding-top: 20px;
+  margin-top: 16px;
+  padding-top: 16px;
   border-top: 1px solid rgba(148, 163, 184, 0.14);
 }
 
@@ -302,13 +271,13 @@ button {
 .workspace-bottom-nav {
   position: fixed;
   left: 50%;
-  bottom: 18px;
+  bottom: 16px;
   transform: translateX(-50%);
   z-index: 50;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px;
+  gap: 4px;
+  padding: 6px;
   border: 1px solid rgba(167, 139, 250, 0.2);
   border-radius: 999px;
   background: rgba(12, 14, 23, 0.78);
@@ -318,12 +287,12 @@ button {
 
 .bottom-nav-item,
 .bottom-tab {
-  min-width: 108px;
+  min-width: 96px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
-  padding: 11px 18px;
+  gap: 8px;
+  padding: 10px 14px;
   border-radius: 999px;
   color: #d4cfe0;
   background: transparent;
@@ -331,11 +300,11 @@ button {
 }
 
 .bottom-nav-item span {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .bottom-nav-item strong {
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .bottom-nav-item.active,
@@ -350,11 +319,11 @@ button {
 .toast {
   position: fixed;
   left: 50%;
-  bottom: 92px;
+  bottom: 80px;
   z-index: 80;
   transform: translateX(-50%);
   max-width: min(520px, calc(100vw - 32px));
-  padding: 14px 18px;
+  padding: 12px 16px;
   border: 1px solid rgba(167, 139, 250, 0.28);
   border-radius: 14px;
   color: white;
@@ -677,13 +646,13 @@ button {
 /* Workspace Dock */
 .workspace-dock {
   position: fixed;
-  bottom: 18px;
+  bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px;
+  gap: 4px;
+  padding: 6px;
   border: 1px solid rgba(167, 139, 250, 0.2);
   border-radius: 999px;
   background: rgba(12, 14, 23, 0.78);
@@ -693,12 +662,12 @@ button {
 }
 
 .dock-tab {
-  min-width: 108px;
+  min-width: 96px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
-  padding: 11px 18px;
+  gap: 8px;
+  padding: 10px 14px;
   border-radius: 999px;
   color: #d4cfe0;
   background: transparent;
@@ -885,7 +854,7 @@ button {
 @media (max-width: 1020px) {
   .create-screen {
     grid-template-columns: 1fr;
-    padding-top: 32px;
+    padding-top: 24px;
   }
 
   .forge-card {
@@ -903,14 +872,14 @@ button {
 
 @media (max-width: 760px) {
   .create-screen {
-    padding: 28px 16px 96px;
+    padding: 24px 12px 72px;
   }
 
   .bottom-nav-item,
   .bottom-tab,
   .dock-tab {
     min-width: auto;
-    padding: 10px 14px;
+    padding: 8px 12px;
   }
 
   .workspace-grid {
