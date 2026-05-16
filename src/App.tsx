@@ -4,29 +4,31 @@ import React from "react";
 const RecoveryShell = () => {
   return (
     <div className="recovery-shell">
-      <div className="top-bar">
-        <div className="top-bar-left">
-          <button 
+      <header className="app-topbar">
+        <div className="topbar-left">
+          <button
+            type="button"
             className="hamburger-button"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Open navigation menu"
+            onClick={() => setIsMenuOpen((open) => !open)}
           >
             <span></span>
             <span></span>
             <span></span>
           </button>
-          <h1 className="brand-title">ForgeOS</h1>
+
+          <span className="topbar-brand">ForgeOS</span>
         </div>
-        <div className="top-bar-center">
-          <h2 className="page-title">Dashboard</h2>
+
+        <div className="topbar-center">
+          Dashboard
         </div>
-        <div className="top-bar-right">
-          <div className="status-indicator">
-            <div className="status-dot"></div>
-            <span className="status-text">Online</span>
-          </div>
+
+        <div className="topbar-right">
+          <span className="status-dot"></span>
+          <span>Frontend Active</span>
         </div>
-      </div>
+      </header>
       
       <div className="main-container">
         <div className="activity-rail">
@@ -180,29 +182,31 @@ const RecoveryShell = () => {
 const ProjectsHome = () => {
   return (
     <div className="recovery-shell">
-      <div className="top-bar">
-        <div className="top-bar-left">
-          <button 
+      <header className="app-topbar">
+        <div className="topbar-left">
+          <button
+            type="button"
             className="hamburger-button"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Open navigation menu"
+            onClick={() => setIsMenuOpen((open) => !open)}
           >
             <span></span>
             <span></span>
             <span></span>
           </button>
-          <h1 className="brand-title">ForgeOS</h1>
+
+          <span className="topbar-brand">ForgeOS</span>
         </div>
-        <div className="top-bar-center">
-          <h2 className="page-title">Projects</h2>
+
+        <div className="topbar-center">
+          Projects
         </div>
-        <div className="top-bar-right">
-          <div className="status-indicator">
-            <div className="status-dot"></div>
-            <span className="status-text">Online</span>
-          </div>
+
+        <div className="topbar-right">
+          <span className="status-dot"></span>
+          <span>Frontend Active</span>
         </div>
-      </div>
+      </header>
       
       <div className="main-container">
         <div className="activity-rail">
@@ -490,22 +494,6 @@ const App: React.FC = () => {
     navigate(route);
   };
   
-  // Test button handlers
-  const testHamburgerClick = () => {
-    console.log("TEST HAMBURGER CLICK");
-    setLastAction("Hamburger clicked");
-  };
-  
-  const testProjectsClick = () => {
-    console.log("TEST PROJECTS CLICK");
-    setLastAction("Projects rail button clicked");
-  };
-  
-  const testNewProjectClick = () => {
-    console.log("TEST NEW PROJECT CLICK");
-    setLastAction("New Project button clicked");
-  };
-  
   // Route components
   const renderRoute = () => {
     switch (currentRoute) {
@@ -601,29 +589,37 @@ const App: React.FC = () => {
 
   return (
     <div className="recovery-shell">
-      <div className="top-bar">
-        <div className="top-bar-left">
-          <button 
+      <header className="app-topbar">
+        <div className="topbar-left">
+          <button
+            type="button"
             className="hamburger-button"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Open navigation menu"
+            onClick={() => setIsMenuOpen((open) => !open)}
           >
             <span></span>
             <span></span>
             <span></span>
           </button>
-          <h1 className="brand-title">ForgeOS</h1>
+
+          <span className="topbar-brand">ForgeOS</span>
         </div>
-        <div className="top-bar-center">
-          <h2 className="page-title">Projects</h2>
+
+        <div className="topbar-center">
+          {currentRoute === 'projects' ? 'Projects' : 
+           currentRoute === 'dashboard' ? 'Dashboard' : 
+           currentRoute === 'ai' ? 'AI' : 
+           currentRoute === 'marketplace' ? 'Marketplace' : 
+           currentRoute === 'workspaces' ? 'Workspaces' : 
+           currentRoute === 'resources' ? 'Resources' : 
+           currentRoute === 'settings' ? 'Settings' : 'ForgeOS'}
         </div>
-        <div className="top-bar-right">
-          <div className="status-indicator">
-            <div className="status-dot"></div>
-            <span className="status-text">Online</span>
-          </div>
+
+        <div className="topbar-right">
+          <span className="status-dot"></span>
+          <span>Frontend Active</span>
         </div>
-      </div>
+      </header>
       
       {/* Debug panel */}
       <div className="debug-panel">
