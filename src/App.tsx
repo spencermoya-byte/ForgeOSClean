@@ -16,7 +16,8 @@ const App: React.FC = () => {
     { route: 'workspaces', label: 'Workspaces', icon: '💼' },
     { route: 'resources', label: 'Resources', icon: '📚' },
     { route: 'settings', label: 'Settings', icon: '⚙️' },
-    { route: 'workspace', label: 'Workspace', icon: '💻' }, // Added workspace route
+    { route: 'workspace', label: 'Workspace', icon: '💻' },
+    { route: 'account', label: 'Account', icon: '👤' },
   ];
   
   // Normalize route names
@@ -52,6 +53,7 @@ const App: React.FC = () => {
       case 'resources': return 'Resources';
       case 'settings': return 'Settings';
       case 'workspace': return 'Workspace';
+      case 'account': return 'Account';
       default: return 'ForgeOS';
     }
   };
@@ -106,9 +108,21 @@ const App: React.FC = () => {
                 </button>
                 <div className="prompt-controls">
                   <button className="control-button" onClick={() => placeholderAction("Plan")}>Plan</button>
-                  <button className="control-button" onClick={() => placeholderAction("Attach Context")}>Attach Context</button>
-                  <button className="control-button" onClick={() => placeholderAction("Select Model")}>Select Model</button>
+                  <button className="control-button" onClick={() => placeholderAction("Send")}>Send</button>
                 </div>
+              </div>
+            </div>
+            
+            <div className="quick-start">
+              <h2 className="section-title">Quick Start</h2>
+              <div className="quick-start-pills">
+                <button className="pill-button" onClick={() => placeholderAction("Website project")}>Website</button>
+                <button className="pill-button" onClick={() => placeholderAction("Desktop App project")}>Desktop App</button>
+                <button className="pill-button" onClick={() => placeholderAction("AI Tool project")}>AI Tool</button>
+                <button className="pill-button" onClick={() => placeholderAction("Automation project")}>Automation</button>
+                <button className="pill-button" onClick={() => placeholderAction("API project")}>API</button>
+                <button className="pill-button" onClick={() => placeholderAction("Game project")}>Game</button>
+                <button className="pill-button" onClick={() => placeholderAction("Utility project")}>Utility</button>
               </div>
             </div>
             
@@ -275,6 +289,51 @@ export default App;`}
                 <span className="status-dot status-not-connected"></span>
                 <span>Backend not connected</span>
               </div>
+            </div>
+          </div>
+        );
+        
+      case 'account':
+        return (
+          <div className="account-page">
+            <div className="account-header">
+              <div className="avatar-container">
+                <div className="avatar">JD</div>
+              </div>
+              <div className="user-info">
+                <h2 className="user-name">John Doe</h2>
+                <p className="user-email">john.doe@example.com</p>
+              </div>
+            </div>
+            
+            <div className="settings-section">
+              <h3 className="section-title">Settings</h3>
+              <div className="settings-list">
+                <button className="setting-item" onClick={() => placeholderAction("Profile settings")}>
+                  <span className="setting-label">Profile</span>
+                  <span className="setting-arrow">→</span>
+                </button>
+                <button className="setting-item" onClick={() => placeholderAction("Theme settings")}>
+                  <span className="setting-label">Theme</span>
+                  <span className="setting-arrow">→</span>
+                </button>
+                <button className="setting-item" onClick={() => placeholderAction("Usage settings")}>
+                  <span className="setting-label">Usage</span>
+                  <span className="setting-arrow">→</span>
+                </button>
+                <button className="setting-item" onClick={() => placeholderAction("Notifications settings")}>
+                  <span className="setting-label">Notifications</span>
+                  <span className="setting-arrow">→</span>
+                </button>
+                <button className="setting-item" onClick={() => placeholderAction("Help settings")}>
+                  <span className="setting-label">Help</span>
+                  <span className="setting-arrow">→</span>
+                </button>
+              </div>
+            </div>
+            
+            <div className="account-footer">
+              <button className="logout-button" onClick={() => placeholderAction("Logout")}>Logout</button>
             </div>
           </div>
         );
