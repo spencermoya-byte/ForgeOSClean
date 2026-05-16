@@ -55,12 +55,12 @@ button {
   width: min(760px, 100%);
   justify-self: center;
   text-align: center;
-  margin-top: -40px;
+  margin-top: -60px;
 }
 
 .workspace-pill {
   width: fit-content;
-  margin: 0 auto 8px;
+  margin: 0 auto 24px;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -90,7 +90,7 @@ button {
 }
 
 .hero-subtitle {
-  margin: 10px 0 12px;
+  margin: 14px 0 32px;
   color: #b8b0c9;
   font-size: 15px;
 }
