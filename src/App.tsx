@@ -9,11 +9,11 @@ const RecoveryShell = () => {
           <button 
             className="hamburger-button"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle navigation menu"
+            aria-label="Open navigation menu"
           >
-            <span className="hamburger-line"></span>
-            <span className="hamburger-line"></span>
-            <span className="hamburger-line"></span>
+            <span></span>
+            <span></span>
+            <span></span>
           </button>
           <h1 className="brand-title">ForgeOS</h1>
         </div>
@@ -33,49 +33,56 @@ const RecoveryShell = () => {
           <button 
             className="rail-button active" 
             title="Dashboard"
-            onClick={() => handleNavigation('dashboard')}
+            onClick={() => navigate("dashboard")}
+            type="button"
           >
             <span className="rail-icon">🏠</span>
           </button>
           <button 
             className="rail-button" 
             title="Projects"
-            onClick={() => handleNavigation('projects')}
+            onClick={() => navigate("projects")}
+            type="button"
           >
             <span className="rail-icon">📁</span>
           </button>
           <button 
             className="rail-button" 
             title="AI"
-            onClick={() => handleNavigation('ai')}
+            onClick={() => navigate("ai")}
+            type="button"
           >
             <span className="rail-icon">🤖</span>
           </button>
           <button 
             className="rail-button" 
             title="Marketplace"
-            onClick={() => handleNavigation('marketplace')}
+            onClick={() => navigate("marketplace")}
+            type="button"
           >
             <span className="rail-icon">🏪</span>
           </button>
           <button 
             className="rail-button" 
             title="Workspaces"
-            onClick={() => handleNavigation('workspaces')}
+            onClick={() => navigate("workspaces")}
+            type="button"
           >
             <span className="rail-icon">💼</span>
           </button>
           <button 
             className="rail-button" 
             title="Resources"
-            onClick={() => handleNavigation('resources')}
+            onClick={() => navigate("resources")}
+            type="button"
           >
             <span className="rail-icon">📚</span>
           </button>
           <button 
             className="rail-button" 
             title="Settings"
-            onClick={() => handleNavigation('settings')}
+            onClick={() => navigate("settings")}
+            type="button"
           >
             <span className="rail-icon">⚙️</span>
           </button>
@@ -178,11 +185,11 @@ const ProjectsHome = () => {
           <button 
             className="hamburger-button"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle navigation menu"
+            aria-label="Open navigation menu"
           >
-            <span className="hamburger-line"></span>
-            <span className="hamburger-line"></span>
-            <span className="hamburger-line"></span>
+            <span></span>
+            <span></span>
+            <span></span>
           </button>
           <h1 className="brand-title">ForgeOS</h1>
         </div>
@@ -202,49 +209,56 @@ const ProjectsHome = () => {
           <button 
             className="rail-button" 
             title="Dashboard"
-            onClick={() => handleNavigation('dashboard')}
+            onClick={() => navigate("dashboard")}
+            type="button"
           >
             <span className="rail-icon">🏠</span>
           </button>
           <button 
             className="rail-button active" 
             title="Projects"
-            onClick={() => handleNavigation('projects')}
+            onClick={() => navigate("projects")}
+            type="button"
           >
             <span className="rail-icon">📁</span>
           </button>
           <button 
             className="rail-button" 
             title="AI"
-            onClick={() => handleNavigation('ai')}
+            onClick={() => navigate("ai")}
+            type="button"
           >
             <span className="rail-icon">🤖</span>
           </button>
           <button 
             className="rail-button" 
             title="Marketplace"
-            onClick={() => handleNavigation('marketplace')}
+            onClick={() => navigate("marketplace")}
+            type="button"
           >
             <span className="rail-icon">🏪</span>
           </button>
           <button 
             className="rail-button" 
             title="Workspaces"
-            onClick={() => handleNavigation('workspaces')}
+            onClick={() => navigate("workspaces")}
+            type="button"
           >
             <span className="rail-icon">💼</span>
           </button>
           <button 
             className="rail-button" 
             title="Resources"
-            onClick={() => handleNavigation('resources')}
+            onClick={() => navigate("resources")}
+            type="button"
           >
             <span className="rail-icon">📚</span>
           </button>
           <button 
             className="rail-button" 
             title="Settings"
-            onClick={() => handleNavigation('settings')}
+            onClick={() => navigate("settings")}
+            type="button"
           >
             <span className="rail-icon">⚙️</span>
           </button>
@@ -269,10 +283,13 @@ const ProjectsHome = () => {
                     rows={3}
                   ></textarea>
                   <div className="creation-controls">
-                    <button className="control-button">Plan</button>
-                    <button className="control-button">Attach Context</button>
-                    <button className="control-button">Select Model</button>
+                    <button className="control-button" onClick={() => showPlaceholderFeedback("Plan")}>Plan</button>
+                    <button className="control-button" onClick={() => showPlaceholderFeedback("Attach Context")}>Attach Context</button>
+                    <button className="control-button" onClick={() => showPlaceholderFeedback("Select Model")}>Select Model</button>
                   </div>
+                  <button className="plus-button" onClick={() => showPlaceholderFeedback("Attach files/photos")} aria-label="Attach files">
+                    <span className="plus-icon">+</span>
+                  </button>
                 </div>
               </div>
               
@@ -293,9 +310,9 @@ const ProjectsHome = () => {
               
               {/* Project Actions */}
               <div className="project-actions">
-                <button className="action-button primary">New Project</button>
-                <button className="action-button secondary">Open Existing Project</button>
-                <button className="action-button secondary">Import Project</button>
+                <button className="action-button primary" onClick={() => showPlaceholderFeedback("New Project")}>New Project</button>
+                <button className="action-button secondary" onClick={() => showPlaceholderFeedback("Open Existing Project")}>Open Existing Project</button>
+                <button className="action-button secondary" onClick={() => showPlaceholderFeedback("Import Project")}>Import Project</button>
               </div>
               
               {/* Recent Projects */}
@@ -409,10 +426,27 @@ const App: React.FC = () => {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
   
+  // Centralized navigation function
+  const navigate = (routeName: string) => {
+    // Normalize route names
+    let normalizedRoute = routeName;
+    if (normalizedRoute === '' || normalizedRoute === '/' || normalizedRoute === '#/' || normalizedRoute === '#') {
+      normalizedRoute = 'projects';
+    }
+    
+    setCurrentRoute(normalizedRoute);
+    window.location.hash = `/${normalizedRoute}`;
+    setIsMenuOpen(false);
+  };
+  
+  // Show placeholder feedback for actions
+  const showPlaceholderFeedback = (actionName: string) => {
+    alert(`Placeholder action: ${actionName} is not connected yet.`);
+  };
+  
   // Handle navigation
   const handleNavigation = (route: string) => {
-    window.location.hash = `#/${route}`;
-    setIsMenuOpen(false);
+    navigate(route);
   };
   
   // Route components
@@ -515,11 +549,11 @@ const App: React.FC = () => {
         <button 
           className="hamburger-button"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          aria-label="Toggle navigation menu"
+          aria-label="Open navigation menu"
         >
-          <span className="hamburger-line"></span>
-          <span className="hamburger-line"></span>
-          <span className="hamburger-line"></span>
+          <span></span>
+          <span></span>
+          <span></span>
         </button>
         
         {isMenuOpen && (
@@ -527,42 +561,49 @@ const App: React.FC = () => {
             <button 
               className={`menu-item ${currentRoute === 'dashboard' ? 'active' : ''}`}
               onClick={() => handleNavigation('dashboard')}
+              type="button"
             >
               Dashboard
             </button>
             <button 
               className={`menu-item ${currentRoute === 'projects' ? 'active' : ''}`}
               onClick={() => handleNavigation('projects')}
+              type="button"
             >
               Projects
             </button>
             <button 
               className={`menu-item ${currentRoute === 'marketplace' ? 'active' : ''}`}
               onClick={() => handleNavigation('marketplace')}
+              type="button"
             >
               Marketplace
             </button>
             <button 
               className={`menu-item ${currentRoute === 'ai' ? 'active' : ''}`}
               onClick={() => handleNavigation('ai')}
+              type="button"
             >
               AI
             </button>
             <button 
               className={`menu-item ${currentRoute === 'workspaces' ? 'active' : ''}`}
               onClick={() => handleNavigation('workspaces')}
+              type="button"
             >
               Workspaces
             </button>
             <button 
               className={`menu-item ${currentRoute === 'resources' ? 'active' : ''}`}
               onClick={() => handleNavigation('resources')}
+              type="button"
             >
               Resources
             </button>
             <button 
               className={`menu-item ${currentRoute === 'settings' ? 'active' : ''}`}
               onClick={() => handleNavigation('settings')}
+              type="button"
             >
               Settings
             </button>
