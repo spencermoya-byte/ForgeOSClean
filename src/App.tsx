@@ -389,6 +389,7 @@ const App: React.FC = () => {
   // Simple hash-based routing
   const [currentRoute, setCurrentRoute] = React.useState<string>('projects');
   const [isMenuOpen, setIsMenuOpen] = React.useState<boolean>(false);
+  const [clickFeedback, setClickFeedback] = React.useState<string>('');
   const menuRef = React.useRef<HTMLDivElement>(null);
   
   React.useEffect(() => {
@@ -439,11 +440,15 @@ const App: React.FC = () => {
     setCurrentRoute(normalizedRoute);
     window.location.hash = `/${normalizedRoute}`;
     setIsMenuOpen(false);
+    
+    // Update click feedback
+    setClickFeedback(`Clicked: ${normalizedRoute.charAt(0).toUpperCase() + normalizedRoute.slice(1)}`);
   };
   
   // Show placeholder feedback for actions
   const showPlaceholderFeedback = (actionName: string) => {
     alert(`Placeholder action: ${actionName} is not connected yet.`);
+    setClickFeedback(`Clicked: ${actionName}`);
   };
   
   // Handle navigation
@@ -611,6 +616,11 @@ const App: React.FC = () => {
             </button>
           </div>
         )}
+      </div>
+      
+      {/* Debug click feedback */}
+      <div className="click-feedback">
+        {clickFeedback}
       </div>
       
       {renderRoute()}
