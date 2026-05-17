@@ -661,6 +661,7 @@ button {
   margin-top: 8px;
 }
 
+/* NEW CSS FOR DOCK AND COMPOSER SPACING */
 .workspace-dock {
   display: flex;
   align-items: center;
@@ -677,6 +678,8 @@ button {
   border-radius: 12px;
   z-index: 100;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  /* Ensure dock doesn't overlap composer */
+  height: 72px;
 }
 
 .dock-tab {
@@ -811,6 +814,24 @@ button {
 
 .plugin-launcher-item:hover {
   background: rgba(124, 58, 237, 0.18);
+}
+
+/* Ensure the composer is positioned above the dock */
+.builder-panel {
+  position: relative;
+  height: 100%;
+}
+
+.ai-builder-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 16px;
+}
+
+/* Add spacing for the dock */
+.ai-builder-content .ai-builder-input-wrapper {
+  margin-bottom: 96px; /* dock height + gap */
 }
 
 @media (max-width: 1020px) {
