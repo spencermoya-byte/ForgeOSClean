@@ -529,6 +529,13 @@ button {
   overflow-y: auto;
   max-height: 400px;
   padding-bottom: 16px;
+  /* Hide scrollbar while keeping scroll functionality */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.ai-conversation::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .ai-message {
