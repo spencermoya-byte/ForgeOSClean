@@ -44,6 +44,9 @@ export default function App() {
   const [buildMessages, setBuildMessages] = React.useState<Array<{ role: string; content: string }>>([]);
   const [hasStartedConversation, setHasStartedConversation] = React.useState(false);
 
+  // Ref for auto-scrolling
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
   React.useEffect(() => {
     const handleHash = () => setRoute(normalizeRoute(window.location.hash || "create"));
     window.addEventListener("hashchange", handleHash);
@@ -55,6 +58,13 @@ export default function App() {
     const id = window.setTimeout(() => setToast(""), 2600);
     return () => window.clearTimeout(id);
   }, [toast]);
+
+  // Auto-scroll to bottom when messages change
+  React.useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  }, [buildMessages]);
 
   function navigate(nextRoute: Route) {
     setRoute(nextRoute);
@@ -301,6 +311,7 @@ export default function App() {
                       <p>{message.content}</p>
                     </div>
                   ))}
+                  <div ref={messagesEndRef} />
                 </div>
                 
                 <div className="ai-builder-input-wrapper">
