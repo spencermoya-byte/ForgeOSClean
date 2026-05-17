@@ -3,8 +3,8 @@ import "./App.css";
 import { LayoutGrid, Sparkles, UserRound, Share2, Play, Settings, Monitor, Smartphone, Globe, Plus, X, ChevronDown } from "lucide-react";
 
 type Route = "create" | "apps" | "account" | "workspace";
-type WorkspaceTab = "preview" | "builder" | "plugins" | "console" | "git" | "publish";
-type OpenPlugin = "builder" | "preview" | "plugins" | "console" | "git" | "publish";
+type WorkspaceTab = "preview" | "builder" | "plugins" | "console" | "timeline" | "publish";
+type OpenPlugin = "builder" | "preview" | "plugins" | "console" | "timeline" | "publish";
 
 const quickStarts = ["Website", "Desktop App", "AI Tool", "Automation", "API", "Game", "Utility"];
 
@@ -19,7 +19,7 @@ const workspaceTabs: Array<{ key: WorkspaceTab; label: string }> = [
   { key: "builder", label: "Builder" },
   { key: "plugins", label: "Plugins" },
   { key: "console", label: "Console" },
-  { key: "git", label: "Git" },
+  { key: "timeline", label: "Timeline" },
   { key: "publish", label: "Publish" },
 ];
 
@@ -28,7 +28,7 @@ const availablePlugins = [
   { id: "preview", label: "Live Preview" },
   { id: "plugins", label: "Plugins" },
   { id: "console", label: "Console" },
-  { id: "git", label: "Git Timeline" },
+  { id: "timeline", label: "Project Timeline" },
   { id: "publish", label: "Publish" },
 ];
 
@@ -261,61 +261,6 @@ export default function App() {
               </div>
             </div>
           </section>
-
-          <aside className="plugins-panel">
-            <h2>Project Activity</h2>
-            <div className="plugins-content">
-              <div className="pending-changes">
-                <h3>Pending Changes</h3>
-                <div className="change-item">
-                  <div className="change-description">UI improvements pending</div>
-                  <div className="change-meta">
-                    <span className="duration">2m</span>
-                    <span className="time">10:30 AM</span>
-                  </div>
-                </div>
-                <div className="change-item">
-                  <div className="change-description">Workspace initialization</div>
-                  <div className="change-meta">
-                    <span className="duration">5m</span>
-                    <span className="time">10:25 AM</span>
-                  </div>
-                </div>
-                <div className="change-item">
-                  <div className="change-description">Plugin sync pending</div>
-                  <div className="change-meta">
-                    <span className="duration">10m</span>
-                    <span className="time">10:20 AM</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="commit-timeline">
-                <h3>Commit Timeline</h3>
-                <div className="timeline-item">
-                  <div className="timeline-header">
-                    <div className="timeline-title">2 min ago</div>
-                    <div className="timeline-time">Workspace created</div>
-                  </div>
-                  <div className="timeline-duration">Duration: 1m 42s</div>
-                </div>
-                <div className="timeline-item">
-                  <div className="timeline-header">
-                    <div className="timeline-title">15 min ago</div>
-                    <div className="timeline-time">UI refinement pass</div>
-                  </div>
-                  <div className="timeline-duration">Duration: 4m 11s</div>
-                </div>
-                <div className="timeline-item">
-                  <div className="timeline-header">
-                    <div className="timeline-title">Yesterday</div>
-                    <div className="timeline-time">Create screen redesign</div>
-                  </div>
-                  <div className="timeline-duration">Duration: 22m</div>
-                </div>
-              </div>
-            </div>
-          </aside>
         </section>
       );
     }
@@ -366,61 +311,6 @@ export default function App() {
               </div>
             </div>
           </section>
-
-          <aside className="plugins-panel">
-            <h2>Project Activity</h2>
-            <div className="plugins-content">
-              <div className="pending-changes">
-                <h3>Pending Changes</h3>
-                <div className="change-item">
-                  <div className="change-description">UI improvements pending</div>
-                  <div className="change-meta">
-                    <span className="duration">2m</span>
-                    <span className="time">10:30 AM</span>
-                  </div>
-                </div>
-                <div className="change-item">
-                  <div className="change-description">Workspace initialization</div>
-                  <div className="change-meta">
-                    <span className="duration">5m</span>
-                    <span className="time">10:25 AM</span>
-                  </div>
-                </div>
-                <div className="change-item">
-                  <div className="change-description">Plugin sync pending</div>
-                  <div className="change-meta">
-                    <span className="duration">10m</span>
-                    <span className="time">10:20 AM</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="commit-timeline">
-                <h3>Commit Timeline</h3>
-                <div className="timeline-item">
-                  <div className="timeline-header">
-                    <div className="timeline-title">2 min ago</div>
-                    <div className="timeline-time">Workspace created</div>
-                  </div>
-                  <div className="timeline-duration">Duration: 1m 42s</div>
-                </div>
-                <div className="timeline-item">
-                  <div className="timeline-header">
-                    <div className="timeline-title">15 min ago</div>
-                    <div className="timeline-time">UI refinement pass</div>
-                  </div>
-                  <div className="timeline-duration">Duration: 4m 11s</div>
-                </div>
-                <div className="timeline-item">
-                  <div className="timeline-header">
-                    <div className="timeline-title">Yesterday</div>
-                    <div className="timeline-time">Create screen redesign</div>
-                  </div>
-                  <div className="timeline-duration">Duration: 22m</div>
-                </div>
-              </div>
-            </div>
-          </aside>
         </section>
       );
     }
@@ -471,61 +361,6 @@ export default function App() {
               </div>
             </div>
           </section>
-
-          <aside className="plugins-panel">
-            <h2>Project Activity</h2>
-            <div className="plugins-content">
-              <div className="pending-changes">
-                <h3>Pending Changes</h3>
-                <div className="change-item">
-                  <div className="change-description">UI improvements pending</div>
-                  <div className="change-meta">
-                    <span className="duration">2m</span>
-                    <span className="time">10:30 AM</span>
-                  </div>
-                </div>
-                <div className="change-item">
-                  <div className="change-description">Workspace initialization</div>
-                  <div className="change-meta">
-                    <span className="duration">5m</span>
-                    <span className="time">10:25 AM</span>
-                  </div>
-                </div>
-                <div className="change-item">
-                  <div className="change-description">Plugin sync pending</div>
-                  <div className="change-meta">
-                    <span className="duration">10m</span>
-                    <span className="time">10:20 AM</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="commit-timeline">
-                <h3>Commit Timeline</h3>
-                <div className="timeline-item">
-                  <div className="timeline-header">
-                    <div className="timeline-title">2 min ago</div>
-                    <div className="timeline-time">Workspace created</div>
-                  </div>
-                  <div className="timeline-duration">Duration: 1m 42s</div>
-                </div>
-                <div className="timeline-item">
-                  <div className="timeline-header">
-                    <div className="timeline-title">15 min ago</div>
-                    <div className="timeline-time">UI refinement pass</div>
-                  </div>
-                  <div className="timeline-duration">Duration: 4m 11s</div>
-                </div>
-                <div className="timeline-item">
-                  <div className="timeline-header">
-                    <div className="timeline-title">Yesterday</div>
-                    <div className="timeline-time">Create screen redesign</div>
-                  </div>
-                  <div className="timeline-duration">Duration: 22m</div>
-                </div>
-              </div>
-            </div>
-          </aside>
         </section>
       );
     }
@@ -576,66 +411,11 @@ export default function App() {
               </div>
             </div>
           </section>
-
-          <aside className="plugins-panel">
-            <h2>Project Activity</h2>
-            <div className="plugins-content">
-              <div className="pending-changes">
-                <h3>Pending Changes</h3>
-                <div className="change-item">
-                  <div className="change-description">UI improvements pending</div>
-                  <div className="change-meta">
-                    <span className="duration">2m</span>
-                    <span className="time">10:30 AM</span>
-                  </div>
-                </div>
-                <div className="change-item">
-                  <div className="change-description">Workspace initialization</div>
-                  <div className="change-meta">
-                    <span className="duration">5m</span>
-                    <span className="time">10:25 AM</span>
-                  </div>
-                </div>
-                <div className="change-item">
-                  <div className="change-description">Plugin sync pending</div>
-                  <div className="change-meta">
-                    <span className="duration">10m</span>
-                    <span className="time">10:20 AM</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="commit-timeline">
-                <h3>Commit Timeline</h3>
-                <div className="timeline-item">
-                  <div className="timeline-header">
-                    <div className="timeline-title">2 min ago</div>
-                    <div className="timeline-time">Workspace created</div>
-                  </div>
-                  <div className="timeline-duration">Duration: 1m 42s</div>
-                </div>
-                <div className="timeline-item">
-                  <div className="timeline-header">
-                    <div className="timeline-title">15 min ago</div>
-                    <div className="timeline-time">UI refinement pass</div>
-                  </div>
-                  <div className="timeline-duration">Duration: 4m 11s</div>
-                </div>
-                <div className="timeline-item">
-                  <div className="timeline-header">
-                    <div className="timeline-title">Yesterday</div>
-                    <div className="timeline-time">Create screen redesign</div>
-                  </div>
-                  <div className="timeline-duration">Duration: 22m</div>
-                </div>
-              </div>
-            </div>
-          </aside>
         </section>
       );
     }
 
-    if (workspaceTab === "git") {
+    if (workspaceTab === "timeline") {
       return (
         <section className="workspace-grid">
           <aside className="preview-panel">
@@ -683,7 +463,7 @@ export default function App() {
           </section>
 
           <aside className="plugins-panel">
-            <h2>Project Activity</h2>
+            <h2>Project Timeline</h2>
             <div className="plugins-content">
               <div className="pending-changes">
                 <h3>Pending Changes</h3>
@@ -786,61 +566,6 @@ export default function App() {
               </div>
             </div>
           </section>
-
-          <aside className="plugins-panel">
-            <h2>Project Activity</h2>
-            <div className="plugins-content">
-              <div className="pending-changes">
-                <h3>Pending Changes</h3>
-                <div className="change-item">
-                  <div className="change-description">UI improvements pending</div>
-                  <div className="change-meta">
-                    <span className="duration">2m</span>
-                    <span className="time">10:30 AM</span>
-                  </div>
-                </div>
-                <div className="change-item">
-                  <div className="change-description">Workspace initialization</div>
-                  <div className="change-meta">
-                    <span className="duration">5m</span>
-                    <span className="time">10:25 AM</span>
-                  </div>
-                </div>
-                <div className="change-item">
-                  <div className="change-description">Plugin sync pending</div>
-                  <div className="change-meta">
-                    <span className="duration">10m</span>
-                    <span className="time">10:20 AM</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="commit-timeline">
-                <h3>Commit Timeline</h3>
-                <div className="timeline-item">
-                  <div className="timeline-header">
-                    <div className="timeline-title">2 min ago</div>
-                    <div className="timeline-time">Workspace created</div>
-                  </div>
-                  <div className="timeline-duration">Duration: 1m 42s</div>
-                </div>
-                <div className="timeline-item">
-                  <div className="timeline-header">
-                    <div className="timeline-title">15 min ago</div>
-                    <div className="timeline-time">UI refinement pass</div>
-                  </div>
-                  <div className="timeline-duration">Duration: 4m 11s</div>
-                </div>
-                <div className="timeline-item">
-                  <div className="timeline-header">
-                    <div className="timeline-title">Yesterday</div>
-                    <div className="timeline-time">Create screen redesign</div>
-                  </div>
-                  <div className="timeline-duration">Duration: 22m</div>
-                </div>
-              </div>
-            </div>
-          </aside>
         </section>
       );
     }
@@ -890,61 +615,6 @@ export default function App() {
             </div>
           </div>
         </section>
-
-        <aside className="plugins-panel">
-          <h2>Project Activity</h2>
-          <div className="plugins-content">
-            <div className="pending-changes">
-              <h3>Pending Changes</h3>
-              <div className="change-item">
-                <div className="change-description">UI improvements pending</div>
-                <div className="change-meta">
-                  <span className="duration">2m</span>
-                  <span className="time">10:30 AM</span>
-                </div>
-              </div>
-              <div className="change-item">
-                <div className="change-description">Workspace initialization</div>
-                <div className="change-meta">
-                  <span className="duration">5m</span>
-                  <span className="time">10:25 AM</span>
-                </div>
-              </div>
-              <div className="change-item">
-                <div className="change-description">Plugin sync pending</div>
-                <div className="change-meta">
-                  <span className="duration">10m</span>
-                  <span className="time">10:20 AM</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="commit-timeline">
-              <h3>Commit Timeline</h3>
-              <div className="timeline-item">
-                <div className="timeline-header">
-                  <div className="timeline-title">2 min ago</div>
-                  <div className="timeline-time">Workspace created</div>
-                </div>
-                <div className="timeline-duration">Duration: 1m 42s</div>
-              </div>
-              <div className="timeline-item">
-                <div className="timeline-header">
-                  <div className="timeline-title">15 min ago</div>
-                  <div className="timeline-time">UI refinement pass</div>
-                </div>
-                <div className="timeline-duration">Duration: 4m 11s</div>
-              </div>
-              <div className="timeline-item">
-                <div className="timeline-header">
-                  <div className="timeline-title">Yesterday</div>
-                  <div className="timeline-time">Create screen redesign</div>
-                </div>
-                <div className="timeline-duration">Duration: 22m</div>
-              </div>
-            </div>
-          </div>
-        </aside>
       </section>
     );
   }
