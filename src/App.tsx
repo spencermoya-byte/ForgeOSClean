@@ -14,15 +14,6 @@ const bottomNav: Array<{ route: Route; label: string; icon: React.ReactNode }> =
   { route: "account", label: "Account", icon: <UserRound size={20} strokeWidth={2} /> },
 ];
 
-const workspaceTabs: Array<{ key: WorkspaceTab; label: string }> = [
-  { key: "preview", label: "Preview" },
-  { key: "builder", label: "Build" },
-  { key: "commits", label: "Commits" },
-  { key: "plugins", label: "Plugins" },
-  { key: "console", label: "Console" },
-  { key: "publish", label: "Publish" },
-];
-
 const availablePlugins = [
   { id: "preview", label: "Live Preview" },
   { id: "builder", label: "Build" },
@@ -220,6 +211,7 @@ export default function App() {
   }
 
   function renderWorkspaceContent() {
+    // Only render content for the active workspace tab
     if (workspaceTab === "preview") {
       return (
         <section className="workspace-grid">
@@ -243,29 +235,6 @@ export default function App() {
               </div>
             </div>
           </aside>
-
-          <section className="builder-panel">
-            <div className="ai-builder-content">
-              <div className="ai-builder-header">
-                <h2>Build with Vivus</h2>
-                <p>Describe what you want to build.</p>
-              </div>
-              
-              <div className="ai-builder-input">
-                <textarea placeholder="Describe what you want to build..." />
-                <button type="button" className="send-button" onClick={() => action("AI build request")}>
-                  →
-                </button>
-              </div>
-              
-              <div className="ai-conversation">
-                <div className="ai-message">
-                  <strong>Vivus</strong>
-                  <p>What would you like to build today?</p>
-                </div>
-              </div>
-            </div>
-          </section>
         </section>
       );
     }
@@ -273,27 +242,6 @@ export default function App() {
     if (workspaceTab === "builder") {
       return (
         <section className="workspace-grid">
-          <aside className="preview-panel">
-            <h2>Live Preview</h2>
-            <div className="preview-placeholder">
-              <div className="preview-icon">▭</div>
-              <p>Your app preview will appear here.</p>
-              <p className="preview-subtext">Run your project to preview changes.</p>
-              
-              <div className="device-toggle">
-                <button className="device-btn active">
-                  <Monitor size={16} />
-                </button>
-                <button className="device-btn">
-                  <Smartphone size={16} />
-                </button>
-                <button className="device-btn">
-                  <Globe size={16} />
-                </button>
-              </div>
-            </div>
-          </aside>
-
           <section className="builder-panel">
             <div className="ai-builder-content">
               <div className="ai-builder-header">
@@ -323,50 +271,6 @@ export default function App() {
     if (workspaceTab === "commits") {
       return (
         <section className="workspace-grid">
-          <aside className="preview-panel">
-            <h2>Live Preview</h2>
-            <div className="preview-placeholder">
-              <div className="preview-icon">▭</div>
-              <p>Your app preview will appear here.</p>
-              <p className="preview-subtext">Run your project to preview changes.</p>
-              
-              <div className="device-toggle">
-                <button className="device-btn active">
-                  <Monitor size={16} />
-                </button>
-                <button className="device-btn">
-                  <Smartphone size={16} />
-                </button>
-                <button className="device-btn">
-                  <Globe size={16} />
-                </button>
-              </div>
-            </div>
-          </aside>
-
-          <section className="builder-panel">
-            <div className="ai-builder-content">
-              <div className="ai-builder-header">
-                <h2>Build with Vivus</h2>
-                <p>Describe what you want to build.</p>
-              </div>
-              
-              <div className="ai-builder-input">
-                <textarea placeholder="Describe what you want to build..." />
-                <button type="button" className="send-button" onClick={() => action("AI build request")}>
-                  →
-                </button>
-              </div>
-              
-              <div className="ai-conversation">
-                <div className="ai-message">
-                  <strong>Vivus</strong>
-                  <p>What would you like to build today?</p>
-                </div>
-              </div>
-            </div>
-          </section>
-
           <aside className="plugins-panel">
             <h2>Commits</h2>
             <div className="plugins-content">
@@ -428,47 +332,10 @@ export default function App() {
     if (workspaceTab === "plugins") {
       return (
         <section className="workspace-grid">
-          <aside className="preview-panel">
-            <h2>Live Preview</h2>
-            <div className="preview-placeholder">
-              <div className="preview-icon">▭</div>
-              <p>Your app preview will appear here.</p>
-              <p className="preview-subtext">Run your project to preview changes.</p>
-              
-              <div className="device-toggle">
-                <button className="device-btn active">
-                  <Monitor size={16} />
-                </button>
-                <button className="device-btn">
-                  <Smartphone size={16} />
-                </button>
-                <button className="device-btn">
-                  <Globe size={16} />
-                </button>
-              </div>
-            </div>
-          </aside>
-
           <section className="builder-panel">
-            <div className="ai-builder-content">
-              <div className="ai-builder-header">
-                <h2>Build with Vivus</h2>
-                <p>Describe what you want to build.</p>
-              </div>
-              
-              <div className="ai-builder-input">
-                <textarea placeholder="Describe what you want to build..." />
-                <button type="button" className="send-button" onClick={() => action("AI build request")}>
-                  →
-                </button>
-              </div>
-              
-              <div className="ai-conversation">
-                <div className="ai-message">
-                  <strong>Vivus</strong>
-                  <p>What would you like to build today?</p>
-                </div>
-              </div>
+            <h2>Plugins</h2>
+            <div className="plugins-content">
+              <p>Plugin manager placeholder</p>
             </div>
           </section>
         </section>
@@ -478,47 +345,10 @@ export default function App() {
     if (workspaceTab === "console") {
       return (
         <section className="workspace-grid">
-          <aside className="preview-panel">
-            <h2>Live Preview</h2>
-            <div className="preview-placeholder">
-              <div className="preview-icon">▭</div>
-              <p>Your app preview will appear here.</p>
-              <p className="preview-subtext">Run your project to preview changes.</p>
-              
-              <div className="device-toggle">
-                <button className="device-btn active">
-                  <Monitor size={16} />
-                </button>
-                <button className="device-btn">
-                  <Smartphone size={16} />
-                </button>
-                <button className="device-btn">
-                  <Globe size={16} />
-                </button>
-              </div>
-            </div>
-          </aside>
-
           <section className="builder-panel">
-            <div className="ai-builder-content">
-              <div className="ai-builder-header">
-                <h2>Build with Vivus</h2>
-                <p>Describe what you want to build.</p>
-              </div>
-              
-              <div className="ai-builder-input">
-                <textarea placeholder="Describe what you want to build..." />
-                <button type="button" className="send-button" onClick={() => action("AI build request")}>
-                  →
-                </button>
-              </div>
-              
-              <div className="ai-conversation">
-                <div className="ai-message">
-                  <strong>Vivus</strong>
-                  <p>What would you like to build today?</p>
-                </div>
-              </div>
+            <h2>Console</h2>
+            <div className="plugins-content">
+              <p>Console placeholder</p>
             </div>
           </section>
         </section>
@@ -528,76 +358,19 @@ export default function App() {
     if (workspaceTab === "publish") {
       return (
         <section className="workspace-grid">
-          <aside className="preview-panel">
-            <h2>Live Preview</h2>
-            <div className="preview-placeholder">
-              <div className="preview-icon">▭</div>
-              <p>Your app preview will appear here.</p>
-              <p className="preview-subtext">Run your project to preview changes.</p>
-              
-              <div className="device-toggle">
-                <button className="device-btn active">
-                  <Monitor size={16} />
-                </button>
-                <button className="device-btn">
-                  <Smartphone size={16} />
-                </button>
-                <button className="device-btn">
-                  <Globe size={16} />
-                </button>
-              </div>
-            </div>
-          </aside>
-
           <section className="builder-panel">
-            <div className="ai-builder-content">
-              <div className="ai-builder-header">
-                <h2>Build with Vivus</h2>
-                <p>Describe what you want to build.</p>
-              </div>
-              
-              <div className="ai-builder-input">
-                <textarea placeholder="Describe what you want to build..." />
-                <button type="button" className="send-button" onClick={() => action("AI build request")}>
-                  →
-                </button>
-              </div>
-              
-              <div className="ai-conversation">
-                <div className="ai-message">
-                  <strong>Vivus</strong>
-                  <p>What would you like to build today?</p>
-                </div>
-              </div>
+            <h2>Publish</h2>
+            <div className="plugins-content">
+              <p>Publish placeholder</p>
             </div>
           </section>
         </section>
       );
     }
 
+    // Default fallback
     return (
       <section className="workspace-grid">
-        <aside className="preview-panel">
-          <h2>Live Preview</h2>
-          <div className="preview-placeholder">
-            <div className="preview-icon">▭</div>
-            <p>Your app preview will appear here.</p>
-            <p className="preview-subtext">Run your project to preview changes.</p>
-            
-            <div className="device-toggle">
-              <button className="device-btn active">
-                <Monitor size={16} />
-              </button>
-              <button className="device-btn">
-                <Smartphone size={16} />
-              </button>
-              <button className="device-btn">
-                <Globe size={16} />
-              </button>
-            </div>
-          </div>
-        </aside>
-
         <section className="builder-panel">
           <div className="ai-builder-content">
             <div className="ai-builder-header">
@@ -654,19 +427,6 @@ export default function App() {
             </button>
           </div>
         </header>
-
-        <nav className="workspace-tabs">
-          {workspaceTabs.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              className={workspaceTab === tab.key ? "workspace-tab active" : "workspace-tab"}
-              onClick={() => switchWorkspaceTab(tab.key)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
 
         {renderWorkspaceContent()}
 

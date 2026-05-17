@@ -380,46 +380,12 @@ button {
   font-size: 14px;
 }
 
-.workspace-tabs {
-  display: flex;
-  gap: 4px;
-  padding: 8px 20px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
-  background: rgba(13, 16, 26, 0.7);
-  backdrop-filter: blur(10px);
-  position: sticky;
-  top: 56px;
-  z-index: 90;
-}
-
-.workspace-tab {
-  padding: 8px 16px;
-  border: none;
-  background: none;
-  color: #9ca3af;
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-.workspace-tab:hover {
-  color: #f8fafc;
-  background: rgba(148, 163, 184, 0.1);
-}
-
-.workspace-tab.active {
-  color: #f8fafc;
-  background: rgba(124, 58, 237, 0.2);
-  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.3);
-}
-
 .workspace-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 16px;
   padding: 16px;
-  margin-top: 80px;
+  margin-top: 60px;
 }
 
 .preview-panel,
