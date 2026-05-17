@@ -462,6 +462,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  height: 100%;
 }
 
 .ai-builder-header h2 {
@@ -515,12 +516,25 @@ button {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  flex: 1;
+  overflow-y: auto;
+  max-height: 300px;
 }
 
 .ai-message {
   padding: 16px;
   border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: 16px;
+  background: rgba(255, 255, 255, 0.045);
+  overflow-wrap: break-word;
+}
+
+.ai-message.user-message {
+  background: rgba(124, 58, 237, 0.1);
+  border-color: rgba(124, 58, 237, 0.3);
+}
+
+.ai-message.assistant-message {
   background: rgba(255, 255, 255, 0.045);
 }
 

@@ -38,6 +38,11 @@ export default function App() {
   const [showPluginLauncher, setShowPluginLauncher] = React.useState(false);
   const [toast, setToast] = React.useState("");
   const [projectName, setProjectName] = React.useState("Untitled Project");
+  
+  // Build chat state
+  const [buildInput, setBuildInput] = React.useState("");
+  const [buildMessages, setBuildMessages] = React.useState<Array<{ role: string; content: string }>>([]);
+  const [hasStartedBuildChat, setHasStartedBuildChat] = React.useState(false);
 
   React.useEffect(() => {
     const handleHash = () => setRoute(normalizeRoute(window.location.hash || "create"));
@@ -96,6 +101,47 @@ export default function App() {
     }
     
     action(`${pluginId} closed`);
+  }
+
+  function handleBuildSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    
+    if (!buildInput.trim()) {
+      setToast("Please enter a description");
+      return;
+    }
+    
+    // Add greeting if not already present
+    let newMessages = [...buildMessages];
+    if (newMessages.length === 0) {
+      newMessages.push({
+        role: "assistant",
+        content: "Vivus\nWhat would you like to build today?"
+      });
+    }
+    
+    // Add user message
+    newMessages.push({
+      role: "user",
+      content: buildInput
+    });
+    
+    // Add assistant response
+    newMessages.push({
+      role: "assistant",
+      content: "I'll use this as the starting specification. Real local AI generation will be connected later."
+    });
+    
+    setBuildMessages(newMessages);
+    setBuildInput("");
+    setHasStartedBuildChat(true);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleBuildSubmit(e as any);
+    }
   }
 
   function renderCreate() {
@@ -243,26 +289,69 @@ export default function App() {
       return (
         <section className="workspace-grid">
           <section className="builder-panel">
-            <div className="ai-builder-content">
-              <div className="ai-builder-header">
-                <h2>Build with Vivus</h2>
-                <p>Describe what you want to build.</p>
-              </div>
-              
-              <div className="ai-builder-input">
-                <textarea placeholder="Describe what you want to build..." />
-                <button type="button" className="send-button" onClick={() => action("AI build request")}>
-                  →
-                </button>
-              </div>
-              
-              <div className="ai-conversation">
-                <div className="ai-message">
-                  <strong>Vivus</strong>
-                  <p>What would you like to build today?</p>
+            {hasStartedBuildChat ? (
+              <div className="ai-builder-content">
+                <div className="ai-conversation">
+                  {buildMessages.map((message, index) => (
+                    <div 
+                      key={index} 
+                      className={`ai-message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`}
+                    >
+                      <strong>{message.role === 'user' ? 'You' : 'Vivus'}</strong>
+                      <p>{message.content}</p>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="ai-builder-input">
+                  <form onSubmit={handleBuildSubmit}>
+                    <textarea 
+                      placeholder="Describe what you want to build..." 
+                      value={buildInput}
+                      onChange={(e) => setBuildInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                    />
+                    <button type="button" className="composer-plus" onClick={() => action("Attach files/photos")}>
+                      +
+                    </button>
+                    <button type="submit" className="send-button">
+                      →
+                    </button>
+                  </form>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="ai-builder-content">
+                <div className="ai-builder-header">
+                  <h2>Build with Vivus</h2>
+                  <p>Describe what you want to build.</p>
+                </div>
+                
+                <div className="ai-builder-input">
+                  <form onSubmit={handleBuildSubmit}>
+                    <textarea 
+                      placeholder="Describe what you want to build..." 
+                      value={buildInput}
+                      onChange={(e) => setBuildInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                    />
+                    <button type="button" className="composer-plus" onClick={() => action("Attach files/photos")}>
+                      +
+                    </button>
+                    <button type="submit" className="send-button">
+                      →
+                    </button>
+                  </form>
+                </div>
+                
+                <div className="ai-conversation">
+                  <div className="ai-message assistant-message">
+                    <strong>Vivus</strong>
+                    <p>What would you like to build today?</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
         </section>
       );
