@@ -43,6 +43,8 @@ export default function App() {
   const [buildInput, setBuildInput] = React.useState("");
   const [buildMessages, setBuildMessages] = React.useState<Array<{ role: string; content: string }>>([]);
   const [hasStartedConversation, setHasStartedConversation] = React.useState(false);
+  const [currentMode, setCurrentMode] = React.useState<"plan" | "build">("plan");
+  const [planApproved, setPlanApproved] = React.useState(false);
 
   // Ref for auto-scrolling
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
@@ -123,7 +125,7 @@ export default function App() {
     
     // Add greeting if not already present
     let newMessages = [...buildMessages];
-    if (newMessages.length === 0) {
+    if (newMessages.length === 0 && currentMode === "plan") {
       newMessages.push({
         role: "assistant",
         content: "Vivus\nWhat would you like to build today?"
@@ -136,15 +138,39 @@ export default function App() {
       content: buildInput
     });
     
-    // Add assistant response
-    newMessages.push({
-      role: "assistant",
-      content: "I'll use this as the starting specification. Real local AI generation will be connected later."
-    });
+    // Add assistant response based on mode
+    if (currentMode === "plan") {
+      // In plan mode, respond with clarifying questions
+      newMessages.push({
+        role: "assistant",
+        content: "I'll help you define the requirements. Can you tell me more about:\n\n- What problem you're trying to solve?\n- What features are essential?\n- Any constraints or requirements?"
+      });
+    } else {
+      // In build mode, respond with build instructions
+      newMessages.push({
+        role: "assistant",
+        content: "I'll use this as the starting specification. Real local AI generation will be connected later."
+      });
+    }
     
     setBuildMessages(newMessages);
     setBuildInput("");
     setHasStartedConversation(true);
+  }
+
+  function handleApprovePlan() {
+    // Switch to build mode
+    setCurrentMode("build");
+    
+    // Add assistant message about approved plan
+    const newMessages = [...buildMessages];
+    newMessages.push({
+      role: "assistant",
+      content: "Your plan has been approved! I'll now start building based on your requirements."
+    });
+    
+    setBuildMessages(newMessages);
+    setPlanApproved(true);
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -315,9 +341,40 @@ export default function App() {
                 </div>
                 
                 <div className="ai-builder-input-wrapper">
+                  <div className="mode-toggle">
+                    <button 
+                      type="button" 
+                      className={`mode-button ${currentMode === "plan" ? "active" : ""}`}
+                      onClick={() => setCurrentMode("plan")}
+                    >
+                      Plan
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`mode-button ${currentMode === "build" ? "active" : ""}`}
+                      onClick={() => setCurrentMode("build")}
+                    >
+                      Build
+                    </button>
+                  </div>
+                  
+                  {currentMode === "plan" && buildMessages.length > 0 && !planApproved && (
+                    <div className="plan-approval">
+                      <button 
+                        type="button" 
+                        className="soft-button approve-button"
+                        onClick={handleApprovePlan}
+                      >
+                        Approve Plan
+                      </button>
+                    </div>
+                  )}
+                  
                   <form onSubmit={handleBuildSubmit} className="ai-builder-input-form">
                     <textarea 
-                      placeholder="Make, test, iterate..." 
+                      placeholder={currentMode === "plan" 
+                        ? "Describe your requirements and goals..." 
+                        : "Make, test, iterate..."}
                       value={buildInput}
                       onChange={(e) => setBuildInput(e.target.value)}
                       onKeyDown={handleKeyDown}
@@ -336,9 +393,28 @@ export default function App() {
                 </div>
                 
                 <div className="ai-builder-input-wrapper">
+                  <div className="mode-toggle">
+                    <button 
+                      type="button" 
+                      className={`mode-button ${currentMode === "plan" ? "active" : ""}`}
+                      onClick={() => setCurrentMode("plan")}
+                    >
+                      Plan
+                    </button>
+                    <button 
+                      type="button" 
+                      className={`mode-button ${currentMode === "build" ? "active" : ""}`}
+                      onClick={() => setCurrentMode("build")}
+                    >
+                      Build
+                    </button>
+                  </div>
+                  
                   <form onSubmit={handleBuildSubmit} className="ai-builder-input-form">
                     <textarea 
-                      placeholder="Make, test, iterate..." 
+                      placeholder={currentMode === "plan" 
+                        ? "Describe your requirements and goals..." 
+                        : "Make, test, iterate..."}
                       value={buildInput}
                       onChange={(e) => setBuildInput(e.target.value)}
                       onKeyDown={handleKeyDown}
