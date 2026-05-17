@@ -42,7 +42,7 @@ export default function App() {
   // Build chat state
   const [buildInput, setBuildInput] = React.useState("");
   const [buildMessages, setBuildMessages] = React.useState<Array<{ role: string; content: string }>>([]);
-  const [hasStartedBuildChat, setHasStartedBuildChat] = React.useState(false);
+  const [hasStartedConversation, setHasStartedConversation] = React.useState(false);
 
   React.useEffect(() => {
     const handleHash = () => setRoute(normalizeRoute(window.location.hash || "create"));
@@ -134,7 +134,7 @@ export default function App() {
     
     setBuildMessages(newMessages);
     setBuildInput("");
-    setHasStartedBuildChat(true);
+    setHasStartedConversation(true);
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -289,7 +289,7 @@ export default function App() {
       return (
         <section className="workspace-grid">
           <section className="builder-panel">
-            {hasStartedBuildChat ? (
+            {hasStartedConversation ? (
               <div className="ai-builder-content">
                 <div className="ai-conversation">
                   {buildMessages.map((message, index) => (
@@ -303,17 +303,14 @@ export default function App() {
                   ))}
                 </div>
                 
-                <div className="ai-builder-input">
-                  <form onSubmit={handleBuildSubmit}>
+                <div className="ai-builder-input-wrapper">
+                  <form onSubmit={handleBuildSubmit} className="ai-builder-input-form">
                     <textarea 
-                      placeholder="Describe what you want to build..." 
+                      placeholder="Make, test, iterate..." 
                       value={buildInput}
                       onChange={(e) => setBuildInput(e.target.value)}
                       onKeyDown={handleKeyDown}
                     />
-                    <button type="button" className="composer-plus" onClick={() => action("Attach files/photos")}>
-                      +
-                    </button>
                     <button type="submit" className="send-button">
                       →
                     </button>
@@ -327,17 +324,14 @@ export default function App() {
                   <p>Describe what you want to build.</p>
                 </div>
                 
-                <div className="ai-builder-input">
-                  <form onSubmit={handleBuildSubmit}>
+                <div className="ai-builder-input-wrapper">
+                  <form onSubmit={handleBuildSubmit} className="ai-builder-input-form">
                     <textarea 
-                      placeholder="Describe what you want to build..." 
+                      placeholder="Make, test, iterate..." 
                       value={buildInput}
                       onChange={(e) => setBuildInput(e.target.value)}
                       onKeyDown={handleKeyDown}
                     />
-                    <button type="button" className="composer-plus" onClick={() => action("Attach files/photos")}>
-                      +
-                    </button>
                     <button type="submit" className="send-button">
                       →
                     </button>

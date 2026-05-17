@@ -461,8 +461,8 @@ button {
 .ai-builder-content {
   display: flex;
   flex-direction: column;
-  gap: 24px;
   height: 100%;
+  gap: 16px;
 }
 
 .ai-builder-header h2 {
@@ -477,15 +477,20 @@ button {
   font-size: 14px;
 }
 
-.ai-builder-input {
-  position: relative;
+.ai-builder-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ai-builder-input-form {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  position: relative;
 }
 
-.ai-builder-input textarea {
-  flex: 1;
+.ai-builder-input-form textarea {
   min-height: 120px;
   padding: 16px;
   border: 1px solid rgba(167, 139, 250, 0.24);
@@ -495,9 +500,10 @@ button {
   font-size: 16px;
   resize: vertical;
   outline: none;
+  width: 100%;
 }
 
-.ai-builder-input button {
+.ai-builder-input-form button {
   position: absolute;
   right: 12px;
   bottom: 12px;
@@ -510,6 +516,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
+  border: none;
 }
 
 .ai-conversation {
@@ -518,7 +525,8 @@ button {
   gap: 16px;
   flex: 1;
   overflow-y: auto;
-  max-height: 300px;
+  max-height: 400px;
+  padding-bottom: 16px;
 }
 
 .ai-message {
@@ -527,6 +535,7 @@ button {
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.045);
   overflow-wrap: break-word;
+  max-width: 700px;
 }
 
 .ai-message.user-message {
@@ -549,6 +558,7 @@ button {
   color: #c8c0d8;
   margin: 0;
   font-size: 14px;
+  line-height: 1.5;
 }
 
 .plugins-content {
@@ -864,7 +874,7 @@ button {
     font-size: 12px;
   }
 
-  .ai-builder-input textarea {
+  .ai-builder-input-form textarea {
     min-height: 100px;
     padding: 12px;
     font-size: 14px;
