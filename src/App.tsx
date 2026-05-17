@@ -43,7 +43,7 @@ export default function App() {
   const [buildInput, setBuildInput] = React.useState("");
   const [buildMessages, setBuildMessages] = React.useState<Array<{ role: string; content: string }>>([]);
   const [hasStartedConversation, setHasStartedConversation] = React.useState(false);
-  const [currentMode, setCurrentMode] = React.useState<"plan" | "build">("plan");
+  const [currentMode, setCurrentMode] = React.useState<"plan" | "build">("build");
   const [planApproved, setPlanApproved] = React.useState(false);
 
   // Ref for auto-scrolling
@@ -171,6 +171,11 @@ export default function App() {
     
     setBuildMessages(newMessages);
     setPlanApproved(true);
+  }
+
+  function handleModeChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const mode = e.target.value as "plan" | "build";
+    setCurrentMode(mode);
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -341,35 +346,6 @@ export default function App() {
                 </div>
                 
                 <div className="ai-builder-input-wrapper">
-                  <div className="mode-toggle">
-                    <button 
-                      type="button" 
-                      className={`mode-button ${currentMode === "plan" ? "active" : ""}`}
-                      onClick={() => setCurrentMode("plan")}
-                    >
-                      Plan
-                    </button>
-                    <button 
-                      type="button" 
-                      className={`mode-button ${currentMode === "build" ? "active" : ""}`}
-                      onClick={() => setCurrentMode("build")}
-                    >
-                      Build
-                    </button>
-                  </div>
-                  
-                  {currentMode === "plan" && buildMessages.length > 0 && !planApproved && (
-                    <div className="plan-approval">
-                      <button 
-                        type="button" 
-                        className="soft-button approve-button"
-                        onClick={handleApprovePlan}
-                      >
-                        Approve Plan
-                      </button>
-                    </div>
-                  )}
-                  
                   <form onSubmit={handleBuildSubmit} className="ai-builder-input-form">
                     <textarea 
                       placeholder={currentMode === "plan" 
@@ -379,9 +355,19 @@ export default function App() {
                       onChange={(e) => setBuildInput(e.target.value)}
                       onKeyDown={handleKeyDown}
                     />
-                    <button type="submit" className="send-button">
-                      →
-                    </button>
+                    <div className="composer-controls">
+                      <select 
+                        className="mode-selector"
+                        value={currentMode}
+                        onChange={handleModeChange}
+                      >
+                        <option value="build">Build</option>
+                        <option value="plan">Plan</option>
+                      </select>
+                      <button type="submit" className="send-button">
+                        →
+                      </button>
+                    </div>
                   </form>
                 </div>
               </div>
@@ -393,23 +379,6 @@ export default function App() {
                 </div>
                 
                 <div className="ai-builder-input-wrapper">
-                  <div className="mode-toggle">
-                    <button 
-                      type="button" 
-                      className={`mode-button ${currentMode === "plan" ? "active" : ""}`}
-                      onClick={() => setCurrentMode("plan")}
-                    >
-                      Plan
-                    </button>
-                    <button 
-                      type="button" 
-                      className={`mode-button ${currentMode === "build" ? "active" : ""}`}
-                      onClick={() => setCurrentMode("build")}
-                    >
-                      Build
-                    </button>
-                  </div>
-                  
                   <form onSubmit={handleBuildSubmit} className="ai-builder-input-form">
                     <textarea 
                       placeholder={currentMode === "plan" 
@@ -419,9 +388,19 @@ export default function App() {
                       onChange={(e) => setBuildInput(e.target.value)}
                       onKeyDown={handleKeyDown}
                     />
-                    <button type="submit" className="send-button">
-                      →
-                    </button>
+                    <div className="composer-controls">
+                      <select 
+                        className="mode-selector"
+                        value={currentMode}
+                        onChange={handleModeChange}
+                      >
+                        <option value="build">Build</option>
+                        <option value="plan">Plan</option>
+                      </select>
+                      <button type="submit" className="send-button">
+                        →
+                      </button>
+                    </div>
                   </form>
                 </div>
                 
