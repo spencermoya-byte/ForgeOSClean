@@ -170,29 +170,29 @@ button {
   color: #8f879d;
 }
 
-.composer-footer {
+.composer-controls {
   position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 8px;
+  right: 24px;
+  bottom: 20px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  pointer-events: none;
+  gap: 14px;
+  z-index: 10;
 }
 
-.composer-footer button {
-  pointer-events: auto;
-}
-
-.composer-plus {
-  width: 28px;
-  height: 28px;
-  border: 1px solid rgba(167, 139, 250, 0.36);
+.mode-selector {
+  width: 90px;
+  height: 36px;
   border-radius: 10px;
-  color: #f5f3ff;
-  background: rgba(255, 255, 255, 0.065);
-  font-size: 18px;
+  border: 1px solid rgba(124, 58, 237, 0.45);
+  background: rgba(17, 20, 31, 0.95);
+  color: #f8fafc;
+  padding: 0 12px;
+}
+
+.mode-selector:focus {
+  outline: none;
+  border-color: #a78bfa;
 }
 
 .composer-actions {
@@ -229,10 +229,9 @@ button {
 }
 
 .send-button {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  font-size: 18px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
 }
 
 .forge-card {
@@ -292,7 +291,7 @@ button {
   padding: 4px;
   border: 1px solid rgba(167, 139, 250, 0.2);
   border-radius: 999px;
-  background: rgba(12, 14, 23, 0.78);
+  background: rgba(12, 14, 26, 0.78);
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(18px);
 }
@@ -489,15 +488,15 @@ button {
 }
 
 .ai-builder-input-form {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
   position: relative;
+  width: 100%;
 }
 
 .ai-builder-input-form textarea {
   min-height: 120px;
-  padding: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 18px 178px 64px 18px;
   border: 1px solid rgba(167, 139, 250, 0.24);
   border-radius: 12px;
   color: #f8fafc;
@@ -505,17 +504,15 @@ button {
   font-size: 16px;
   resize: vertical;
   outline: none;
-  width: 100%;
-  flex: 1;
 }
 
 .ai-builder-input-form button {
   position: absolute;
-  right: 12px;
-  bottom: 12px;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  right: 24px;
+  bottom: 20px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   color: white;
   background: linear-gradient(135deg, #7c3aed, #2563eb);
   cursor: pointer;
@@ -761,66 +758,65 @@ button {
   bottom: 70px;
   left: 50%;
   transform: translateX(-50%);
-  width: 280px;
-  background: rgba(13, 16, 26, 0.9);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  border-radius: 12px;
   z-index: 101;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  width: 200px;
+  background: rgba(13, 16, 26, 0.9);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
 }
 
 .plugin-launcher-header {
+  padding: 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
-  background: rgba(13, 16, 26, 0.7);
 }
 
 .plugin-launcher-header h3 {
   margin: 0;
-  font-size: 14px;
+  font-size: 16px;
   color: #f8fafc;
 }
 
 .plugin-launcher-close {
   background: none;
   border: none;
-  color: #9ca3af;
+  color: #f8fafc;
   cursor: pointer;
+  font-size: 18px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
+  border-radius: 50%;
+  transition: background 0.2s;
 }
 
 .plugin-launcher-close:hover {
-  background: rgba(148, 163, 184, 0.14);
-  color: #f8fafc;
+  background: rgba(148, 163, 184, 0.1);
 }
 
 .plugin-launcher-content {
-  display: flex;
-  flex-direction: column;
   padding: 8px 0;
 }
 
 .plugin-launcher-item {
+  width: 100%;
   padding: 10px 16px;
   border: none;
   background: none;
   color: #f8fafc;
   text-align: left;
   cursor: pointer;
-  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 8px;
+  transition: background 0.2s;
+  font-size: 14px;
 }
 
 .plugin-launcher-item:hover {
@@ -847,26 +843,23 @@ button {
 
 /* Composer controls styling */
 .composer-controls {
+  position: absolute;
+  right: 24px;
+  bottom: 20px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 14px;
+  z-index: 10;
 }
 
 .mode-selector {
-  width: 80px;
-  padding: 6px 10px;
-  border: 1px solid rgba(167, 139, 250, 0.24);
+  width: 90px;
+  height: 36px;
   border-radius: 10px;
+  border: 1px solid rgba(124, 58, 237, 0.45);
+  background: rgba(17, 20, 31, 0.95);
   color: #f8fafc;
-  background: rgba(255, 255, 255, 0.055);
-  font-size: 14px;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f8fafc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 12px;
+  padding: 0 12px;
 }
 
 .mode-selector:focus {
@@ -1014,4 +1007,46 @@ button {
   .workspace-actions .soft-button:nth-child(n + 2) {
     display: none;
   }
+}
+/* FINAL WORKSPACE BUILDER COMPOSER OVERRIDE */
+
+.ai-builder-input-form {
+  position: relative;
+  width: 100%;
+}
+
+.ai-builder-input-form textarea {
+  width: 100%;
+  min-height: 120px;
+  box-sizing: border-box;
+  padding: 18px 180px 64px 18px;
+}
+
+.ai-builder-input-form .composer-controls {
+  position: absolute;
+  right: 22px;
+  bottom: 18px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  z-index: 20;
+}
+
+.ai-builder-input-form .mode-selector {
+  position: static;
+  width: 92px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(124, 58, 237, 0.45);
+  background: rgba(17, 20, 31, 0.95);
+  color: #f8fafc;
+  padding: 0 12px;
+}
+
+.ai-builder-input-form .composer-controls .send-button {
+  position: static;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
 }

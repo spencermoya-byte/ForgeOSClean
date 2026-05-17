@@ -128,7 +128,7 @@ export default function App() {
     if (newMessages.length === 0 && currentMode === "plan") {
       newMessages.push({
         role: "assistant",
-        content: "Vivus\nWhat would you like to build today?"
+        content: "Hey there! What would you like to build today?"
       });
     }
     
@@ -407,7 +407,7 @@ export default function App() {
                 <div className="ai-conversation">
                   <div className="ai-message assistant-message">
                     <strong>Vivus</strong>
-                    <p>What would you like to build today?</p>
+                    <p>Hey there! What would you like to build today?</p>
                   </div>
                 </div>
               </div>
