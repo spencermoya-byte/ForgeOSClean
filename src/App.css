@@ -386,6 +386,8 @@ button {
   gap: 16px;
   padding: 16px;
   margin-top: 60px;
+  height: calc(100vh - 120px);
+  position: relative;
 }
 
 .preview-panel,
