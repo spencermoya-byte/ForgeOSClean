@@ -123,34 +123,35 @@ export default function App() {
       return;
     }
     
-    // Add greeting if not already present
-    let newMessages = [...buildMessages];
-    if (newMessages.length === 0 && currentMode === "plan") {
-      newMessages.push({
-        role: "assistant",
-        content: "Hey there! What would you like to build today?"
-      });
-    }
-    
     // Add user message
-    newMessages.push({
+    const newMessages = [...buildMessages, {
       role: "user",
       content: buildInput
-    });
+    }];
     
     // Add assistant response based on mode
     if (currentMode === "plan") {
       // In plan mode, respond with clarifying questions
       newMessages.push({
         role: "assistant",
-        content: "I'll help you define the requirements. Can you tell me more about:\n\n- What problem you're trying to solve?\n- What features are essential?\n- Any constraints or requirements?"
+        content: "I'll help you define the requirements. Can you tell me more about:\n\n1. What problem you're trying to solve?\n2. What features are essential?\n3. What platform will it target (web, desktop, mobile)?\n4. What UI style are you aiming for (modern, minimalist, etc.)?\n5. Are there any constraints or requirements to consider?"
       });
     } else {
       // In build mode, respond with build instructions
-      newMessages.push({
-        role: "assistant",
-        content: "I'll use this as the starting specification. Real local AI generation will be connected later."
-      });
+      // Check if the input is vague and add a clarifying question if needed
+      const isVague = buildInput.length < 20;
+      
+      if (isVague) {
+        newMessages.push({
+          role: "assistant",
+          content: "I'll use this as the starting build specification.\n\nUnderstood goal:\n[brief description of the request]\n\nInitial build scope:\n- Core screen/layout\n- Primary user interaction\n- Local-first data handling where applicable\n- Basic error/empty states\n\nReal local AI generation will be connected later.\n\nTo ensure I build the right thing, could you clarify what specific functionality you'd like to see first?"
+        });
+      } else {
+        newMessages.push({
+          role: "assistant",
+          content: "I'll use this as the starting build specification.\n\nUnderstood goal:\n[brief description of the request]\n\nInitial build scope:\n- Core screen/layout\n- Primary user interaction\n- Local-first data handling where applicable\n- Basic error/empty states\n\nReal local AI generation will be connected later."
+        });
+      }
     }
     
     setBuildMessages(newMessages);
@@ -166,7 +167,7 @@ export default function App() {
     const newMessages = [...buildMessages];
     newMessages.push({
       role: "assistant",
-      content: "Your plan has been approved! I'll now start building based on your requirements."
+      content: "Plan approved. I'll now use this as the build specification."
     });
     
     setBuildMessages(newMessages);
@@ -370,6 +371,18 @@ export default function App() {
                     </div>
                   </form>
                 </div>
+                
+                {currentMode === "plan" && buildMessages.length > 1 && !planApproved && (
+                  <div className="plan-approval-container">
+                    <button 
+                      type="button" 
+                      className="soft-button"
+                      onClick={handleApprovePlan}
+                    >
+                      Approve Plan
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="ai-builder-content">
