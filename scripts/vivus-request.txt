@@ -1,0 +1,13 @@
+Fix the current Vivus UI regressions in one guarded stabilization pass.
+
+Restore the missing context/attachment plus button in the bottom-left of the textbox.
+
+Fix the Build/Plan dropdown button so it has a purple background, the dropdown arrow is inside the button, and the button width dynamically grows/shrinks based on the selected word plus the dropdown arrow.
+
+Restore exactly one subtle vertical divider between the Commits button and the plus/add button in the bottom nav bar.
+
+Fix the bottom nav bar outer padding so the left/right spacing visually equals the top/bottom spacing.
+
+Remove the x icons from the three default bottom nav buttons only: Live Preview, Build, and Commits.
+
+Do not change anything else visually. Do not redesign, refactor, or touch unrelated systems. Use the existing Vivus stabilization rules, active-source verification, property locks, minimal patching, regression check, and npm run build.
