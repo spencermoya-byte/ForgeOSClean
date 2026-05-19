@@ -48,7 +48,8 @@ button,
 .home-composer-plus,
 .mode-selector,
 .dock-tab,
-.dock-plugin-launcher {
+.dock-plugin-launcher,
+.project-card {
   transition:
     transform 0.16s ease,
     border-color 0.16s ease,
@@ -63,7 +64,8 @@ button:hover,
 .ai-builder-plus:hover,
 .home-composer-plus:hover,
 .mode-selector:hover,
-.dock-plugin-launcher:hover {
+.dock-plugin-launcher:hover,
+.project-card:hover {
   transform: translateY(-1px);
 }
 
@@ -358,7 +360,7 @@ button:hover,
 
 .workspace-content {
   min-height: calc(100vh - 58px);
-  padding: 26px 18px 118px;
+  padding: 26px 18px 170px;
 }
 
 .builder-workspace {
@@ -446,7 +448,8 @@ button:hover,
   font-weight: 650;
 }
 
-.vivus-greeting-card {
+.vivus-greeting-card,
+.project-context-card {
   width: fit-content;
   display: flex;
   align-items: center;
@@ -457,6 +460,21 @@ button:hover,
   background: rgba(255, 255, 255, 0.045);
 }
 
+.project-context-card {
+  width: 100%;
+  display: grid;
+  gap: 4px;
+  align-items: start;
+}
+
+.project-context-card span,
+.project-card-topline,
+.page-heading-row p {
+  color: #a8a0b8;
+  font-size: 13px;
+}
+
+.project-context-card p,
 .vivus-greeting-card p {
   margin: 3px 0 0;
   color: #b8b0c9;
@@ -474,7 +492,7 @@ button:hover,
   display: flex;
   flex-direction: column;
   gap: 14px;
-  padding: 8px 0;
+  padding: 8px 0 8px;
   scrollbar-width: none;
 }
 
@@ -513,8 +531,12 @@ button:hover,
 }
 
 .bottom-composer-wrap {
-  position: sticky;
-  bottom: 92px;
+  position: fixed;
+  left: 50%;
+  bottom: 86px;
+  transform: translateX(-50%);
+  z-index: 45;
+  width: min(880px, calc(100vw - 36px));
   display: grid;
   gap: 10px;
 }
@@ -721,13 +743,29 @@ button:hover,
   gap: 18px;
 }
 
+.page-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-heading-row h1 {
+  margin: 0 0 8px;
+}
+
+.page-heading-row p {
+  margin: 0;
+}
+
 .account-shell {
   align-items: center;
 }
 
 .list-row,
 .app-card,
-.account-row {
+.account-row,
+.project-card {
   border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.045);
@@ -754,6 +792,63 @@ button:hover,
   place-items: center;
   margin-bottom: 16px;
   color: #a78bfa;
+}
+
+.project-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 14px;
+}
+
+.project-card {
+  width: 100%;
+  min-height: 150px;
+  padding: 16px;
+  text-align: left;
+  color: #f8fafc;
+  background:
+    radial-gradient(circle at right top, rgba(124, 58, 237, 0.16), transparent 16rem),
+    rgba(255, 255, 255, 0.045);
+}
+
+.project-card:hover {
+  border-color: rgba(167, 139, 250, 0.42);
+  background:
+    radial-gradient(circle at right top, rgba(124, 58, 237, 0.22), transparent 16rem),
+    rgba(255, 255, 255, 0.065);
+}
+
+.project-card-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.project-card-topline span {
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #c4b5fd;
+  background: rgba(124, 58, 237, 0.18);
+  border: 1px solid rgba(167, 139, 250, 0.22);
+}
+
+.project-card-topline em {
+  color: #a8a0b8;
+  font-style: normal;
+}
+
+.project-card h2 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  letter-spacing: -0.03em;
+}
+
+.project-card p {
+  margin: 0;
+  color: #b8b0c9;
+  line-height: 1.45;
 }
 
 .avatar {
@@ -792,6 +887,11 @@ button:hover,
   .ai-builder-input-form textarea,
   .home-composer textarea {
     padding-right: 128px;
+  }
+
+  .bottom-composer-wrap {
+    bottom: 86px;
+    width: calc(100vw - 20px);
   }
 
   .workspace-dock {
