@@ -430,6 +430,23 @@ export default function App() {
               Untitled Project <ChevronDown size={16} strokeWidth={2.4} />
             </button>
           </div>
+          <button
+            type="button"
+            onClick={() => navigate("create")}
+            style={{
+              marginLeft: "auto",
+              height: "36px",
+              padding: "0 14px",
+              borderRadius: "10px",
+              border: "1px solid rgba(167, 139, 250, 0.24)",
+              background: "rgba(255, 255, 255, 0.05)",
+              color: "#f8fafc",
+              fontSize: "13px",
+              fontWeight: 600,
+            }}
+          >
+            Home
+          </button>
         </header>
 
         {renderWorkspaceContent()}
