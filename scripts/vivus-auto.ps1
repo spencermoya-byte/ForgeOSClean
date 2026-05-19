@@ -4,23 +4,17 @@ param(
 
 Set-Location "C:\ForgeOSClean"
 
-$TempRequest = ".\scripts\vivus-request.txt"
-
-if (!(Test-Path $TempRequest)) {
-    "" | Set-Content $TempRequest
-}
-
 Write-Host ""
-Write-Host "Opening request editor..." -ForegroundColor Cyan
-
-notepad $TempRequest
-
-Write-Host ""
-Write-Host "Paste your request into Notepad, SAVE the file, then CLOSE Notepad." -ForegroundColor Yellow
+Write-Host "Copy your Vivus request to clipboard first." -ForegroundColor Cyan
+Write-Host "Press ENTER when ready..." -ForegroundColor Yellow
 Pause
 
-$UserRequest = Get-Content $TempRequest -Raw
+$UserRequest = Get-Clipboard
 
+if ([string]::IsNullOrWhiteSpace($UserRequest)) {
+    Write-Host "Clipboard is empty." -ForegroundColor Red
+    exit 1
+}
 $PlannerMode = Get-Content ".\.aider-modes\vivusplanner.txt" -Raw
 $TargetMode = Get-Content ".\.aider-modes\vivusfiles.txt" -Raw
 

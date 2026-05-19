@@ -1,13 +1,183 @@
-Fix the current Vivus UI regressions in one guarded stabilization pass.
+MODE TO USE:
+vivusfiles
 
-Restore the missing context/attachment plus button in the bottom-left of the textbox.
+VISUAL CHANGE EXPECTED:
+Yes.
 
-Fix the Build/Plan dropdown button so it has a purple background, the dropdown arrow is inside the button, and the button width dynamically grows/shrinks based on the selected word plus the dropdown arrow.
+ONLY:
+1. Change the Build/Plan button background to match the bottom dock plus button background.
+2. Add/restore the missing context plus button in the bottom-left of the textbox.
+3. The textbox plus button must use the same visual style as the bottom dock plus button.
 
-Restore exactly one subtle vertical divider between the Commits button and the plus/add button in the bottom nav bar.
+Nothing else should visually change.
 
-Fix the bottom nav bar outer padding so the left/right spacing visually equals the top/bottom spacing.
+ABSOLUTE TASK LOCK RULE:
+Do exactly what was requested and nothing else.
+Do not redesign, refactor, modernize, clean up, reorganize, rename, or touch unrelated systems.
 
-Remove the x icons from the three default bottom nav buttons only: Live Preview, Build, and Commits.
+CURRENT ISSUES:
+1. The Build/Plan button background is too dark and does not match the brighter purple bottom dock plus button.
+2. The textbox is still missing the lower-left context/attachment plus button.
+3. The textbox plus button should visually match the bottom dock plus button style.
 
-Do not change anything else visually. Do not redesign, refactor, or touch unrelated systems. Use the existing Vivus stabilization rules, active-source verification, property locks, minimal patching, regression check, and npm run build.
+INTENT COMPILER:
+Goal:
+Make the Build/Plan selector background match the dock plus button and restore the textbox context plus button using the same style as the dock plus button.
+
+Allowed changes:
+- Build/Plan selector background styling only
+- composer/textbox plus button JSX/rendering
+- composer/textbox plus button CSS
+- reuse/copy dock plus button visual style
+
+Blocked changes:
+- Build/Plan selector sizing
+- Build/Plan arrow placement
+- send button
+- textbox dimensions
+- bottom dock layout
+- bottom dock buttons
+- dock divider
+- page layout
+- header
+- message card
+- routing
+- state management
+- plugin behavior
+
+MANDATORY FIRST STEP:
+Before editing, verify the active rendered sources in:
+src/App.tsx
+src/App.css
+
+Find:
+- Build/Plan selector active JSX/CSS
+- bottom dock plus button active JSX/CSS
+- composer/textbox container
+- existing composer plus/context button if present
+- send button/action area
+
+Do not edit dead CSS.
+Do not guess selectors.
+If active source cannot be verified, STOP and explain.
+
+IMPLEMENTATION:
+Open:
+src/App.tsx
+src/App.css
+
+PART 1 — MATCH BUILD/PLAN BACKGROUND TO DOCK PLUS BUTTON
+
+Find the active CSS for the bottom dock plus button.
+
+Copy only the background color/gradient from the bottom dock plus button and apply it to the Build/Plan selector.
+
+Do NOT change:
+- Build selector width
+- Build selector padding
+- Build selector height
+- Build selector arrow
+- Build selector border radius
+- Build selector position
+
+Only make the selector background match the dock plus button.
+
+If the dock plus button uses a class like `.dock-add-button`, `.dock-plus`, or similar, reuse its background value.
+
+PART 2 — RESTORE TEXTBOX PLUS BUTTON
+
+If the textbox lower-left context plus button JSX is missing, add it inside the active composer/textbox container.
+
+Use:
+
+<button className="composer-plus" type="button" aria-label="Add context">
+  +
+</button>
+
+It must render inside the textbox at the lower-left.
+
+It must not affect textarea size.
+
+PART 3 — STYLE TEXTBOX PLUS BUTTON LIKE DOCK PLUS BUTTON
+
+Make `.composer-plus` visually match the bottom dock plus button.
+
+Use the same:
+- width
+- height
+- border-radius
+- background
+- color
+- font/icon weight
+- centered plus alignment
+
+The `.composer-plus` should be positioned inside the textbox:
+
+.composer-plus {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: THE_SAME_BACKGROUND_AS_DOCK_PLUS_BUTTON;
+  color: rgba(248, 250, 252, 0.96);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+  font-size: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 10;
+}
+
+Use the actual dock plus button background value from the active CSS instead of the placeholder.
+
+If the composer/textbox container is not position: relative, add position: relative only to the active composer container.
+
+PROPERTY LOCK:
+Only modify:
+- Build/Plan selector background
+- composer plus JSX
+- composer plus CSS
+
+Do NOT modify:
+- Build/Plan sizing
+- Build/Plan arrow
+- send button
+- dock layout
+- dock divider
+- dock button behavior
+- x icon behavior
+- textbox size
+- workspace layout
+- global styling
+
+REGRESSION CHECK:
+Before finishing, review every changed line.
+If any unrelated changes exist, revert them.
+
+SUCCESS REQUIREMENT:
+Final diff must be explainable as:
+“I changed only the Build selector background and restored the textbox plus button using the dock plus style.”
+
+STOP CONDITION:
+- Build/Plan button background matches bottom dock plus button.
+- Textbox plus button appears in the lower-left of the textbox.
+- Textbox plus button visually matches the bottom dock plus button.
+- Send button remains unchanged.
+- Build arrow remains inside the button.
+- Nothing else visually changed.
+
+Run:
+npm run build
+
+FINAL RESPONSE:
+Summarize only:
+- Files changed
+- Exact active selectors/components fixed
+- Confirmation no unrelated systems touched
+- Build result

@@ -601,7 +601,7 @@ export default function App() {
               onClick={() => switchWorkspaceTab(pluginId as WorkspaceTab)}
             >
               {availablePlugins.find(p => p.id === pluginId)?.label}
-              {openPlugins.length > 1 && (
+              {openPlugins.length > 1 && !["preview", "builder", "commits"].includes(pluginId) && (
                 <button
                   type="button"
                   className="dock-tab-close"
@@ -670,16 +670,19 @@ export default function App() {
 
       {showBottomNav && (
         <nav className="bottom-nav" aria-label="Main navigation">
-          {bottomNav.map((item) => (
-            <button
-              key={item.route}
-              type="button"
-              className={route === item.route ? "bottom-nav-item active" : "bottom-nav-item"}
-              onClick={() => navigate(item.route)}
-            >
-              <span>{item.icon}</span>
-              <strong>{item.label}</strong>
-            </button>
+          {bottomNav.map((item, index) => (
+            <React.Fragment key={item.route}>
+              <button
+                className={route === item.route ? "bottom-nav-item active" : "bottom-nav-item"}
+                onClick={() => navigate(item.route)}
+              >
+                <span>{item.icon}</span>
+                <strong>{item.label}</strong>
+              </button>
+              {index < bottomNav.length - 1 && (
+                <div className="nav-divider" />
+              )}
+            </React.Fragment>
           ))}
         </nav>
       )}
