@@ -356,6 +356,14 @@ export default function App() {
                       onChange={(e) => setBuildInput(e.target.value)}
                       onKeyDown={handleKeyDown}
                     />
+                    <button
+                      type="button"
+                      className="composer-plus ai-builder-plus"
+                      aria-label="Add context"
+                      onClick={() => action("Add context")}
+                    >
+                      +
+                    </button>
                     <div className="composer-controls">
                       <select 
                         className="mode-selector"
@@ -401,6 +409,14 @@ export default function App() {
                       onChange={(e) => setBuildInput(e.target.value)}
                       onKeyDown={handleKeyDown}
                     />
+                    <button
+                      type="button"
+                      className="composer-plus ai-builder-plus"
+                      aria-label="Add context"
+                      onClick={() => action("Add context")}
+                    >
+                      +
+                    </button>
                     <div className="composer-controls">
                       <select 
                         className="mode-selector"
@@ -615,7 +631,7 @@ export default function App() {
               )}
             </button>
           ))}
-          
+          <div className="dock-divider" aria-hidden="true" />
           <button
             type="button"
             className="dock-plugin-launcher"
