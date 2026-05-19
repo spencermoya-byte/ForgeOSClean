@@ -235,27 +235,6 @@ export default function App() {
             </div>
           </div>
         </section>
-
-        <aside className="forge-card">
-          <div className="forge-card-icon">✦</div>
-          <h2>Vivus</h2>
-          <p>Your local AI engineering workspace.</p>
-
-          <div className="forge-feature">
-            <strong>100% local</strong>
-            <span>Your data stays on your machine.</span>
-          </div>
-
-          <div className="forge-feature">
-            <strong>AI native</strong>
-            <span>Built for guarded, agent-assisted development.</span>
-          </div>
-
-          <div className="forge-feature">
-            <strong>Verifiable</strong>
-            <span>Designed around diffs, tests, previews, and rollback.</span>
-          </div>
-        </aside>
       </main>
     );
   }
