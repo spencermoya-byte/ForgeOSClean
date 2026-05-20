@@ -61,7 +61,8 @@
 }
 
 .builder-plan-section ul,
-.builder-task-list {
+.builder-task-list,
+.builder-activity-list {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -108,9 +109,60 @@
   border-color: rgba(245, 158, 11, 0.24);
 }
 
+.task-status-pill.failed {
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.24);
+}
+
+.builder-activity-item {
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  gap: 10px;
+  align-items: start;
+  color: #c8c0d8;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.builder-activity-item strong {
+  margin: 0 0 3px;
+  font-size: 12px;
+}
+
+.builder-activity-item em {
+  display: block;
+  color: #a8a0b8;
+  font-style: normal;
+}
+
+.activity-status-dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.54);
+}
+
+.activity-status-dot.active {
+  background: #f59e0b;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.72);
+}
+
+.activity-status-dot.done {
+  background: #22c55e;
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.62);
+}
+
+.activity-status-dot.blocked {
+  background: #ef4444;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.5);
+}
+
 .builder-workflow-actions {
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 10px;
   padding-top: 2px;
 }
@@ -124,6 +176,11 @@
   background: rgba(255, 255, 255, 0.045);
   font-size: 12px;
   font-weight: 700;
+}
+
+.builder-workflow-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
 }
 
 .builder-workflow-actions .primary {
