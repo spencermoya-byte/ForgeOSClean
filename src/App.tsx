@@ -1,5 +1,6 @@
 import React from "react";
 import "./App.css";
+import { ProjectFilesPanel, initializeProjectFiles } from "./ProjectFilesPanel";
 import {
   ChevronDown,
   Code2,
@@ -14,7 +15,7 @@ import {
 } from "lucide-react";
 
 type Route = "create" | "apps" | "account" | "workspace";
-type WorkspaceTab = "preview" | "builder" | "commits" | "plugins" | "console" | "publish";
+type WorkspaceTab = "preview" | "builder" | "files" | "commits" | "plugins" | "console" | "publish";
 type OpenPlugin = WorkspaceTab;
 type BuildMode = "build" | "plan";
 type BuildMessage = { role: "user" | "assistant"; content: string };
@@ -28,10 +29,11 @@ const bottomNav: Array<{ route: Route; label: string; icon: React.ReactNode }> =
   { route: "create", label: "Create", icon: <Sparkles size={20} strokeWidth={2.2} /> },
   { route: "account", label: "Account", icon: <UserRound size={20} strokeWidth={2.2} /> },
 ];
-const defaultPlugins: OpenPlugin[] = ["preview", "builder", "commits"];
+const defaultPlugins: OpenPlugin[] = ["preview", "builder", "files", "commits"];
 const availablePlugins: Array<{ id: OpenPlugin; label: string }> = [
   { id: "preview", label: "Live Preview" },
   { id: "builder", label: "Builder" },
+  { id: "files", label: "Files" },
   { id: "commits", label: "Commits" },
   { id: "plugins", label: "Plugins" },
   { id: "console", label: "Console" },
@@ -119,13 +121,14 @@ export default function App() {
   }
 
   function seedWorkspace(project: ProjectRecord) {
+    initializeProjectFiles(project.id);
     setActiveProjectId(project.id);
     setWorkspaceTab("builder");
     setBuildInput("");
     setPlanApproved(false);
     setBuildMessages([
       { role: "user", content: project.originalPrompt },
-      { role: "assistant", content: `Project saved locally.\n\nProject: ${project.name}\n\nI’ll use this as the starting build specification.` },
+      { role: "assistant", content: `Project saved locally.\n\nProject: ${project.name}\n\nStarter files are ready in the Files tab. I’ll use this as the starting build specification.` },
     ]);
   }
 
@@ -146,6 +149,7 @@ export default function App() {
       status: "active",
     };
 
+    initializeProjectFiles(project.id);
     setProjects((current) => [project, ...current]);
     setHomePrompt("");
     seedWorkspace(project);
@@ -154,6 +158,7 @@ export default function App() {
   }
 
   function openProject(project: ProjectRecord) {
+    initializeProjectFiles(project.id);
     const updated = { ...project, updatedAt: new Date().toISOString(), status: "active" as const };
     setProjects((current) => current.map((item) => (item.id === project.id ? updated : item)));
     seedWorkspace(updated);
@@ -286,6 +291,7 @@ export default function App() {
 
   function renderWorkspaceContent() {
     if (workspaceTab === "builder") return <section className="workspace-content builder-workspace">{hasStartedConversation ? renderBuilderConversation() : renderEmptyBuilder()}</section>;
+    if (workspaceTab === "files") return <ProjectFilesPanel projectId={activeProjectId} />;
     if (workspaceTab === "preview") return <section className="workspace-content tool-panel-screen"><div className="tool-panel-card preview-panel-card"><div className="tool-panel-heading"><Monitor size={18} /><h2>Live Preview</h2></div><div className="preview-placeholder"><div className="preview-window"><div className="preview-window-top" /><div className="preview-window-body">Your app preview will appear here.</div></div><p>Run your project to preview changes.</p></div></div></section>;
     if (workspaceTab === "commits") return <section className="workspace-content tool-panel-screen"><div className="tool-panel-card"><div className="tool-panel-heading"><GitBranch size={18} /><h2>Commits</h2></div><div className="commit-grid">{[["Pending Changes", activeProject ? `${activeProject.name} metadata saved` : "UI improvements pending", "2m"], ["Checkpoint", "Workspace shell stabilized", "15m"], ["Timeline", "Create screen redesign", "Yesterday"]].map(([title, description, time]) => <div key={title} className="change-item"><div><strong>{title}</strong><span>{description}</span></div><em>{time}</em></div>)}</div></div></section>;
     return <section className="workspace-content tool-panel-screen"><div className="tool-panel-card"><div className="tool-panel-heading"><Code2 size={18} /><h2>{pluginLabel(workspaceTab)}</h2></div><p className="placeholder-copy">This tool area is reserved for the future {pluginLabel(workspaceTab).toLowerCase()} system.</p></div></section>;
