@@ -1,0 +1,220 @@
+.workspace-dashboard-shell {
+  min-height: calc(100vh - 58px);
+  display: grid;
+  grid-template-columns: 280px minmax(560px, 1fr) 320px;
+  gap: 24px;
+  padding: 22px 18px 128px;
+}
+
+.workspace-dashboard-center {
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.workspace-dashboard-center .workspace-content {
+  min-height: auto;
+  width: 100%;
+  padding: 0;
+}
+
+.workspace-side-panel {
+  min-width: 0;
+}
+
+.workspace-side-card {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top, rgba(124, 58, 237, 0.09), transparent 17rem),
+    rgba(10, 13, 24, 0.74);
+  box-shadow: 0 18px 70px rgba(0, 0, 0, 0.24);
+  overflow: hidden;
+}
+
+.workspace-card-header {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 18px;
+  color: #f8fafc;
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.workspace-card-header button,
+.workspace-card-toggle {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #c4b5fd;
+  border: 1px solid rgba(167, 139, 250, 0.18);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.recent-project-list {
+  display: grid;
+  padding: 8px 0 12px;
+}
+
+.recent-project-item {
+  width: 100%;
+  min-height: 70px;
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  color: #f8fafc;
+  text-align: left;
+  border-left: 2px solid transparent;
+  background: transparent;
+}
+
+.recent-project-item.active {
+  border-left-color: #8b5cf6;
+  background: linear-gradient(90deg, rgba(124, 58, 237, 0.18), transparent);
+}
+
+.recent-project-icon {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: #c4b5fd;
+  border: 1px solid rgba(167, 139, 250, 0.24);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.recent-project-text strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.recent-project-text span {
+  display: block;
+  margin-top: 4px;
+  color: #a8a0b8;
+  font-size: 12px;
+}
+
+.recent-project-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #8b5cf6;
+  box-shadow: 0 0 14px rgba(139, 92, 246, 0.8);
+}
+
+.workspace-card-link {
+  margin: 4px 18px 18px;
+  color: #c084fc;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.right-insights-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.insight-card-body {
+  padding: 6px 18px 18px;
+}
+
+.project-overview-body {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  align-items: center;
+  gap: 20px;
+}
+
+.overview-ring {
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  background: conic-gradient(#7c3aed 0 48%, #2563eb 48% 70%, #14b8a6 70% 83%, #f59e0b 83% 100%);
+  position: relative;
+}
+
+.overview-ring::after {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border-radius: 50%;
+  background: #080b14;
+}
+
+.overview-stat-row,
+.activity-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+  color: #d4cfe0;
+  font-size: 13px;
+}
+
+.overview-stat-row strong {
+  color: #f8fafc;
+}
+
+.activity-row {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.activity-row em {
+  color: #a8a0b8;
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.activity-dot {
+  width: 7px;
+  height: 7px;
+  margin-left: 8px;
+  border-radius: 999px;
+  background: #22c55e;
+  align-self: center;
+}
+
+.activity-meta {
+  display: inline-flex;
+  align-items: center;
+}
+
+.collapsed-card .insight-card-body {
+  display: none;
+}
+
+.collapsed-card .workspace-card-header {
+  border-bottom: 0;
+}
+
+@media (max-width: 1180px) {
+  .workspace-dashboard-shell {
+    grid-template-columns: 240px minmax(480px, 1fr);
+  }
+
+  .workspace-dashboard-right {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .workspace-dashboard-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-dashboard-left {
+    display: none;
+  }
+}
