@@ -1,6 +1,7 @@
 import React from "react";
 import "./App.css";
 import "./BuilderLifecycle.css";
+import "./BuilderWorkflow.css";
 import { CommitPanel } from "./CommitPanel";
 import { ProjectFilesPanel, initializeProjectFiles } from "./ProjectFilesPanel";
 import {
@@ -21,6 +22,9 @@ type OpenPlugin = WorkspaceTab;
 type BuildMode = "build" | "plan";
 type BuildMessage = { role: "user" | "assistant"; content: string };
 type ProjectRecord = { id: string; name: string; originalPrompt: string; createdAt: string; updatedAt: string; status: "active" | "draft" };
+type BuilderPlan = { summary: string; requirements: string[]; acceptance: string[] };
+type TaskStatus = "queued" | "running" | "done" | "failed";
+type BuilderTask = { id: string; title: string; status: TaskStatus };
 
 const PROJECT_KEY = "vivus.projects.v1";
 const ACTIVE_PROJECT_KEY = "vivus.activeProject.v1";
@@ -71,6 +75,35 @@ function shortDate(value: string) {
   return new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
+function makePlan(input: string): BuilderPlan {
+  const cleaned = input.trim();
+  return {
+    summary: `Build request captured: ${cleaned}. Vivus will turn this into a scoped implementation plan before editing project files.`,
+    requirements: [
+      "Preserve the existing working UI and project structure.",
+      "Identify the files/components that must change before editing.",
+      "Use minimal safe patches instead of broad rewrites.",
+      "Keep the result local-first with no hidden telemetry or cloud dependency.",
+    ],
+    acceptance: [
+      "The requested behavior is visible in the app.",
+      "No unrelated routes or panels regress.",
+      "The project builds successfully after changes.",
+      "The user can revise the plan before execution.",
+    ],
+  };
+}
+
+function makeTasks(mode: "planned" | "approved"): BuilderTask[] {
+  return [
+    { id: "task-1", title: "Analyze the request and convert it into acceptance criteria", status: mode === "approved" ? "done" : "queued" },
+    { id: "task-2", title: "Find the relevant project files and verify current source state", status: mode === "approved" ? "running" : "queued" },
+    { id: "task-3", title: "Apply a minimal implementation patch", status: "queued" },
+    { id: "task-4", title: "Run build/type verification", status: "queued" },
+    { id: "task-5", title: "Report verified result or stop with failure details", status: "queued" },
+  ];
+}
+
 export default function App() {
   const [route, setRoute] = React.useState<Route>(() => normalizeRoute(window.location.hash || "create"));
   const [workspaceTab, setWorkspaceTab] = React.useState<WorkspaceTab>("builder");
@@ -85,6 +118,8 @@ export default function App() {
   const [buildMessages, setBuildMessages] = React.useState<BuildMessage[]>([]);
   const [currentMode, setCurrentMode] = React.useState<BuildMode>("build");
   const [planApproved, setPlanApproved] = React.useState(false);
+  const [builderPlan, setBuilderPlan] = React.useState<BuilderPlan | null>(null);
+  const [builderTasks, setBuilderTasks] = React.useState<BuilderTask[]>([]);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? null;
   const hasStartedConversation = buildMessages.length > 0;
@@ -111,7 +146,7 @@ export default function App() {
 
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [buildMessages]);
+  }, [buildMessages, builderPlan, builderTasks]);
 
   function navigate(nextRoute: Route) {
     setRoute(nextRoute);
@@ -126,13 +161,19 @@ export default function App() {
     return project ? `${project.name} is loaded. What should we build first?` : "What would you like to build today?";
   }
 
+  function resetBuilderWorkflow() {
+    setBuildInput("");
+    setPlanApproved(false);
+    setBuilderPlan(null);
+    setBuilderTasks([]);
+  }
+
   function seedWorkspace(project: ProjectRecord, startWithPrompt = false) {
     initializeProjectFiles(project.id);
     setActiveProjectId(project.id);
     setWorkspaceTab("builder");
     setShowProjectMenu(false);
-    setBuildInput("");
-    setPlanApproved(false);
+    resetBuilderWorkflow();
     setBuildMessages(
       startWithPrompt
         ? [
@@ -196,14 +237,18 @@ export default function App() {
     });
   }
 
-  function assistantReplyFor(input: string): string {
-    if (currentMode === "plan") {
-      return "I’ll help turn this into a build-ready plan.\n\nRequirements to confirm:\n- Core goal\n- Required screens\n- Main user flow\n- Local data behavior\n- Acceptance criteria";
-    }
+  function handleApprovePlan() {
+    setPlanApproved(true);
+    setCurrentMode("build");
+    setBuilderTasks(makeTasks("approved"));
+    setBuildMessages((current) => [...current, { role: "assistant", content: "Plan approved. I’m ready to execute the task queue once the local execution backend is connected." }]);
+  }
 
-    return input.trim().length < 20
-      ? "I’ll use this as the starting build direction. The request is still broad, so I would normally clarify requirements before changing files."
-      : "I’ll use this as the starting build specification. The local AI execution pipeline will be connected later.";
+  function handleRevisePlan() {
+    setCurrentMode("plan");
+    setPlanApproved(false);
+    setBuilderTasks(makeTasks("planned"));
+    setBuildMessages((current) => [...current, { role: "assistant", content: "Plan revision mode is active. Send the changes you want and I’ll regenerate the build plan." }]);
   }
 
   function handleBuildSubmit(event: React.FormEvent) {
@@ -214,7 +259,24 @@ export default function App() {
       return;
     }
 
-    setBuildMessages((current) => [...current, { role: "user", content: trimmed }, { role: "assistant", content: assistantReplyFor(trimmed) }]);
+    if (currentMode === "plan" || !builderPlan) {
+      const nextPlan = makePlan(trimmed);
+      setBuilderPlan(nextPlan);
+      setBuilderTasks(makeTasks("planned"));
+      setPlanApproved(false);
+      setBuildMessages((current) => [
+        ...current,
+        { role: "user", content: trimmed },
+        { role: "assistant", content: "I generated a build plan. Review it below, then approve or revise before execution." },
+      ]);
+    } else {
+      setBuildMessages((current) => [
+        ...current,
+        { role: "user", content: trimmed },
+        { role: "assistant", content: "I added this to the active build context. Approve the plan when you’re ready to execute." },
+      ]);
+    }
+
     setBuildInput("");
   }
 
@@ -248,6 +310,30 @@ export default function App() {
           </button>
         </div>
       </form>
+    );
+  }
+
+  function renderWorkflowPanel() {
+    if (!builderPlan) return null;
+    return (
+      <section className="builder-workflow-panel">
+        <div className="builder-workflow-header">
+          <div><strong>{planApproved ? "Approved build queue" : "Plan review"}</strong><br /><span>{planApproved ? "Execution queue prepared" : "Approve before implementation"}</span></div>
+          <span>{builderTasks.filter((task) => task.status === "done").length}/{builderTasks.length} done</span>
+        </div>
+        <div className="builder-plan-body">
+          <p className="builder-plan-summary">{builderPlan.summary}</p>
+          <div className="builder-plan-grid">
+            <div className="builder-plan-section"><strong>Requirements</strong><ul>{builderPlan.requirements.map((item) => <li key={item}>{item}</li>)}</ul></div>
+            <div className="builder-plan-section"><strong>Acceptance criteria</strong><ul>{builderPlan.acceptance.map((item) => <li key={item}>{item}</li>)}</ul></div>
+          </div>
+          <div className="builder-plan-section"><strong>Task queue</strong><ul className="builder-task-list">{builderTasks.map((task) => <li key={task.id} className="builder-task-item"><span className={`task-status-pill ${task.status}`}>{task.status}</span><span>{task.title}</span></li>)}</ul></div>
+          <div className="builder-workflow-actions">
+            <button type="button" onClick={handleRevisePlan}>Revise plan</button>
+            <button type="button" className="primary" onClick={handleApprovePlan} disabled={planApproved}>{planApproved ? "Approved" : "Approve plan"}</button>
+          </div>
+        </div>
+      </section>
     );
   }
 
@@ -298,7 +384,7 @@ export default function App() {
   }
 
   function renderBuilderConversation() {
-    return <section className="builder-conversation-state"><div className="ai-conversation"><div className="ai-message assistant-message"><strong>Vivus</strong><p>{greetingMessage(activeProject)}</p></div>{buildMessages.map((message, index) => <div key={`${message.role}-${index}`} className={`ai-message ${message.role === "user" ? "user-message" : "assistant-message"}`}><strong>{message.role === "user" ? "You" : "Vivus"}</strong><p>{message.content}</p></div>)}<div ref={messagesEndRef} /></div><div className="bottom-composer-wrap">{renderBuildComposer("bottom-composer")}{currentMode === "plan" && buildMessages.length > 1 && !planApproved && <button type="button" className="approve-plan-button" onClick={() => { setCurrentMode("build"); setPlanApproved(true); }}>Approve Plan</button>}</div></section>;
+    return <section className="builder-conversation-state"><div className="ai-conversation"><div className="ai-message assistant-message"><strong>Vivus</strong><p>{greetingMessage(activeProject)}</p></div>{buildMessages.map((message, index) => <div key={`${message.role}-${index}`} className={`ai-message ${message.role === "user" ? "user-message" : "assistant-message"}`}><strong>{message.role === "user" ? "You" : "Vivus"}</strong><p>{message.content}</p></div>)}{renderWorkflowPanel()}<div ref={messagesEndRef} /></div><div className="bottom-composer-wrap">{renderBuildComposer("bottom-composer")}</div></section>;
   }
 
   function renderWorkspaceContent() {
