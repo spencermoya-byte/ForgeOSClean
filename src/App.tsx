@@ -1,10 +1,10 @@
 import React from "react";
 import "./App.css";
+import { CommitPanel } from "./CommitPanel";
 import { ProjectFilesPanel, initializeProjectFiles } from "./ProjectFilesPanel";
 import {
   ChevronDown,
   Code2,
-  GitBranch,
   LayoutGrid,
   Monitor,
   Plus,
@@ -294,8 +294,8 @@ export default function App() {
   function renderWorkspaceContent() {
     if (workspaceTab === "builder") return <section className="workspace-content builder-workspace">{hasStartedConversation ? renderBuilderConversation() : renderEmptyBuilder()}</section>;
     if (workspaceTab === "files") return <ProjectFilesPanel projectId={activeProjectId} />;
+    if (workspaceTab === "commits") return <CommitPanel projectName={activeProject?.name ?? "Untitled Project"} />;
     if (workspaceTab === "preview") return <section className="workspace-content tool-panel-screen"><div className="tool-panel-card preview-panel-card"><div className="tool-panel-heading"><Monitor size={18} /><h2>Live Preview</h2></div><div className="preview-placeholder"><div className="preview-window"><div className="preview-window-top" /><div className="preview-window-body">Your app preview will appear here.</div></div><p>Run your project to preview changes.</p></div></div></section>;
-    if (workspaceTab === "commits") return <section className="workspace-content tool-panel-screen"><div className="tool-panel-card"><div className="tool-panel-heading"><GitBranch size={18} /><h2>Commits</h2></div><div className="commit-grid">{[["Pending Changes", activeProject ? `${activeProject.name} metadata saved` : "UI improvements pending", "2m"], ["Checkpoint", "Workspace shell stabilized", "15m"], ["Timeline", "Create screen redesign", "Yesterday"]].map(([title, description, time]) => <div key={title} className="change-item"><div><strong>{title}</strong><span>{description}</span></div><em>{time}</em></div>)}</div></div></section>;
     return <section className="workspace-content tool-panel-screen"><div className="tool-panel-card"><div className="tool-panel-heading"><Code2 size={18} /><h2>{pluginLabel(workspaceTab)}</h2></div><p className="placeholder-copy">This tool area is reserved for the future {pluginLabel(workspaceTab).toLowerCase()} system.</p></div></section>;
   }
 
