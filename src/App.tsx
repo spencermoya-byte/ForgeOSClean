@@ -1,6 +1,7 @@
 import React from "react";
 import "./App.css";
 import "./BuilderLifecycle.css";
+import "./WorkspaceDashboard.css";
 import { CommitPanel } from "./CommitPanel";
 import { ProjectFilesPanel, initializeProjectFiles } from "./ProjectFilesPanel";
 import {
@@ -85,6 +86,8 @@ export default function App() {
   const [buildMessages, setBuildMessages] = React.useState<BuildMessage[]>([]);
   const [currentMode, setCurrentMode] = React.useState<BuildMode>("build");
   const [planApproved, setPlanApproved] = React.useState(false);
+  const [projectOverviewOpen, setProjectOverviewOpen] = React.useState(true);
+  const [recentActivityOpen, setRecentActivityOpen] = React.useState(true);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? null;
   const hasStartedConversation = buildMessages.length > 0;
@@ -309,6 +312,15 @@ export default function App() {
     return <section className="workspace-content tool-panel-screen"><div className="tool-panel-card"><div className="tool-panel-heading"><Code2 size={18} /><h2>{pluginLabel(workspaceTab)}</h2></div><p className="placeholder-copy">This tool area is reserved for the future {pluginLabel(workspaceTab).toLowerCase()} system.</p></div></section>;
   }
 
+  function renderRecentProjectsPanel() {
+    const recentProjects = projects.slice(0, 5);
+    return <aside className="workspace-side-panel workspace-dashboard-left"><div className="workspace-side-card"><div className="workspace-card-header"><span>Recent projects</span><button type="button" onClick={() => navigate("create")} aria-label="Create project"><Plus size={17} /></button></div><div className="recent-project-list">{recentProjects.length === 0 ? <button type="button" className="recent-project-item" onClick={() => navigate("create")}><span className="recent-project-icon">+</span><span className="recent-project-text"><strong>Create project</strong><span>Start with a new idea</span></span></button> : recentProjects.map((project) => <button key={project.id} type="button" className={`recent-project-item ${project.id === activeProjectId ? "active" : ""}`} onClick={() => openProject(project)}><span className="recent-project-icon">⌑</span><span className="recent-project-text"><strong>{project.name}</strong><span>{shortDate(project.updatedAt)}</span></span>{project.id === activeProjectId && <span className="recent-project-dot" />}</button>)}</div><button type="button" className="workspace-card-link" onClick={() => navigate("apps")}>View all projects →</button></div></aside>;
+  }
+
+  function renderRightDashboardPanels() {
+    return <aside className="workspace-side-panel workspace-dashboard-right"><div className="right-insights-stack"><section className={`workspace-side-card ${projectOverviewOpen ? "" : "collapsed-card"}`}><div className="workspace-card-header"><span>Project overview</span><button type="button" className="workspace-card-toggle" onClick={() => setProjectOverviewOpen((open) => !open)} aria-label="Toggle project overview"><ChevronDown size={16} /></button></div><div className="insight-card-body project-overview-body"><div className="overview-ring" /><div><div className="overview-stat-row"><span>Files</span><strong>24</strong></div><div className="overview-stat-row"><span>Components</span><strong>16</strong></div><div className="overview-stat-row"><span>APIs</span><strong>7</strong></div><div className="overview-stat-row"><span>Models</span><strong>2</strong></div></div></div></section><section className={`workspace-side-card ${recentActivityOpen ? "" : "collapsed-card"}`}><div className="workspace-card-header"><span>Recent activity</span><button type="button" className="workspace-card-toggle" onClick={() => setRecentActivityOpen((open) => !open)} aria-label="Toggle recent activity"><ChevronDown size={16} /></button></div><div className="insight-card-body"><div className="activity-row"><span>Login flow updated</span><span className="activity-meta"><em>2m ago</em><span className="activity-dot" /></span></div><div className="activity-row"><span>Landing page created</span><span className="activity-meta"><em>20m ago</em><span className="activity-dot" /></span></div><div className="activity-row"><span>API endpoint added</span><span className="activity-meta"><em>1h ago</em><span className="activity-dot" /></span></div><div className="activity-row"><span>Database schema changed</span><span className="activity-meta"><em>3h ago</em><span className="activity-dot" /></span></div><button type="button" className="workspace-card-link" onClick={() => action("Activity")}>View all activity →</button></div></section></div></aside>;
+  }
+
   function renderDockTab(pluginId: OpenPlugin, canClose: boolean) {
     return <button key={pluginId} type="button" className={`dock-tab ${workspaceTab === pluginId ? "active" : ""}`} onClick={() => switchWorkspaceTab(pluginId)}>{pluginLabel(pluginId)}{canClose && <span role="button" tabIndex={0} className="dock-tab-close" onClick={(event) => { event.stopPropagation(); closePlugin(pluginId); }} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); event.stopPropagation(); closePlugin(pluginId); } }} aria-label={`Close ${pluginLabel(pluginId)}`}><X size={12} /></span>}</button>;
   }
@@ -338,7 +350,11 @@ export default function App() {
           </div>
           <button type="button" onClick={() => navigate("create")} style={{ marginLeft: "auto", height: "36px", padding: "0 14px", borderRadius: "10px", border: "1px solid rgba(167, 139, 250, 0.24)", background: "rgba(255, 255, 255, 0.05)", color: "#f8fafc", fontSize: "13px", fontWeight: 600 }}>Home</button>
         </header>
-        {renderWorkspaceContent()}
+        <div className="workspace-dashboard-shell">
+          {renderRecentProjectsPanel()}
+          <div className="workspace-dashboard-center">{renderWorkspaceContent()}</div>
+          {renderRightDashboardPanels()}
+        </div>
         <nav className="workspace-dock" aria-label="Workspace plugins">{defaultDockPlugins.map((pluginId) => renderDockTab(pluginId, false))}<div className="dock-divider" aria-hidden="true" />{extensionDockPlugins.map((pluginId) => renderDockTab(pluginId, true))}<button type="button" className="dock-plugin-launcher" onClick={() => setShowPluginLauncher((open) => !open)} aria-label="Open plugin launcher"><Plus size={18} strokeWidth={2.5} /></button></nav>
         {showPluginLauncher && <div className="plugin-launcher"><div className="plugin-launcher-header"><h3>Open Tool</h3><button type="button" className="plugin-launcher-close" onClick={() => setShowPluginLauncher(false)} aria-label="Close plugin launcher"><X size={16} /></button></div><div className="plugin-launcher-content">{availablePlugins.map((plugin) => <button key={plugin.id} type="button" className="plugin-launcher-item" onClick={() => openPlugin(plugin.id)}>{plugin.label}</button>)}</div></div>}
       </main>
