@@ -23,6 +23,31 @@
   overflow-y: auto;
 }
 
+.builder-conversation-state {
+  height: calc(100vh - 58px);
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-conversation {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 0 280px;
+  scroll-padding-bottom: 280px;
+}
+
+.bottom-composer-wrap {
+  position: fixed;
+  left: 50%;
+  bottom: 86px;
+  transform: translateX(-50%);
+  z-index: 45;
+  width: min(880px, calc(100vw - 36px));
+}
+
 .files-workspace {
   min-height: 0;
 }
