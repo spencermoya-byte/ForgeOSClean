@@ -1,31 +1,289 @@
-/* tighter 25% reduced scale */
-.commits-page-polish .commits-panel-header { min-height: 98px; padding: 22px 30px; }
-.commits-page-polish .commits-heading { gap: 16px; }
-.commits-page-polish .commits-heading-icon { width: 46px; height: 46px; border-radius: 13px; }
-.commits-page-polish .commits-heading h2 { font-size: 22px; }
-.commits-page-polish .commits-heading p { margin-top: 5px; font-size: 13px; }
-.commits-page-polish .github-toggle { min-width: 224px; min-height: 58px; padding: 12px 16px; gap: 12px; }
-.commits-page-polish .github-toggle-track { width: 46px; height: 26px; flex: 0 0 46px; }
-.commits-page-polish .github-toggle-thumb { width: 18px; height: 18px; }
-.commits-page-polish .github-toggle input:checked + .github-toggle-track .github-toggle-thumb { transform: translateX(18px); }
-.commits-page-polish .github-toggle-copy strong { font-size: 14px; }
-.commits-page-polish .github-toggle-copy em { font-size: 12px; }
-.commits-page-polish .commit-create-card { margin: 12px 18px; padding: 16px 22px; min-height: 98px; gap: 18px; }
-.commits-page-polish .commit-create-copy strong { font-size: 15px; }
-.commits-page-polish .commit-create-copy p { font-size: 12px; line-height: 1.45; }
-.commits-page-polish .commit-controls input { height: 38px; font-size: 13px; }
-.commits-page-polish .commit-button { width: 54px; height: 38px; flex-basis: 54px; }
-.commits-page-polish .commit-status-line { min-height: 46px; margin: 0 18px 12px; padding: 0 20px; font-size: 13px; }
-.commits-page-polish .commit-status-icon { width: 28px; height: 28px; }
-.commits-page-polish .commit-history-card { margin: 0 18px 18px; }
-.commits-page-polish .commit-history-header { min-height: 48px; padding: 0 20px; }
-.commits-page-polish .commit-history-header strong { font-size: 15px; }
-.commits-page-polish .commit-entry { min-height: 74px; padding: 10px 22px 10px 62px; }
-.commits-page-polish .commit-dot { left: 24px; width: 16px; height: 16px; }
-.commits-page-polish .commit-entry-topline strong { font-size: 15px; }
-.commits-page-polish .commit-entry-main p { margin-top: 4px; font-size: 12px; }
-.commits-page-polish .commit-badges { margin-top: 7px; }
-.commits-page-polish .commit-badges span { padding: 4px 10px; font-size: 10px; }
-.commits-page-polish .commit-entry-actions { grid-template-columns: auto 40px 118px; gap: 12px; font-size: 12px; }
-.commits-page-polish .commit-options-button { width: 40px; height: 40px; }
-.commits-page-polish .commit-rollback-button { width: 118px; min-width: 118px; height: 40px; gap: 8px; font-size: 13px; }
+/* Compact commits page pass: smaller overall scale + fixed horizontal rollback button */
+.commits-page-polish .commits-panel-card {
+  background:
+    radial-gradient(circle at right top, rgba(124, 58, 237, 0.12), transparent 24rem),
+    rgba(13, 16, 26, 0.74);
+}
+
+.commits-page-polish .commits-panel-header {
+  min-height: 84px;
+  padding: 18px 28px;
+}
+
+.commits-page-polish .commits-heading {
+  gap: 14px;
+}
+
+.commits-page-polish .commits-heading-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+}
+
+.commits-page-polish .commits-heading h2 {
+  font-size: 21px;
+  line-height: 1.08;
+}
+
+.commits-page-polish .commits-heading p {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #c9c2d6;
+}
+
+.commits-page-polish .github-toggle {
+  min-width: 214px;
+  min-height: 54px;
+  padding: 10px 14px;
+  gap: 12px;
+  border-color: rgba(167, 139, 250, 0.32);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.commits-page-polish .github-toggle-track {
+  width: 44px;
+  height: 25px;
+  padding: 3px;
+  flex: 0 0 44px;
+}
+
+.commits-page-polish .github-toggle-thumb {
+  width: 17px;
+  height: 17px;
+}
+
+.commits-page-polish .github-toggle input:checked + .github-toggle-track .github-toggle-thumb {
+  transform: translateX(19px);
+}
+
+.commits-page-polish .github-toggle-copy strong {
+  font-size: 14px;
+  line-height: 1.12;
+}
+
+.commits-page-polish .github-toggle-copy em {
+  margin-top: 3px;
+  font-size: 11px;
+  color: #c9c2d6;
+}
+
+.commits-page-polish .commit-create-card {
+  margin: 12px 18px 10px;
+  padding: 14px 20px;
+  min-height: 88px;
+  grid-template-columns: minmax(260px, 360px) minmax(280px, 1fr);
+  gap: 18px;
+}
+
+.commits-page-polish .commit-create-copy strong {
+  font-size: 14px;
+}
+
+.commits-page-polish .commit-create-copy p {
+  max-width: 330px;
+  margin-top: 7px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #c9c2d6;
+}
+
+.commits-page-polish .commit-controls input {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 11px;
+  font-size: 12px;
+}
+
+.commits-page-polish .commit-button {
+  width: 52px;
+  height: 36px;
+  flex-basis: 52px;
+  border-radius: 12px;
+}
+
+.commits-page-polish .commit-status-line {
+  min-height: 42px;
+  margin: 0 18px 10px;
+  padding: 0 18px;
+  gap: 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #ede9fe;
+}
+
+.commits-page-polish .commit-status-icon {
+  width: 25px;
+  height: 25px;
+  font-size: 13px;
+}
+
+.commits-page-polish .commit-history-card {
+  margin: 0 18px 16px;
+  border-radius: 14px;
+}
+
+.commits-page-polish .commit-history-header {
+  min-height: 42px;
+  padding: 0 18px;
+}
+
+.commits-page-polish .commit-history-header strong {
+  font-size: 14px;
+}
+
+.commits-page-polish .commit-history-header span {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+.commits-page-polish .commit-entry {
+  min-height: 64px;
+  padding: 8px 18px 8px 56px;
+  display: flex;
+  align-items: center;
+}
+
+.commits-page-polish .commit-entry::before {
+  content: "";
+  position: absolute;
+  left: 32px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.22), rgba(139, 92, 246, 0.72), rgba(139, 92, 246, 0.22));
+}
+
+.commits-page-polish .commit-dot {
+  left: 25px;
+  top: 50%;
+  width: 15px;
+  height: 15px;
+  transform: translateY(-50%);
+  box-shadow: 0 0 0 6px rgba(124, 58, 237, 0.16), 0 0 16px rgba(99, 102, 241, 0.45);
+  z-index: 1;
+}
+
+.commits-page-polish .commit-entry-main {
+  width: 100%;
+  gap: 0;
+}
+
+.commits-page-polish .commit-entry-topline {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+}
+
+.commits-page-polish .commit-entry-topline strong {
+  font-size: 14px;
+  line-height: 1.1;
+}
+
+.commits-page-polish .commit-entry-main p {
+  margin-top: 3px;
+  font-size: 11px;
+  color: #c9c2d6;
+}
+
+.commits-page-polish .commit-badges {
+  margin-top: 6px;
+  gap: 7px;
+}
+
+.commits-page-polish .commit-badges span {
+  padding: 4px 9px;
+  font-size: 9px;
+  line-height: 1;
+}
+
+.commits-page-polish .commit-entry-actions {
+  display: grid;
+  grid-template-columns: auto 36px 110px;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: #c9c2d6;
+}
+
+.commits-page-polish .commit-entry-actions > span {
+  min-width: 112px;
+  text-align: right;
+}
+
+.commits-page-polish .commit-options-button {
+  width: 36px;
+  height: 36px;
+  display: grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+  border-radius: 11px;
+  color: #ede9fe;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.commits-page-polish .commit-rollback-button,
+.commits-page-polish .commit-entry-actions .commit-rollback-button {
+  box-sizing: border-box;
+  width: 110px !important;
+  min-width: 110px !important;
+  max-width: 110px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 12px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  border-radius: 11px;
+  color: #ede9fe;
+  border: 1px solid rgba(167, 139, 250, 0.42);
+  background: rgba(124, 58, 237, 0.12);
+  box-shadow: 0 0 18px rgba(124, 58, 237, 0.1);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.commits-page-polish .commit-rollback-button svg,
+.commits-page-polish .commit-entry-actions .commit-rollback-button svg {
+  width: 16px !important;
+  height: 16px !important;
+  flex: 0 0 16px !important;
+  display: block !important;
+}
+
+.commits-page-polish .commit-rollback-button span,
+.commits-page-polish .commit-entry-actions .commit-rollback-button span {
+  display: inline-block !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  margin: 0 !important;
+}
+
+.commits-page-polish .commit-options-button:hover,
+.commits-page-polish .commit-rollback-button:hover {
+  border-color: rgba(196, 181, 253, 0.62);
+  background: rgba(124, 58, 237, 0.18);
+}
+
+@media (max-width: 980px) {
+  .commits-page-polish .commit-create-card {
+    grid-template-columns: 1fr;
+  }
+
+  .commits-page-polish .commit-entry-topline {
+    grid-template-columns: 1fr;
+  }
+
+  .commits-page-polish .commit-entry-actions {
+    justify-content: start;
+  }
+}
