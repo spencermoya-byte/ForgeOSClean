@@ -1,5 +1,6 @@
 import React from "react";
 import "./App.css";
+import "./BuilderLifecycle.css";
 import { CommitPanel } from "./CommitPanel";
 import { ProjectFilesPanel, initializeProjectFiles } from "./ProjectFilesPanel";
 import {
@@ -121,17 +122,25 @@ export default function App() {
     setToast(label);
   }
 
-  function seedWorkspace(project: ProjectRecord) {
+  function greetingMessage(project: ProjectRecord | null) {
+    return project ? `${project.name} is loaded. What should we build first?` : "What would you like to build today?";
+  }
+
+  function seedWorkspace(project: ProjectRecord, startWithPrompt = false) {
     initializeProjectFiles(project.id);
     setActiveProjectId(project.id);
     setWorkspaceTab("builder");
     setShowProjectMenu(false);
     setBuildInput("");
     setPlanApproved(false);
-    setBuildMessages([
-      { role: "user", content: project.originalPrompt },
-      { role: "assistant", content: `Project saved locally.\n\nProject: ${project.name}\n\nStarter files are ready in the Files tab. I’ll use this as the starting build specification.` },
-    ]);
+    setBuildMessages(
+      startWithPrompt
+        ? [
+            { role: "user", content: project.originalPrompt },
+            { role: "assistant", content: `Project saved locally.\n\nProject: ${project.name}\n\nStarter files are ready in the Files tab. I’ll use this as the starting build specification.` },
+          ]
+        : []
+    );
   }
 
   function createProject(prompt: string) {
@@ -154,7 +163,7 @@ export default function App() {
     initializeProjectFiles(project.id);
     setProjects((current) => [project, ...current]);
     setHomePrompt("");
-    seedWorkspace(project);
+    seedWorkspace(project, true);
     navigate("workspace");
     setToast("Project created");
   }
@@ -163,7 +172,7 @@ export default function App() {
     initializeProjectFiles(project.id);
     const updated = { ...project, updatedAt: new Date().toISOString(), status: "active" as const };
     setProjects((current) => current.map((item) => (item.id === project.id ? updated : item)));
-    seedWorkspace(updated);
+    seedWorkspace(updated, false);
     navigate("workspace");
   }
 
@@ -204,6 +213,7 @@ export default function App() {
       setToast("Enter a build request first");
       return;
     }
+
     setBuildMessages((current) => [...current, { role: "user", content: trimmed }, { role: "assistant", content: assistantReplyFor(trimmed) }]);
     setBuildInput("");
   }
@@ -284,15 +294,15 @@ export default function App() {
   }
 
   function renderEmptyBuilder() {
-    return <section className="builder-empty-state"><div className="empty-composer-wrap">{activeProject && <div className="project-context-card"><span>Current project</span><strong>{activeProject.name}</strong><p>{activeProject.originalPrompt}</p></div>}{renderBuildComposer("initial-composer")}<div className="vivus-greeting-card"><div className="greeting-icon">V</div><div><strong>Vivus</strong><p>{activeProject ? "Project loaded. What should we build first?" : "What would you like to build today?"}</p></div></div></div></section>;
+    return <section className="builder-empty-state"><div className="empty-composer-wrap">{activeProject && <div className="project-context-card"><span>Current project</span><strong>{activeProject.name}</strong><p>{activeProject.originalPrompt}</p></div>}{renderBuildComposer("initial-composer")}<div className="vivus-greeting-card"><div className="greeting-icon">V</div><div><strong>Vivus</strong><p>{greetingMessage(activeProject)}</p></div></div></div></section>;
   }
 
   function renderBuilderConversation() {
-    return <section className="builder-conversation-state"><div className="ai-conversation"><div className="ai-message assistant-message"><strong>Vivus</strong><p>{activeProject ? `${activeProject.name} is loaded.` : "What would you like to build today?"}</p></div>{buildMessages.map((message, index) => <div key={`${message.role}-${index}`} className={`ai-message ${message.role === "user" ? "user-message" : "assistant-message"}`}><strong>{message.role === "user" ? "You" : "Vivus"}</strong><p>{message.content}</p></div>)}<div ref={messagesEndRef} /></div><div className="bottom-composer-wrap">{renderBuildComposer("bottom-composer")}{currentMode === "plan" && buildMessages.length > 1 && !planApproved && <button type="button" className="approve-plan-button" onClick={() => { setCurrentMode("build"); setPlanApproved(true); }}>Approve Plan</button>}</div></section>;
+    return <section className="builder-conversation-state"><div className="ai-conversation"><div className="ai-message assistant-message"><strong>Vivus</strong><p>{greetingMessage(activeProject)}</p></div>{buildMessages.map((message, index) => <div key={`${message.role}-${index}`} className={`ai-message ${message.role === "user" ? "user-message" : "assistant-message"}`}><strong>{message.role === "user" ? "You" : "Vivus"}</strong><p>{message.content}</p></div>)}<div ref={messagesEndRef} /></div><div className="bottom-composer-wrap">{renderBuildComposer("bottom-composer")}{currentMode === "plan" && buildMessages.length > 1 && !planApproved && <button type="button" className="approve-plan-button" onClick={() => { setCurrentMode("build"); setPlanApproved(true); }}>Approve Plan</button>}</div></section>;
   }
 
   function renderWorkspaceContent() {
-    if (workspaceTab === "builder") return <section className="workspace-content builder-workspace">{hasStartedConversation ? renderBuilderConversation() : renderEmptyBuilder()}</section>;
+    if (workspaceTab === "builder") return <section className={`workspace-content builder-workspace ${hasStartedConversation ? "builder-has-conversation" : "builder-is-empty"}`}>{hasStartedConversation ? renderBuilderConversation() : renderEmptyBuilder()}</section>;
     if (workspaceTab === "files") return <ProjectFilesPanel projectId={activeProjectId} />;
     if (workspaceTab === "commits") return <CommitPanel projectName={activeProject?.name ?? "Untitled Project"} />;
     if (workspaceTab === "preview") return <section className="workspace-content tool-panel-screen"><div className="tool-panel-card preview-panel-card"><div className="tool-panel-heading"><Monitor size={18} /><h2>Live Preview</h2></div><div className="preview-placeholder"><div className="preview-window"><div className="preview-window-top" /><div className="preview-window-body">Your app preview will appear here.</div></div><p>Run your project to preview changes.</p></div></div></section>;
