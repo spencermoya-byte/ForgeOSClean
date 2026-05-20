@@ -75,6 +75,7 @@ export default function App() {
   const [workspaceTab, setWorkspaceTab] = React.useState<WorkspaceTab>("builder");
   const [openPlugins, setOpenPlugins] = React.useState<OpenPlugin[]>(defaultPlugins);
   const [showPluginLauncher, setShowPluginLauncher] = React.useState(false);
+  const [showProjectMenu, setShowProjectMenu] = React.useState(false);
   const [toast, setToast] = React.useState("");
   const [homePrompt, setHomePrompt] = React.useState("");
   const [projects, setProjects] = React.useState<ProjectRecord[]>(readProjects);
@@ -124,6 +125,7 @@ export default function App() {
     initializeProjectFiles(project.id);
     setActiveProjectId(project.id);
     setWorkspaceTab("builder");
+    setShowProjectMenu(false);
     setBuildInput("");
     setPlanApproved(false);
     setBuildMessages([
@@ -307,7 +309,25 @@ export default function App() {
 
     return (
       <main className="workspace-screen">
-        <header className="workspace-topbar"><div className="workspace-brand"><div className="logo-box">V</div><button type="button" className="project-name" onClick={() => action("Project menu")}>{activeProject?.name ?? "Untitled Project"} <ChevronDown size={16} strokeWidth={2.4} /></button></div><button type="button" onClick={() => navigate("create")} style={{ marginLeft: "auto", height: "36px", padding: "0 14px", borderRadius: "10px", border: "1px solid rgba(167, 139, 250, 0.24)", background: "rgba(255, 255, 255, 0.05)", color: "#f8fafc", fontSize: "13px", fontWeight: 600 }}>Home</button></header>
+        <header className="workspace-topbar">
+          <div className="workspace-brand project-switcher-wrap">
+            <div className="logo-box">V</div>
+            <button type="button" className="project-name" onClick={() => setShowProjectMenu((open) => !open)} aria-expanded={showProjectMenu}>
+              {activeProject?.name ?? "Untitled Project"} <ChevronDown size={16} strokeWidth={2.4} />
+            </button>
+            {showProjectMenu && <div className="project-switcher-menu">
+              <div className="project-switcher-header">Projects</div>
+              {projects.length === 0 ? <div className="project-switcher-empty">No saved projects yet</div> : projects.map((project) => (
+                <button key={project.id} type="button" className={project.id === activeProjectId ? "project-switcher-item active" : "project-switcher-item"} onClick={() => openProject(project)}>
+                  <strong>{project.name}</strong>
+                  <span>{shortDate(project.updatedAt)}</span>
+                </button>
+              ))}
+              <button type="button" className="project-switcher-new" onClick={() => { setShowProjectMenu(false); navigate("create"); }}>New Project</button>
+            </div>}
+          </div>
+          <button type="button" onClick={() => navigate("create")} style={{ marginLeft: "auto", height: "36px", padding: "0 14px", borderRadius: "10px", border: "1px solid rgba(167, 139, 250, 0.24)", background: "rgba(255, 255, 255, 0.05)", color: "#f8fafc", fontSize: "13px", fontWeight: 600 }}>Home</button>
+        </header>
         {renderWorkspaceContent()}
         <nav className="workspace-dock" aria-label="Workspace plugins">{defaultDockPlugins.map((pluginId) => renderDockTab(pluginId, false))}<div className="dock-divider" aria-hidden="true" />{extensionDockPlugins.map((pluginId) => renderDockTab(pluginId, true))}<button type="button" className="dock-plugin-launcher" onClick={() => setShowPluginLauncher((open) => !open)} aria-label="Open plugin launcher"><Plus size={18} strokeWidth={2.5} /></button></nav>
         {showPluginLauncher && <div className="plugin-launcher"><div className="plugin-launcher-header"><h3>Open Tool</h3><button type="button" className="plugin-launcher-close" onClick={() => setShowPluginLauncher(false)} aria-label="Close plugin launcher"><X size={16} /></button></div><div className="plugin-launcher-content">{availablePlugins.map((plugin) => <button key={plugin.id} type="button" className="plugin-launcher-item" onClick={() => openPlugin(plugin.id)}>{plugin.label}</button>)}</div></div>}
