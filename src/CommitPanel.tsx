@@ -1,5 +1,5 @@
 import React from "react";
-import { GitBranch } from "lucide-react";
+import { Check, GitBranch } from "lucide-react";
 
 type CommitEntry = {
   id: string;
@@ -78,11 +78,13 @@ export function CommitPanel({ projectName }: { projectName: string }) {
     <section className="workspace-content tool-panel-screen">
       <div className="tool-panel-card commits-panel-card">
         <div className="commits-panel-header">
-          <div className="tool-panel-heading">
-            <GitBranch size={18} />
+          <div className="tool-panel-heading commits-heading">
+            <div className="commits-heading-icon">
+              <GitBranch size={18} />
+            </div>
             <div>
               <h2>Commits</h2>
-              <p>Every commit is treated as a rollback checkpoint.</p>
+              <p>Every commit becomes a rollback checkpoint.</p>
             </div>
           </div>
 
@@ -92,7 +94,10 @@ export function CommitPanel({ projectName }: { projectName: string }) {
               checked={autoPush}
               onChange={(event) => setAutoPush(event.target.checked)}
             />
-            <span>
+            <span className="github-toggle-track" aria-hidden="true">
+              <span className="github-toggle-thumb" />
+            </span>
+            <span className="github-toggle-copy">
               <strong>GitHub Auto Push</strong>
               <em>{autoPush ? "On until turned off" : "Off"}</em>
             </span>
@@ -100,9 +105,9 @@ export function CommitPanel({ projectName }: { projectName: string }) {
         </div>
 
         <div className="commit-create-card">
-          <div>
+          <div className="commit-create-copy">
             <strong>Create revert point</strong>
-            <p>Creates a local checkpoint now. GitHub push will run automatically later when backend Git support is connected.</p>
+            <p>Save the current project state as a local checkpoint. GitHub push will run later when backend Git support is connected.</p>
           </div>
 
           <div className="commit-controls">
@@ -110,9 +115,10 @@ export function CommitPanel({ projectName }: { projectName: string }) {
               value={commitMessage}
               onChange={(event) => setCommitMessage(event.target.value)}
               placeholder="Commit message"
+              aria-label="Commit message"
             />
-            <button type="button" className="commit-button" onClick={createCheckpoint}>
-              Commit
+            <button type="button" className="commit-button" onClick={createCheckpoint} aria-label="Create commit checkpoint" title="Create commit checkpoint">
+              <Check size={18} strokeWidth={2.8} />
             </button>
           </div>
         </div>
