@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, GitBranch } from "lucide-react";
+import { Check, GitBranch, MoreHorizontal } from "lucide-react";
 
 type CommitEntry = {
   id: string;
@@ -75,12 +75,12 @@ export function CommitPanel({ projectName }: { projectName: string }) {
   }
 
   return (
-    <section className="workspace-content tool-panel-screen">
-      <div className="tool-panel-card commits-panel-card">
+    <section className="workspace-content commits-workspace">
+      <div className="commits-panel-card">
         <div className="commits-panel-header">
-          <div className="tool-panel-heading commits-heading">
+          <div className="commits-heading">
             <div className="commits-heading-icon">
-              <GitBranch size={18} />
+              <GitBranch size={22} />
             </div>
             <div>
               <h2>Commits</h2>
@@ -118,37 +118,54 @@ export function CommitPanel({ projectName }: { projectName: string }) {
               aria-label="Commit message"
             />
             <button type="button" className="commit-button" onClick={createCheckpoint} aria-label="Create commit checkpoint" title="Create commit checkpoint">
-              <Check size={18} strokeWidth={2.8} />
+              <Check size={24} strokeWidth={2.8} />
             </button>
           </div>
         </div>
 
-        <div className="commit-status-line">{status}</div>
+        <div className="commit-status-line">
+          <span className="commit-status-icon">i</span>
+          <span>{status}</span>
+        </div>
 
-        <div className="commit-timeline">
-          {commits.length === 0 ? (
-            <div className="commit-empty-state">
-              <strong>No checkpoints yet</strong>
-              <p>Create your first commit to make a rollback point.</p>
-            </div>
-          ) : (
-            commits.map((commit) => (
-              <article key={commit.id} className="commit-entry">
-                <div className="commit-dot" />
-                <div className="commit-entry-main">
-                  <div className="commit-entry-topline">
-                    <strong>{commit.message}</strong>
-                    <span>{formatTime(commit.createdAt)}</span>
+        <div className="commit-history-card">
+          <div className="commit-history-header">
+            <strong>Recent checkpoints</strong>
+            <span>{commits.length} {commits.length === 1 ? "checkpoint" : "checkpoints"}</span>
+          </div>
+
+          <div className="commit-timeline">
+            {commits.length === 0 ? (
+              <div className="commit-empty-state">
+                <strong>No checkpoints yet</strong>
+                <p>Create your first commit to make a rollback point.</p>
+              </div>
+            ) : (
+              commits.map((commit) => (
+                <article key={commit.id} className="commit-entry">
+                  <div className="commit-dot" />
+                  <div className="commit-entry-main">
+                    <div className="commit-entry-topline">
+                      <div>
+                        <strong>{commit.message}</strong>
+                        <p>{commit.projectName}</p>
+                      </div>
+                      <div className="commit-entry-actions">
+                        <span>{formatTime(commit.createdAt)}</span>
+                        <button type="button" aria-label="Checkpoint options">
+                          <MoreHorizontal size={18} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="commit-badges">
+                      <span>Local revert point</span>
+                      <span>{commit.status === "github-pending" ? "GitHub push queued" : "GitHub off"}</span>
+                    </div>
                   </div>
-                  <p>{commit.projectName}</p>
-                  <div className="commit-badges">
-                    <span>Local revert point</span>
-                    <span>{commit.status === "github-pending" ? "GitHub push queued" : "GitHub off"}</span>
-                  </div>
-                </div>
-              </article>
-            ))
-          )}
+                </article>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </section>
