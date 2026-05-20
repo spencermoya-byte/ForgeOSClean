@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './App.css';
 import './workspaceSticky.css';
+import './commitsLayout.css';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
