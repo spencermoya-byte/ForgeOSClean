@@ -34,48 +34,47 @@
   grid-template-areas:
     "context"
     "composer"
-    "greeting"
-    "helper";
+    "greeting";
   justify-items: center;
-  gap: 22px;
-  transform: translateY(-8px);
+  gap: 24px;
+  transform: translateY(-10px);
 }
 
 .project-context-card {
   grid-area: context;
   width: fit-content;
-  min-width: 260px;
+  min-width: 238px;
   min-height: 0;
-  padding: 13px 22px;
+  padding: 10px 18px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  background: rgba(255, 255, 255, 0.055);
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  box-shadow: 0 16px 54px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.052);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow: 0 14px 46px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .project-context-card::before {
   content: "";
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 999px;
-  background: #7c3aed;
-  box-shadow: 0 0 16px rgba(124, 58, 237, 0.9);
+  background: #8b5cf6;
+  box-shadow: 0 0 14px rgba(139, 92, 246, 0.9);
 }
 
 .project-context-card span {
   color: #b8b0c9;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .project-context-card strong {
   display: inline;
   margin: 0;
   color: #f8fafc;
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1;
   letter-spacing: -0.02em;
 }
@@ -87,152 +86,103 @@
 
 .initial-composer {
   grid-area: composer;
-  width: min(920px, 100%);
-  min-height: 248px;
-  border-radius: 30px;
-  border-color: rgba(168, 85, 247, 0.72);
+  width: min(820px, 100%);
+  min-height: 124px;
+  border-radius: 26px;
+  border-color: rgba(168, 85, 247, 0.68);
   background:
-    radial-gradient(circle at right bottom, rgba(124, 58, 237, 0.28), transparent 25rem),
-    linear-gradient(135deg, rgba(18, 19, 35, 0.96), rgba(33, 20, 56, 0.9));
+    radial-gradient(circle at right bottom, rgba(124, 58, 237, 0.24), transparent 22rem),
+    linear-gradient(135deg, rgba(18, 19, 35, 0.96), rgba(33, 20, 56, 0.88));
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.035),
-    0 34px 118px rgba(0, 0, 0, 0.52),
-    0 0 62px rgba(124, 58, 237, 0.25);
+    0 0 0 1px rgba(255, 255, 255, 0.032),
+    0 26px 92px rgba(0, 0, 0, 0.46),
+    0 0 48px rgba(124, 58, 237, 0.21);
   animation: composer-center-enter 260ms ease-out both;
 }
 
 .initial-composer textarea {
-  min-height: 248px;
-  padding: 44px 260px 96px 44px;
-  font-size: 26px;
-  line-height: 1.45;
+  min-height: 124px;
+  padding: 34px 210px 58px 34px;
+  font-size: 22px;
+  line-height: 1.35;
 }
 
 .initial-composer .ai-builder-plus,
 .initial-composer .send-button,
 .initial-composer .mode-selector {
-  height: 66px;
-  border-radius: 18px;
+  height: 52px;
+  border-radius: 16px;
 }
 
 .initial-composer .ai-builder-plus,
 .initial-composer .send-button {
-  width: 66px;
-  flex-basis: 66px;
+  width: 52px;
+  flex-basis: 52px;
 }
 
 .initial-composer .ai-builder-plus {
-  left: 42px;
-  bottom: 42px;
+  left: 34px;
+  bottom: 30px;
 }
 
 .initial-composer .composer-controls {
-  right: 42px;
-  bottom: 42px;
-  gap: 16px;
+  right: 34px;
+  bottom: 30px;
+  gap: 12px;
 }
 
 .initial-composer .mode-selector {
-  min-width: 146px;
-  padding: 0 26px;
-  gap: 12px;
-  font-size: 22px;
+  min-width: 116px;
+  padding: 0 20px;
+  gap: 10px;
+  font-size: 17px;
   font-weight: 750;
 }
 
 .initial-composer .ai-builder-plus svg,
 .initial-composer .send-button svg {
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
 }
 
 .vivus-greeting-card {
   grid-area: greeting;
-  width: min(920px, 100%);
-  min-height: 150px;
+  width: min(820px, 100%);
+  min-height: 74px;
   margin: 0 auto;
-  padding: 28px 34px;
-  border-radius: 28px;
+  padding: 18px 28px;
+  border-radius: 22px;
   background:
-    radial-gradient(circle at left top, rgba(124, 58, 237, 0.12), transparent 18rem),
-    rgba(255, 255, 255, 0.035);
-  border-color: rgba(148, 163, 184, 0.16);
-  box-shadow: 0 22px 80px rgba(0, 0, 0, 0.32);
+    radial-gradient(circle at left top, rgba(124, 58, 237, 0.1), transparent 16rem),
+    rgba(255, 255, 255, 0.032);
+  border-color: rgba(148, 163, 184, 0.14);
+  box-shadow: 0 18px 62px rgba(0, 0, 0, 0.28);
   animation: greeting-card-enter 280ms ease-out 60ms both;
 }
 
 .vivus-greeting-card .greeting-icon {
-  width: 74px;
-  height: 74px;
-  border-radius: 18px;
-  font-size: 34px;
+  width: 52px;
+  height: 52px;
+  border-radius: 15px;
+  font-size: 25px;
 }
 
 .vivus-greeting-card strong {
-  font-size: 26px;
+  font-size: 20px;
   line-height: 1.1;
 }
 
 .vivus-greeting-card p {
-  margin-top: 10px;
+  margin-top: 6px;
   max-width: 620px;
   color: #c8c0d8;
-  font-size: 24px;
-  line-height: 1.35;
+  font-size: 17px;
+  line-height: 1.28;
 }
 
-.builder-helper-row {
-  grid-area: helper;
-  width: min(860px, 100%);
-  margin: 20px auto 0;
-  display: grid;
-  justify-items: center;
-  gap: 22px;
-  color: #a8a0b8;
-  text-align: center;
-  animation: greeting-card-enter 280ms ease-out 120ms both;
-}
-
-.builder-helper-row p {
-  margin: 0;
-  font-size: 18px;
-  line-height: 1.4;
-}
-
+.builder-helper-row,
 .builder-feature-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0;
-}
-
-.builder-feature-row span {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 26px;
-  color: #b8b0c9;
-  font-size: 15px;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.builder-feature-row span:not(:last-child)::after {
-  content: "";
-  position: absolute;
-  right: 0;
-  width: 1px;
-  height: 18px;
-  background: rgba(148, 163, 184, 0.18);
-}
-
-.builder-feature-row span::before {
-  content: "◆";
-  margin-right: 10px;
-  color: #7c3aed;
-  font-size: 13px;
-  line-height: 1;
+  display: none;
 }
 
 .builder-conversation-state {
@@ -336,13 +286,14 @@
   }
 
   .initial-composer {
-    min-height: 190px;
+    width: min(720px, 100%);
+    min-height: 118px;
   }
 
   .initial-composer textarea {
-    min-height: 190px;
-    padding: 28px 190px 86px 28px;
-    font-size: 20px;
+    min-height: 118px;
+    padding: 28px 170px 58px 28px;
+    font-size: 18px;
   }
 
   .initial-composer .ai-builder-plus {
@@ -368,25 +319,12 @@
   .bottom-composer-wrap {
     width: calc(100vw - 24px);
   }
-
-  .builder-feature-row {
-    gap: 10px;
-  }
-
-  .builder-feature-row span {
-    padding: 0 10px;
-  }
-
-  .builder-feature-row span::after {
-    display: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .builder-empty-state,
   .initial-composer,
   .vivus-greeting-card,
-  .builder-helper-row,
   .builder-conversation-state,
   .ai-conversation .ai-message:first-child,
   .ai-message,
