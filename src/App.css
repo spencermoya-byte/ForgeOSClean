@@ -869,6 +869,319 @@ button:hover,
   gap: 8px;
 }
 
+/* Commits panel content polish - does not alter existing outer bounding box */
+.commits-panel-card {
+  padding: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at right top, rgba(124, 58, 237, 0.12), transparent 24rem),
+    rgba(13, 16, 26, 0.74);
+}
+
+.commits-panel-header {
+  min-height: 76px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.commits-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.commits-heading-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #c4b5fd;
+  background: rgba(124, 58, 237, 0.16);
+  border: 1px solid rgba(167, 139, 250, 0.25);
+}
+
+.commits-heading h2 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: -0.03em;
+}
+
+.commits-heading p {
+  margin: 4px 0 0;
+  color: #a8a0b8;
+  font-size: 12px;
+}
+
+.github-toggle {
+  min-width: 220px;
+  min-height: 50px;
+  padding: 8px 11px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.035);
+  cursor: pointer;
+}
+
+.github-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.github-toggle-track {
+  width: 40px;
+  height: 23px;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.88);
+  display: flex;
+  align-items: center;
+}
+
+.github-toggle-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  background: #94a3b8;
+  transition: transform 0.16s ease, background 0.16s ease;
+}
+
+.github-toggle input:checked + .github-toggle-track {
+  border-color: rgba(167, 139, 250, 0.54);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.95), rgba(37, 99, 235, 0.95));
+}
+
+.github-toggle input:checked + .github-toggle-track .github-toggle-thumb {
+  transform: translateX(17px);
+  background: white;
+}
+
+.github-toggle-copy {
+  display: grid;
+  gap: 1px;
+}
+
+.github-toggle-copy strong {
+  font-size: 12px;
+}
+
+.github-toggle-copy em {
+  color: #a8a0b8;
+  font-size: 11px;
+  font-style: normal;
+}
+
+.commit-create-card {
+  margin: 14px 18px 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(167, 139, 250, 0.16);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.035);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 430px);
+  gap: 14px;
+  align-items: center;
+}
+
+.commit-create-copy strong {
+  color: #f8fafc;
+  font-size: 14px;
+}
+
+.commit-create-copy p {
+  margin: 5px 0 0;
+  color: #a8a0b8;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.commit-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.commit-controls input {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 11px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  outline: 0;
+  color: #f8fafc;
+  background: rgba(6, 8, 18, 0.72);
+  font-size: 13px;
+}
+
+.commit-button {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  color: white;
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
+  box-shadow: 0 14px 32px rgba(124, 58, 237, 0.25);
+}
+
+.commit-status-line {
+  margin: 0 18px 12px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 11px;
+  color: #d8b4fe;
+  background: rgba(124, 58, 237, 0.1);
+  border: 1px solid rgba(167, 139, 250, 0.16);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+}
+
+.commit-status-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: white;
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.commit-history-card {
+  margin: 0 18px 18px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.commit-history-header {
+  min-height: 44px;
+  padding: 0 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.commit-history-header strong {
+  font-size: 14px;
+}
+
+.commit-history-header span {
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #a8a0b8;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  font-size: 11px;
+}
+
+.commit-timeline {
+  display: grid;
+}
+
+.commit-entry {
+  position: relative;
+  min-height: 72px;
+  padding: 12px 14px 12px 42px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.09);
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.commit-entry:last-child {
+  border-bottom: 0;
+}
+
+.commit-dot {
+  position: absolute;
+  left: 18px;
+  top: 17px;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #7c3aed, #2563eb);
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.14);
+}
+
+.commit-entry-main {
+  display: grid;
+  gap: 6px;
+}
+
+.commit-entry-topline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.commit-entry-topline strong {
+  font-size: 13px;
+}
+
+.commit-entry-main p {
+  margin: 3px 0 0;
+  color: #a8a0b8;
+  font-size: 12px;
+}
+
+.commit-entry-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #a8a0b8;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.commit-entry-actions button {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: #a8a0b8;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.commit-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.commit-badges span {
+  padding: 4px 7px;
+  border-radius: 999px;
+  color: #c4b5fd;
+  background: rgba(124, 58, 237, 0.13);
+  border: 1px solid rgba(167, 139, 250, 0.16);
+  font-size: 10px;
+}
+
+.commit-empty-state {
+  min-height: 120px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: #a8a0b8;
+}
+
 @media (max-width: 820px) {
   .create-screen {
     min-height: 100vh;
@@ -902,5 +1215,9 @@ button:hover,
   .dock-tab {
     padding: 0 12px;
     white-space: nowrap;
+  }
+
+  .commit-create-card {
+    grid-template-columns: 1fr;
   }
 }
