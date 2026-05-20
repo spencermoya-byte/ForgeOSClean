@@ -1,0 +1,138 @@
+.builder-workflow-panel {
+  width: min(860px, 100%);
+  margin: 16px auto 24px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 20px;
+  background: rgba(10, 13, 24, 0.72);
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+}
+
+.builder-workflow-header {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 20px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.builder-workflow-header strong {
+  color: #f8fafc;
+  font-size: 15px;
+}
+
+.builder-workflow-header span {
+  color: #a8a0b8;
+  font-size: 12px;
+}
+
+.builder-plan-body {
+  display: grid;
+  gap: 16px;
+  padding: 18px 20px 20px;
+}
+
+.builder-plan-summary {
+  color: #d8d2e3;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.builder-plan-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.builder-plan-section {
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.025);
+  padding: 14px;
+}
+
+.builder-plan-section strong {
+  display: block;
+  margin-bottom: 10px;
+  color: #f8fafc;
+  font-size: 13px;
+}
+
+.builder-plan-section ul,
+.builder-task-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.builder-plan-section li,
+.builder-task-item {
+  color: #c8c0d8;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.builder-task-item {
+  display: grid;
+  grid-template-columns: 82px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.task-status-pill {
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #c4b5fd;
+  background: rgba(124, 58, 237, 0.12);
+  border: 1px solid rgba(167, 139, 250, 0.18);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.task-status-pill.done {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.task-status-pill.running {
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.24);
+}
+
+.builder-workflow-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.builder-workflow-actions button {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(167, 139, 250, 0.22);
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.builder-workflow-actions .primary {
+  background: rgba(124, 58, 237, 0.22);
+  border-color: rgba(167, 139, 250, 0.38);
+}
+
+@media (max-width: 760px) {
+  .builder-plan-grid {
+    grid-template-columns: 1fr;
+  }
+}
