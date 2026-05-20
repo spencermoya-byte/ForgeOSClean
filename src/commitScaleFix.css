@@ -1,0 +1,191 @@
+/* Commit page final scale pass: preserve fixed panel height, restore original text sizing */
+.commitPage .commitHeader,
+.commits-panel-header {
+  min-height: 96px;
+  padding: 18px 28px;
+}
+
+.commitPage .commitIconBox,
+.commits-heading-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.commitPage .commitTitleGroup h2,
+.commits-heading h2 {
+  font-size: 20px;
+  line-height: 1.15;
+}
+
+.commitPage .commitTitleGroup p,
+.commits-heading p {
+  font-size: 13px;
+  line-height: 1.35;
+  margin-top: 6px;
+}
+
+.commitPage .commitToggle,
+.github-toggle {
+  min-width: 240px;
+  min-height: 56px;
+  padding: 10px 14px;
+  border-radius: 14px;
+}
+
+.commitPage .commitToggleTrack,
+.github-toggle-track {
+  width: 44px;
+  height: 24px;
+  padding: 3px;
+}
+
+.commitPage .commitToggleThumb,
+.github-toggle-thumb {
+  width: 16px;
+  height: 16px;
+}
+
+.commitPage .commitToggle input:checked + .commitToggleTrack .commitToggleThumb,
+.github-toggle input:checked + .github-toggle-track .github-toggle-thumb {
+  transform: translateX(18px);
+}
+
+.commitPage .commitToggle strong,
+.github-toggle-copy strong {
+  font-size: 13px;
+}
+
+.commitPage .commitToggle em,
+.github-toggle-copy em {
+  font-size: 12px;
+}
+
+.commitPage .commitCreate,
+.commit-create-card {
+  margin: 18px 28px 12px;
+  padding: 16px 18px;
+  grid-template-columns: minmax(260px, 1fr) minmax(320px, 560px);
+  gap: 18px;
+}
+
+.commitPage .commitCreate strong,
+.commit-create-copy strong {
+  font-size: 16px;
+}
+
+.commitPage .commitCreate p,
+.commit-create-copy p {
+  font-size: 13px;
+  line-height: 1.45;
+  margin-top: 6px;
+}
+
+.commitPage .commitInputRow,
+.commit-controls {
+  gap: 12px;
+}
+
+.commitPage .commitInputRow input,
+.commit-controls input {
+  height: 42px;
+  padding: 0 14px;
+  font-size: 14px;
+  border-radius: 12px;
+}
+
+.commitPage .commitInputRow button,
+.commit-button {
+  width: 42px;
+  height: 42px;
+  flex-basis: 42px;
+  border-radius: 12px;
+}
+
+.commitPage .commitNotice,
+.commit-status-line {
+  min-height: 38px;
+  margin: 0 28px 12px;
+  padding: 0 14px;
+  font-size: 13px;
+  border-radius: 12px;
+}
+
+.commitPage .commitNotice span,
+.commit-status-icon {
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+}
+
+.commitPage .commitHistory,
+.commit-history-card {
+  margin: 0 28px 28px;
+}
+
+.commitPage .commitHistoryHeader,
+.commit-history-header {
+  min-height: 48px;
+  padding: 0 16px;
+}
+
+.commitPage .commitHistoryHeader strong,
+.commit-history-header strong {
+  font-size: 16px;
+}
+
+.commitPage .commitHistoryHeader span,
+.commit-history-header span {
+  font-size: 12px;
+  padding: 5px 9px;
+}
+
+.commitPage .commitRow,
+.commit-entry {
+  min-height: 82px;
+  padding: 14px 18px 14px 44px;
+}
+
+.commitPage .commitDot,
+.commit-dot {
+  left: 18px;
+  top: 18px;
+  width: 13px;
+  height: 13px;
+}
+
+.commitPage .commitRowTop strong,
+.commit-entry-topline strong {
+  font-size: 15px;
+}
+
+.commitPage .commitRowTop p,
+.commit-entry-main p {
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.commitPage .commitRowActions,
+.commit-entry-actions {
+  font-size: 13px;
+  gap: 12px;
+}
+
+.commitPage .commitRowActions button,
+.commit-entry-actions button {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+}
+
+.commitPage .commitBadges,
+.commit-badges {
+  gap: 7px;
+  margin-top: 7px;
+}
+
+.commitPage .commitBadges span,
+.commit-badges span {
+  font-size: 11px;
+  padding: 4px 8px;
+}
