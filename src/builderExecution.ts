@@ -1,5 +1,6 @@
 export type ExecutionTaskStatus = "queued" | "running" | "done" | "failed";
 export type ExecutionActivityStatus = "pending" | "active" | "done" | "blocked";
+export type SafeCommandId = "git_status" | "git_diff_stat" | "npm_build";
 
 export type ExecutionTask = {
   id: string;
@@ -21,7 +22,19 @@ export type BuilderExecutionResult = {
   activity: ExecutionActivity[];
 };
 
+export type SafeCommandResult = {
+  ok: boolean;
+  commandId: string;
+  commandDisplay: string;
+  exitCode: number | null;
+  stdout: string;
+  stderr: string;
+  durationMs: number;
+  blockedReason: string | null;
+};
+
 type TauriExecutionPreview = Partial<BuilderExecutionResult>;
+type TauriSafeCommandResult = Partial<SafeCommandResult>;
 
 const fallbackTasks: ExecutionTask[] = [
   { id: "task-1", title: "Analyze the request and convert it into acceptance criteria", status: "done" },
@@ -38,6 +51,10 @@ const fallbackActivity: ExecutionActivity[] = [
   { id: "activity-4", label: "Verification", detail: "Build verification will run after the local command bridge is connected.", status: "pending" },
 ];
 
+function hasTauriRuntime() {
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
 function normalizeExecutionResult(result: TauriExecutionPreview | null | undefined): BuilderExecutionResult {
   return {
     backendAvailable: Boolean(result?.backendAvailable),
@@ -47,10 +64,21 @@ function normalizeExecutionResult(result: TauriExecutionPreview | null | undefin
   };
 }
 
-export async function runBuilderExecutionPreview(planSummary: string): Promise<BuilderExecutionResult> {
-  const hasTauriRuntime = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+function normalizeSafeCommandResult(commandId: SafeCommandId, result: TauriSafeCommandResult | null | undefined): SafeCommandResult {
+  return {
+    ok: Boolean(result?.ok),
+    commandId: result?.commandId ?? commandId,
+    commandDisplay: result?.commandDisplay ?? commandId,
+    exitCode: typeof result?.exitCode === "number" ? result.exitCode : null,
+    stdout: result?.stdout ?? "",
+    stderr: result?.stderr ?? "",
+    durationMs: typeof result?.durationMs === "number" ? result.durationMs : 0,
+    blockedReason: result?.blockedReason ?? null,
+  };
+}
 
-  if (!hasTauriRuntime) {
+export async function runBuilderExecutionPreview(planSummary: string): Promise<BuilderExecutionResult> {
+  if (!hasTauriRuntime()) {
     return normalizeExecutionResult({
       backendAvailable: false,
       message: "Execution bridge is ready in the frontend. Run inside the Tauri shell and connect the vivus_execution_preview command to enable real file and terminal operations.",
@@ -66,6 +94,37 @@ export async function runBuilderExecutionPreview(planSummary: string): Promise<B
     return normalizeExecutionResult({
       backendAvailable: false,
       message: `Tauri runtime detected, but the local execution command is not connected yet. ${detail}`,
+    });
+  }
+}
+
+export async function runSafeBuilderCommand(commandId: SafeCommandId, projectPath = "."): Promise<SafeCommandResult> {
+  if (!hasTauriRuntime()) {
+    return normalizeSafeCommandResult(commandId, {
+      ok: false,
+      commandId,
+      commandDisplay: commandId,
+      blockedReason: "Safe commands require the Tauri desktop runtime.",
+    });
+  }
+
+  try {
+    const { invoke } = await import("@tauri-apps/api/core");
+    const result = await invoke<TauriSafeCommandResult>("vivus_run_safe_command", {
+      request: {
+        projectPath,
+        commandId,
+      },
+    });
+    return normalizeSafeCommandResult(commandId, result);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    return normalizeSafeCommandResult(commandId, {
+      ok: false,
+      commandId,
+      commandDisplay: commandId,
+      stderr: detail,
+      blockedReason: "Safe command bridge failed before execution.",
     });
   }
 }
