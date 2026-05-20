@@ -17,6 +17,10 @@ pub fn run() {
             commands::auth::register,
             commands::auth::logout,
             
+            // Builder commands
+            commands::builder_execution::vivus_execution_preview,
+            commands::builder_terminal::vivus_run_safe_command,
+            
             // Filesystem commands
             commands::filesystem::start_filesystem_indexing,
             commands::filesystem::search_filesystem,
