@@ -4,6 +4,7 @@ import "./BuilderLifecycle.css";
 import "./BuilderWorkflow.css";
 import { CommitPanel } from "./CommitPanel";
 import { ProjectFilesPanel, initializeProjectFiles } from "./ProjectFilesPanel";
+import { runBuilderExecutionPreview } from "./builderExecution";
 import {
   ChevronDown,
   Code2,
@@ -150,6 +151,7 @@ export default function App() {
   const [builderTasks, setBuilderTasks] = React.useState<BuilderTask[]>([]);
   const [builderActivity, setBuilderActivity] = React.useState<BuilderActivity[]>([]);
   const [executionPreviewed, setExecutionPreviewed] = React.useState(false);
+  const [isExecuting, setIsExecuting] = React.useState(false);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? null;
   const hasStartedConversation = buildMessages.length > 0;
@@ -198,6 +200,7 @@ export default function App() {
     setBuilderTasks([]);
     setBuilderActivity([]);
     setExecutionPreviewed(false);
+    setIsExecuting(false);
   }
 
   function seedWorkspace(project: ProjectRecord, startWithPrompt = false) {
@@ -287,16 +290,26 @@ export default function App() {
     setBuildMessages((current) => [...current, { role: "assistant", content: "Plan revision mode is active. Send the changes you want and I’ll regenerate the build plan." }]);
   }
 
-  function handleExecutionPreview() {
-    if (!planApproved) return;
+  async function handleExecutionPreview() {
+    if (!planApproved || !builderPlan || isExecuting) return;
+    setIsExecuting(true);
+    setBuilderTasks(makeTasks("approved"));
+    setBuilderActivity([
+      { id: "activity-1", label: "Execution bridge", detail: "Calling local execution bridge...", status: "active" },
+      { id: "activity-2", label: "Source verification", detail: "Waiting for backend response.", status: "pending" },
+    ]);
+
+    const result = await runBuilderExecutionPreview(builderPlan.summary);
+
     setExecutionPreviewed(true);
-    setBuilderTasks(makeTasks("complete"));
-    setBuilderActivity(makeActivity("complete"));
+    setIsExecuting(false);
+    setBuilderTasks(result.tasks as BuilderTask[]);
+    setBuilderActivity(result.activity as BuilderActivity[]);
     setBuildMessages((current) => [
       ...current,
       {
         role: "assistant",
-        content: "Execution preview completed. Real file edits, terminal commands, and build verification will connect next through the local Tauri backend.",
+        content: result.message,
       },
     ]);
   }
@@ -384,7 +397,7 @@ export default function App() {
           <div className="builder-workflow-actions">
             <button type="button" onClick={handleRevisePlan}>Revise plan</button>
             <button type="button" className="primary" onClick={handleApprovePlan} disabled={planApproved}>{planApproved ? "Approved" : "Approve plan"}</button>
-            <button type="button" className="primary" onClick={handleExecutionPreview} disabled={!planApproved || executionPreviewed}>{executionPreviewed ? "Preview complete" : "Run execution preview"}</button>
+            <button type="button" className="primary" onClick={handleExecutionPreview} disabled={!planApproved || executionPreviewed || isExecuting}>{isExecuting ? "Running..." : executionPreviewed ? "Preview complete" : "Run execution preview"}</button>
           </div>
         </div>
       </section>
