@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, GitBranch, MoreHorizontal } from "lucide-react";
+import { Check, GitBranch, MoreHorizontal, RotateCcw } from "lucide-react";
 
 type CommitEntry = {
   id: string;
@@ -72,6 +72,11 @@ export function CommitPanel({ projectName }: { projectName: string }) {
         ? "Local revert point created. GitHub push is queued for the future Tauri backend."
         : "Local revert point created. GitHub auto-push is off."
     );
+  }
+
+  function requestRollback(commit: CommitEntry) {
+    // TODO: Connect this to the future Tauri/Git rollback backend when project snapshots are restorable.
+    setStatus(`Rollback requested for: ${commit.message}`);
   }
 
   return (
@@ -154,6 +159,25 @@ export function CommitPanel({ projectName }: { projectName: string }) {
                         <span>{formatTime(commit.createdAt)}</span>
                         <button type="button" aria-label="Checkpoint options">
                           <MoreHorizontal size={18} />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Rollback to ${commit.message}`}
+                          title={`Rollback to ${commit.message}`}
+                          onClick={() => requestRollback(commit)}
+                          style={{
+                            width: "auto",
+                            minWidth: "96px",
+                            padding: "0 12px",
+                            gap: "7px",
+                            color: "#ede9fe",
+                            borderColor: "rgba(167, 139, 250, 0.36)",
+                            background: "rgba(124, 58, 237, 0.14)",
+                            boxShadow: "0 0 22px rgba(124, 58, 237, 0.12)",
+                          }}
+                        >
+                          <RotateCcw size={15} strokeWidth={2.5} />
+                          <span style={{ fontSize: "12px", fontWeight: 700 }}>Rollback</span>
                         </button>
                       </div>
                     </div>
