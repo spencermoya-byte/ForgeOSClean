@@ -25,6 +25,8 @@ type ProjectRecord = { id: string; name: string; originalPrompt: string; created
 type BuilderPlan = { summary: string; requirements: string[]; acceptance: string[] };
 type TaskStatus = "queued" | "running" | "done" | "failed";
 type BuilderTask = { id: string; title: string; status: TaskStatus };
+type ActivityStatus = "pending" | "active" | "done" | "blocked";
+type BuilderActivity = { id: string; label: string; detail: string; status: ActivityStatus };
 
 const PROJECT_KEY = "vivus.projects.v1";
 const ACTIVE_PROJECT_KEY = "vivus.activeProject.v1";
@@ -94,13 +96,39 @@ function makePlan(input: string): BuilderPlan {
   };
 }
 
-function makeTasks(mode: "planned" | "approved"): BuilderTask[] {
+function makeTasks(mode: "planned" | "approved" | "complete"): BuilderTask[] {
   return [
-    { id: "task-1", title: "Analyze the request and convert it into acceptance criteria", status: mode === "approved" ? "done" : "queued" },
-    { id: "task-2", title: "Find the relevant project files and verify current source state", status: mode === "approved" ? "running" : "queued" },
-    { id: "task-3", title: "Apply a minimal implementation patch", status: "queued" },
-    { id: "task-4", title: "Run build/type verification", status: "queued" },
-    { id: "task-5", title: "Report verified result or stop with failure details", status: "queued" },
+    { id: "task-1", title: "Analyze the request and convert it into acceptance criteria", status: mode === "planned" ? "queued" : "done" },
+    { id: "task-2", title: "Find the relevant project files and verify current source state", status: mode === "planned" ? "queued" : mode === "approved" ? "running" : "done" },
+    { id: "task-3", title: "Apply a minimal implementation patch", status: mode === "complete" ? "done" : "queued" },
+    { id: "task-4", title: "Run build/type verification", status: mode === "complete" ? "done" : "queued" },
+    { id: "task-5", title: "Report verified result or stop with failure details", status: mode === "complete" ? "done" : "queued" },
+  ];
+}
+
+function makeActivity(mode: "planned" | "approved" | "complete"): BuilderActivity[] {
+  if (mode === "planned") {
+    return [
+      { id: "activity-1", label: "Plan generated", detail: "Waiting for approval before file work begins.", status: "done" },
+      { id: "activity-2", label: "Source verification", detail: "Queued until the plan is approved.", status: "pending" },
+      { id: "activity-3", label: "Patch execution", detail: "Blocked until approval and backend execution are connected.", status: "pending" },
+    ];
+  }
+
+  if (mode === "approved") {
+    return [
+      { id: "activity-1", label: "Plan approved", detail: "Build queue is ready for execution.", status: "done" },
+      { id: "activity-2", label: "Source verification", detail: "Next step: inspect project files before editing.", status: "active" },
+      { id: "activity-3", label: "Patch execution", detail: "Waiting for local backend/file editing integration.", status: "pending" },
+      { id: "activity-4", label: "Verification", detail: "Will run after implementation patches are applied.", status: "pending" },
+    ];
+  }
+
+  return [
+    { id: "activity-1", label: "Plan approved", detail: "Build queue accepted by the user.", status: "done" },
+    { id: "activity-2", label: "Source verification", detail: "Simulated file targeting pass completed.", status: "done" },
+    { id: "activity-3", label: "Patch execution", detail: "Execution preview complete; real file writes require backend connection.", status: "blocked" },
+    { id: "activity-4", label: "Verification", detail: "Build verification is queued for the future local runner.", status: "pending" },
   ];
 }
 
@@ -120,6 +148,8 @@ export default function App() {
   const [planApproved, setPlanApproved] = React.useState(false);
   const [builderPlan, setBuilderPlan] = React.useState<BuilderPlan | null>(null);
   const [builderTasks, setBuilderTasks] = React.useState<BuilderTask[]>([]);
+  const [builderActivity, setBuilderActivity] = React.useState<BuilderActivity[]>([]);
+  const [executionPreviewed, setExecutionPreviewed] = React.useState(false);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? null;
   const hasStartedConversation = buildMessages.length > 0;
@@ -146,7 +176,7 @@ export default function App() {
 
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [buildMessages, builderPlan, builderTasks]);
+  }, [buildMessages, builderPlan, builderTasks, builderActivity]);
 
   function navigate(nextRoute: Route) {
     setRoute(nextRoute);
@@ -166,6 +196,8 @@ export default function App() {
     setPlanApproved(false);
     setBuilderPlan(null);
     setBuilderTasks([]);
+    setBuilderActivity([]);
+    setExecutionPreviewed(false);
   }
 
   function seedWorkspace(project: ProjectRecord, startWithPrompt = false) {
@@ -240,15 +272,33 @@ export default function App() {
   function handleApprovePlan() {
     setPlanApproved(true);
     setCurrentMode("build");
+    setExecutionPreviewed(false);
     setBuilderTasks(makeTasks("approved"));
-    setBuildMessages((current) => [...current, { role: "assistant", content: "Plan approved. I’m ready to execute the task queue once the local execution backend is connected." }]);
+    setBuilderActivity(makeActivity("approved"));
+    setBuildMessages((current) => [...current, { role: "assistant", content: "Plan approved. The execution queue is staged and source verification is next." }]);
   }
 
   function handleRevisePlan() {
     setCurrentMode("plan");
     setPlanApproved(false);
+    setExecutionPreviewed(false);
     setBuilderTasks(makeTasks("planned"));
+    setBuilderActivity(makeActivity("planned"));
     setBuildMessages((current) => [...current, { role: "assistant", content: "Plan revision mode is active. Send the changes you want and I’ll regenerate the build plan." }]);
+  }
+
+  function handleExecutionPreview() {
+    if (!planApproved) return;
+    setExecutionPreviewed(true);
+    setBuilderTasks(makeTasks("complete"));
+    setBuilderActivity(makeActivity("complete"));
+    setBuildMessages((current) => [
+      ...current,
+      {
+        role: "assistant",
+        content: "Execution preview completed. Real file edits, terminal commands, and build verification will connect next through the local Tauri backend.",
+      },
+    ]);
   }
 
   function handleBuildSubmit(event: React.FormEvent) {
@@ -263,7 +313,9 @@ export default function App() {
       const nextPlan = makePlan(trimmed);
       setBuilderPlan(nextPlan);
       setBuilderTasks(makeTasks("planned"));
+      setBuilderActivity(makeActivity("planned"));
       setPlanApproved(false);
+      setExecutionPreviewed(false);
       setBuildMessages((current) => [
         ...current,
         { role: "user", content: trimmed },
@@ -318,7 +370,7 @@ export default function App() {
     return (
       <section className="builder-workflow-panel">
         <div className="builder-workflow-header">
-          <div><strong>{planApproved ? "Approved build queue" : "Plan review"}</strong><br /><span>{planApproved ? "Execution queue prepared" : "Approve before implementation"}</span></div>
+          <div><strong>{planApproved ? "Approved build queue" : "Plan review"}</strong><br /><span>{planApproved ? "Execution transparency is active" : "Approve before implementation"}</span></div>
           <span>{builderTasks.filter((task) => task.status === "done").length}/{builderTasks.length} done</span>
         </div>
         <div className="builder-plan-body">
@@ -328,9 +380,11 @@ export default function App() {
             <div className="builder-plan-section"><strong>Acceptance criteria</strong><ul>{builderPlan.acceptance.map((item) => <li key={item}>{item}</li>)}</ul></div>
           </div>
           <div className="builder-plan-section"><strong>Task queue</strong><ul className="builder-task-list">{builderTasks.map((task) => <li key={task.id} className="builder-task-item"><span className={`task-status-pill ${task.status}`}>{task.status}</span><span>{task.title}</span></li>)}</ul></div>
+          <div className="builder-plan-section"><strong>Activity transparency</strong><ul className="builder-activity-list">{builderActivity.map((activity) => <li key={activity.id} className="builder-activity-item"><span className={`activity-status-dot ${activity.status}`} /><span><strong>{activity.label}</strong><em>{activity.detail}</em></span></li>)}</ul></div>
           <div className="builder-workflow-actions">
             <button type="button" onClick={handleRevisePlan}>Revise plan</button>
             <button type="button" className="primary" onClick={handleApprovePlan} disabled={planApproved}>{planApproved ? "Approved" : "Approve plan"}</button>
+            <button type="button" className="primary" onClick={handleExecutionPreview} disabled={!planApproved || executionPreviewed}>{executionPreviewed ? "Preview complete" : "Run execution preview"}</button>
           </div>
         </div>
       </section>
