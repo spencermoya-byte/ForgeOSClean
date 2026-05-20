@@ -23,3 +23,4 @@ pub mod client;
 pub mod marketplace;
 pub mod builder_execution;
 pub mod builder_terminal;
+pub mod builder_files;
