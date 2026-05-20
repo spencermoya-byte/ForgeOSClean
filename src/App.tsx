@@ -294,7 +294,7 @@ export default function App() {
   }
 
   function renderEmptyBuilder() {
-    return <section className="builder-empty-state"><div className="empty-composer-wrap">{activeProject && <div className="project-context-card"><span>Current project</span><strong>{activeProject.name}</strong><p>{activeProject.originalPrompt}</p></div>}{renderBuildComposer("initial-composer")}<div className="vivus-greeting-card"><div className="greeting-icon">V</div><div><strong>Vivus</strong><p>{greetingMessage(activeProject)}</p></div></div></div></section>;
+    return <section className="builder-empty-state"><div className="empty-composer-wrap">{activeProject && <div className="project-context-card"><span className="project-pill-dot" aria-hidden="true" /><span>Current project</span><strong>{activeProject.name}</strong><p>{activeProject.originalPrompt}</p></div>}{renderBuildComposer("initial-composer")}<div className="vivus-greeting-card"><div className="greeting-icon">V</div><div><strong>Vivus</strong><p>{greetingMessage(activeProject)}</p></div></div><div className="builder-helper-row"><p>Describe anything. Vivus builds, tests, and iterates with you.</p><div className="builder-feature-row"><span>Local & private</span><span>Multi-model</span><span>Fast builds</span><span>You’re in control</span></div></div></div></section>;
   }
 
   function renderBuilderConversation() {
