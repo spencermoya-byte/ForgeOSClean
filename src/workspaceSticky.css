@@ -273,12 +273,29 @@
 
 .commits-panel-card {
   width: min(980px, 100%);
+  max-height: calc(100vh - 132px);
   min-height: 0;
   padding: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   background:
     radial-gradient(circle at right top, rgba(124, 58, 237, 0.12), transparent 24rem),
     rgba(13, 16, 26, 0.76);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(167, 139, 250, 0.35) rgba(255, 255, 255, 0.04);
+}
+
+.commits-panel-card::-webkit-scrollbar {
+  width: 10px;
+}
+
+.commits-panel-card::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.commits-panel-card::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(167, 139, 250, 0.35);
 }
 
 .commits-panel-header {
@@ -462,7 +479,7 @@
 
 .commit-timeline {
   margin: 0 22px 22px;
-  padding: 4px 0 0;
+  padding: 4px 0 96px;
   display: grid;
   gap: 12px;
 }
@@ -488,6 +505,7 @@
 
 .commit-entry {
   position: relative;
+  min-height: 96px;
   padding: 14px 14px 14px 38px;
   border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: 15px;
@@ -572,6 +590,10 @@
 
   .file-editor-panel {
     min-height: 420px;
+  }
+
+  .commits-panel-card {
+    max-height: calc(100vh - 112px);
   }
 
   .commits-panel-header,
