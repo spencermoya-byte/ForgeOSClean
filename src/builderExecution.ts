@@ -36,6 +36,12 @@ export type SafeCommandResult = {
 type TauriExecutionPreview = Partial<BuilderExecutionResult>;
 type TauriSafeCommandResult = Partial<SafeCommandResult>;
 
+const safeCommands: Array<{ id: SafeCommandId; label: string }> = [
+  { id: "git_status", label: "Git Status" },
+  { id: "git_diff_stat", label: "Git Diff Summary" },
+  { id: "npm_build", label: "Build Verification" },
+];
+
 const fallbackTasks: ExecutionTask[] = [
   { id: "task-1", title: "Analyze the request and convert it into acceptance criteria", status: "done" },
   { id: "task-2", title: "Find the relevant project files and verify current source state", status: "done" },
@@ -75,6 +81,96 @@ function normalizeSafeCommandResult(commandId: SafeCommandId, result: TauriSafeC
     durationMs: typeof result?.durationMs === "number" ? result.durationMs : 0,
     blockedReason: result?.blockedReason ?? null,
   };
+}
+
+function safeCommandLabel(commandId: string) {
+  return safeCommands.find((command) => command.id === commandId)?.label ?? commandId;
+}
+
+function compactSafeCommandOutput(result: SafeCommandResult) {
+  const blocked = result.blockedReason ? `Blocked: ${result.blockedReason}` : "";
+  const output = [result.stderr, result.stdout]
+    .filter(Boolean)
+    .join("\n")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 6)
+    .join("\n");
+
+  if (blocked && output) return `${blocked}\n${output}`;
+  if (blocked) return blocked;
+  if (output) return output;
+  return result.ok ? "Command completed with no output." : "Command finished without output details.";
+}
+
+function renderSafeCommandResult(container: HTMLElement, result: SafeCommandResult) {
+  const existing = container.querySelector(`[data-safe-command-result="${result.commandId}"]`);
+  existing?.remove();
+
+  const card = document.createElement("div");
+  card.dataset.safeCommandResult = result.commandId;
+  card.className = `safe-command-result ${result.blockedReason ? "blocked" : result.ok ? "passed" : "failed"}`;
+  card.innerHTML = `
+    <div class="safe-command-result-header">
+      <span>${safeCommandLabel(result.commandId)}</span>
+      <em>${result.blockedReason ? "blocked" : result.ok ? "passed" : "failed"}</em>
+    </div>
+    <code>${result.commandDisplay}</code>
+    <small>Exit: ${typeof result.exitCode === "number" ? result.exitCode : "n/a"} · ${result.durationMs}ms</small>
+    <pre>${compactSafeCommandOutput(result)}</pre>
+  `;
+  container.prepend(card);
+}
+
+function installSafeVerificationPanel() {
+  if (typeof document === "undefined") return;
+
+  const workflow = document.querySelector(".builder-workflow-panel");
+  const actions = document.querySelector(".builder-workflow-actions");
+  if (!workflow || !actions || document.querySelector(".builder-verification-section")) return;
+
+  const panel = document.createElement("div");
+  panel.className = "builder-plan-section builder-verification-section";
+  panel.innerHTML = `
+    <strong>Safe local verification</strong>
+    <p>Run allowlisted local checks only. Patch execution and arbitrary terminal access remain blocked.</p>
+    <div class="safe-command-actions"></div>
+    <div class="safe-command-results"></div>
+  `;
+
+  const buttonWrap = panel.querySelector(".safe-command-actions");
+  const results = panel.querySelector(".safe-command-results") as HTMLElement | null;
+  if (!buttonWrap || !results) return;
+
+  safeCommands.forEach((command) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = command.label;
+    button.addEventListener("click", async () => {
+      if (button.dataset.running === "true") return;
+      button.dataset.running = "true";
+      const original = button.textContent;
+      button.textContent = "Running...";
+      const result = await runSafeBuilderCommand(command.id, ".");
+      renderSafeCommandResult(results, result);
+      button.textContent = original;
+      button.dataset.running = "false";
+    });
+    buttonWrap.appendChild(button);
+  });
+
+  actions.parentElement?.insertBefore(panel, actions);
+}
+
+function startSafeVerificationInstaller() {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+
+  const install = () => window.setTimeout(installSafeVerificationPanel, 0);
+  install();
+
+  const observer = new MutationObserver(install);
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
 export async function runBuilderExecutionPreview(planSummary: string): Promise<BuilderExecutionResult> {
@@ -128,3 +224,5 @@ export async function runSafeBuilderCommand(commandId: SafeCommandId, projectPat
     });
   }
 }
+
+startSafeVerificationInstaller();
