@@ -2,9 +2,17 @@ import React from "react";
 import "./App.css";
 import "./BuilderLifecycle.css";
 import "./BuilderWorkflow.css";
+import "./VerifiedEditPanel.css";
 import { CommitPanel } from "./CommitPanel";
 import { ProjectFilesPanel, initializeProjectFiles } from "./ProjectFilesPanel";
 import { runBuilderExecutionPreview } from "./builderExecution";
+import { VerifiedEditPanel } from "./VerifiedEditPanel";
+import {
+  applyAndVerifyEdit,
+  checkpointVerifiedEdit,
+  prepareVerifiedEdit,
+  type VerifiedEditState,
+} from "./vivusExecutionLoop";
 import {
   ChevronDown,
   Code2,
@@ -152,6 +160,8 @@ export default function App() {
   const [builderActivity, setBuilderActivity] = React.useState<BuilderActivity[]>([]);
   const [executionPreviewed, setExecutionPreviewed] = React.useState(false);
   const [isExecuting, setIsExecuting] = React.useState(false);
+  const [verifiedEdit, setVerifiedEdit] = React.useState<VerifiedEditState | null>(null);
+  const [isVerifiedEditRunning, setIsVerifiedEditRunning] = React.useState(false);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   const activeProject = projects.find((project) => project.id === activeProjectId) ?? null;
   const hasStartedConversation = buildMessages.length > 0;
@@ -178,7 +188,7 @@ export default function App() {
 
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [buildMessages, builderPlan, builderTasks, builderActivity]);
+  }, [buildMessages, builderPlan, builderTasks, builderActivity, verifiedEdit]);
 
   function navigate(nextRoute: Route) {
     setRoute(nextRoute);
@@ -201,6 +211,8 @@ export default function App() {
     setBuilderActivity([]);
     setExecutionPreviewed(false);
     setIsExecuting(false);
+    setVerifiedEdit(null);
+    setIsVerifiedEditRunning(false);
   }
 
   function seedWorkspace(project: ProjectRecord, startWithPrompt = false) {
@@ -276,6 +288,7 @@ export default function App() {
     setPlanApproved(true);
     setCurrentMode("build");
     setExecutionPreviewed(false);
+    setVerifiedEdit(null);
     setBuilderTasks(makeTasks("approved"));
     setBuilderActivity(makeActivity("approved"));
     setBuildMessages((current) => [...current, { role: "assistant", content: "Plan approved. The execution queue is staged and source verification is next." }]);
@@ -285,6 +298,7 @@ export default function App() {
     setCurrentMode("plan");
     setPlanApproved(false);
     setExecutionPreviewed(false);
+    setVerifiedEdit(null);
     setBuilderTasks(makeTasks("planned"));
     setBuilderActivity(makeActivity("planned"));
     setBuildMessages((current) => [...current, { role: "assistant", content: "Plan revision mode is active. Send the changes you want and I’ll regenerate the build plan." }]);
@@ -314,6 +328,33 @@ export default function App() {
     ]);
   }
 
+  async function handlePrepareVerifiedEdit() {
+    if (!planApproved || !builderPlan || isVerifiedEditRunning) return;
+    setIsVerifiedEditRunning(true);
+    setBuildMessages((current) => [...current, { role: "assistant", content: "Preparing verified edit: inspecting source and generating diff preview." }]);
+    const nextState = await prepareVerifiedEdit({ planSummary: builderPlan.summary });
+    setVerifiedEdit(nextState);
+    setIsVerifiedEditRunning(false);
+  }
+
+  async function handleRunVerifiedEdit() {
+    if (!builderPlan || !verifiedEdit || isVerifiedEditRunning) return;
+    setIsVerifiedEditRunning(true);
+    const checkpointed = await checkpointVerifiedEdit(verifiedEdit);
+    setVerifiedEdit(checkpointed);
+
+    if (checkpointed.stage !== "checkpoint-ready") {
+      setBuildMessages((current) => [...current, { role: "assistant", content: checkpointed.message }]);
+      setIsVerifiedEditRunning(false);
+      return;
+    }
+
+    const result = await applyAndVerifyEdit(checkpointed, builderPlan.summary);
+    setVerifiedEdit(result);
+    setIsVerifiedEditRunning(false);
+    setBuildMessages((current) => [...current, { role: "assistant", content: result.message }]);
+  }
+
   function handleBuildSubmit(event: React.FormEvent) {
     event.preventDefault();
     const trimmed = buildInput.trim();
@@ -329,6 +370,7 @@ export default function App() {
       setBuilderActivity(makeActivity("planned"));
       setPlanApproved(false);
       setExecutionPreviewed(false);
+      setVerifiedEdit(null);
       setBuildMessages((current) => [
         ...current,
         { role: "user", content: trimmed },
@@ -381,26 +423,36 @@ export default function App() {
   function renderWorkflowPanel() {
     if (!builderPlan) return null;
     return (
-      <section className="builder-workflow-panel">
-        <div className="builder-workflow-header">
-          <div><strong>{planApproved ? "Approved build queue" : "Plan review"}</strong><br /><span>{planApproved ? "Execution transparency is active" : "Approve before implementation"}</span></div>
-          <span>{builderTasks.filter((task) => task.status === "done").length}/{builderTasks.length} done</span>
-        </div>
-        <div className="builder-plan-body">
-          <p className="builder-plan-summary">{builderPlan.summary}</p>
-          <div className="builder-plan-grid">
-            <div className="builder-plan-section"><strong>Requirements</strong><ul>{builderPlan.requirements.map((item) => <li key={item}>{item}</li>)}</ul></div>
-            <div className="builder-plan-section"><strong>Acceptance criteria</strong><ul>{builderPlan.acceptance.map((item) => <li key={item}>{item}</li>)}</ul></div>
+      <>
+        <section className="builder-workflow-panel">
+          <div className="builder-workflow-header">
+            <div><strong>{planApproved ? "Approved build queue" : "Plan review"}</strong><br /><span>{planApproved ? "Execution transparency is active" : "Approve before implementation"}</span></div>
+            <span>{builderTasks.filter((task) => task.status === "done").length}/{builderTasks.length} done</span>
           </div>
-          <div className="builder-plan-section"><strong>Task queue</strong><ul className="builder-task-list">{builderTasks.map((task) => <li key={task.id} className="builder-task-item"><span className={`task-status-pill ${task.status}`}>{task.status}</span><span>{task.title}</span></li>)}</ul></div>
-          <div className="builder-plan-section"><strong>Activity transparency</strong><ul className="builder-activity-list">{builderActivity.map((activity) => <li key={activity.id} className="builder-activity-item"><span className={`activity-status-dot ${activity.status}`} /><span><strong>{activity.label}</strong><em>{activity.detail}</em></span></li>)}</ul></div>
-          <div className="builder-workflow-actions">
-            <button type="button" onClick={handleRevisePlan}>Revise plan</button>
-            <button type="button" className="primary" onClick={handleApprovePlan} disabled={planApproved}>{planApproved ? "Approved" : "Approve plan"}</button>
-            <button type="button" className="primary" onClick={handleExecutionPreview} disabled={!planApproved || executionPreviewed || isExecuting}>{isExecuting ? "Running..." : executionPreviewed ? "Preview complete" : "Run execution preview"}</button>
+          <div className="builder-plan-body">
+            <p className="builder-plan-summary">{builderPlan.summary}</p>
+            <div className="builder-plan-grid">
+              <div className="builder-plan-section"><strong>Requirements</strong><ul>{builderPlan.requirements.map((item) => <li key={item}>{item}</li>)}</ul></div>
+              <div className="builder-plan-section"><strong>Acceptance criteria</strong><ul>{builderPlan.acceptance.map((item) => <li key={item}>{item}</li>)}</ul></div>
+            </div>
+            <div className="builder-plan-section"><strong>Task queue</strong><ul className="builder-task-list">{builderTasks.map((task) => <li key={task.id} className="builder-task-item"><span className={`task-status-pill ${task.status}`}>{task.status}</span><span>{task.title}</span></li>)}</ul></div>
+            <div className="builder-plan-section"><strong>Activity transparency</strong><ul className="builder-activity-list">{builderActivity.map((activity) => <li key={activity.id} className="builder-activity-item"><span className={`activity-status-dot ${activity.status}`} /><span><strong>{activity.label}</strong><em>{activity.detail}</em></span></li>)}</ul></div>
+            <div className="builder-workflow-actions">
+              <button type="button" onClick={handleRevisePlan}>Revise plan</button>
+              <button type="button" className="primary" onClick={handleApprovePlan} disabled={planApproved}>{planApproved ? "Approved" : "Approve plan"}</button>
+              <button type="button" className="primary" onClick={handleExecutionPreview} disabled={!planApproved || executionPreviewed || isExecuting}>{isExecuting ? "Running..." : executionPreviewed ? "Preview complete" : "Run execution preview"}</button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+        {planApproved && (
+          <VerifiedEditPanel
+            state={verifiedEdit}
+            isRunning={isVerifiedEditRunning}
+            onPrepare={handlePrepareVerifiedEdit}
+            onRun={handleRunVerifiedEdit}
+          />
+        )}
+      </>
     );
   }
 
