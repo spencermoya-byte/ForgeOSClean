@@ -33,6 +33,12 @@ struct SafeCommandResult {
     summary: String,
 }
 
+#[derive(Clone)]
+struct PatchTarget {
+    path: &'static str,
+    reason: &'static str,
+}
+
 fn repo_root() -> Result<PathBuf, String> {
     std::env::current_dir().map_err(|error| format!("Unable to resolve current working directory: {error}"))
 }
@@ -64,6 +70,61 @@ fn compact_output(stdout: &[u8], stderr: &[u8]) -> String {
     } else {
         text
     }
+}
+
+fn infer_patch_targets(plan_summary: &str) -> Vec<PatchTarget> {
+    let lower = plan_summary.to_lowercase();
+    let mut targets = Vec::new();
+
+    if lower.contains("builder") || lower.contains("plan") || lower.contains("task") || lower.contains("execution") {
+        targets.push(PatchTarget {
+            path: "src/App.tsx",
+            reason: "Builder workflow state and UI are currently orchestrated in App.tsx.",
+        });
+        targets.push(PatchTarget {
+            path: "src/BuilderWorkflow.css",
+            reason: "Builder plan/task/activity presentation styles live in BuilderWorkflow.css.",
+        });
+    }
+
+    if lower.contains("backend") || lower.contains("tauri") || lower.contains("terminal") || lower.contains("build") || lower.contains("file") {
+        targets.push(PatchTarget {
+            path: "src-tauri/src/commands/builder_execution.rs",
+            reason: "Local execution, verification, and safety gates live in builder_execution.rs.",
+        });
+    }
+
+    if lower.contains("composer") || lower.contains("textbox") || lower.contains("chat") || lower.contains("onboarding") {
+        targets.push(PatchTarget {
+            path: "src/BuilderLifecycle.css",
+            reason: "Builder composer lifecycle sizing and positioning styles live in BuilderLifecycle.css.",
+        });
+    }
+
+    if targets.is_empty() {
+        targets.push(PatchTarget {
+            path: "src/App.tsx",
+            reason: "Default safe target for app-level behavior changes.",
+        });
+    }
+
+    targets
+}
+
+fn inspect_patch_targets(root: &Path, targets: &[PatchTarget]) -> (bool, String) {
+    let mut all_exist = true;
+    let mut details = Vec::new();
+
+    for target in targets {
+        let target_path = root.join(target.path);
+        let target_exists = exists(&target_path);
+        if !target_exists {
+            all_exist = false;
+        }
+        details.push(format!("{}: {} ({})", target.path, if target_exists { "found" } else { "missing" }, target.reason));
+    }
+
+    (all_exist, details.join(" | "))
 }
 
 async fn command_available(command: &str, arg: &str) -> bool {
@@ -127,6 +188,8 @@ pub async fn vivus_execution_preview(plan_summary: String) -> Result<BuilderExec
     let source_ready = has_package_json && has_src_dir;
     let verification_ready = has_npm && has_package_json;
     let plan_preview = plan_summary.chars().take(140).collect::<String>();
+    let patch_targets = infer_patch_targets(&plan_summary);
+    let (patch_targets_ready, patch_target_summary) = inspect_patch_targets(&root, &patch_targets);
 
     let git_status = if has_git {
         Some(run_safe_command(&root, "git", &["status", "--short"], 20).await)
@@ -142,6 +205,7 @@ pub async fn vivus_execution_preview(plan_summary: String) -> Result<BuilderExec
 
     let build_success = build_result.as_ref().map(|result| result.success).unwrap_or(false);
     let git_success = git_status.as_ref().map(|result| result.success).unwrap_or(false);
+    let patch_ready = source_ready && patch_targets_ready && git_success;
 
     let tasks = vec![
         task("task-1", "Analyze the request and convert it into acceptance criteria", "done"),
@@ -162,8 +226,8 @@ pub async fn vivus_execution_preview(plan_summary: String) -> Result<BuilderExec
         ),
         task(
             "task-5",
-            "Report verified result or stop with failure details",
-            if source_ready && (!verification_ready || build_success) { "done" } else { "failed" },
+            "Prepare safe patch target plan",
+            if patch_ready { "done" } else { "failed" },
         ),
     ];
 
@@ -217,17 +281,26 @@ pub async fn vivus_execution_preview(plan_summary: String) -> Result<BuilderExec
 
     activity_items.push(activity(
         "activity-6",
+        "Patch target plan",
+        patch_target_summary,
+        if patch_targets_ready { "done" } else { "blocked" },
+    ));
+
+    activity_items.push(activity(
+        "activity-7",
         "Patch execution",
-        "File writes remain disabled until the patch safety layer and rollback hooks are connected.".to_string(),
+        "File writes remain disabled until explicit diff preview, rollback checkpoint, and write approval are connected.".to_string(),
         "blocked",
     ));
 
-    let message = if verification_ready && build_success {
-        "Safe terminal verification completed. npm run build passed; file writes are still gated behind the next patch safety layer."
+    let message = if patch_ready && verification_ready && build_success {
+        "Safe execution phase completed: repo clean/status checked, npm build passed, and patch targets were identified. Next phase is diff preview + checkpointed file writes."
+    } else if verification_ready && build_success {
+        "Safe verification passed, but patch target preparation is blocked. Review target detection before allowing file writes."
     } else if verification_ready {
-        "Safe terminal verification ran, but npm run build failed. Review the build output before allowing AI file edits."
+        "Safe terminal verification ran, but npm run build failed. Do not enable patch writes until the build is stable."
     } else {
-        "Safe terminal bridge completed project/tool checks, but build verification could not run yet."
+        "Safe execution phase completed project/tool checks, but build verification could not run yet."
     };
 
     Ok(BuilderExecutionPreviewResponse {
