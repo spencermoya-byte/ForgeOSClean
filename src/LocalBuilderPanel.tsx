@@ -3,7 +3,6 @@ import {
   applyAndVerifyEdit,
   checkpointVerifiedEdit,
   prepareVerifiedEdit,
-  runVerifiedEditLoop,
   type VerifiedEditState,
 } from "./vivusExecutionLoop";
 import { getOllamaStatus, pickModel, type OllamaModelInfo } from "./builderOllama";
@@ -23,6 +22,8 @@ import {
   updateBuilderApproval,
   type BuilderApprovalItem,
 } from "./builderApprovalQueue";
+import { registerBuilderAttempt, resetBuilderAttempts } from "./builderLoopProtection";
+import { createVerifiedFixSession, updateVerificationCriterion } from "./verifiedFixCriteria";
 
 type BuilderPhase = "idle" | "checking-models" | "planning" | "running" | "approval-ready" | "complete" | "blocked";
 
@@ -35,13 +36,14 @@ type BuilderLog = {
 
 type TimelineStep = {
   id: string;
-  eventType: BuilderExecutionEvent["type"] | "models" | "plan" | "approval";
+  eventType: BuilderExecutionEvent["type"] | "models" | "plan" | "approval" | "criteria";
   label: string;
   detail: string;
   status: "pending" | "active" | "done" | "blocked";
 };
 
 const BASE_TIMELINE: TimelineStep[] = [
+  { id: "criteria", eventType: "criteria", label: "Acceptance criteria", detail: "Create required v1 verification checks.", status: "pending" },
   { id: "models", eventType: "models", label: "Check models", detail: "Connect to Ollama and select local planner/coder models.", status: "pending" },
   { id: "plan", eventType: "plan", label: "Plan request", detail: "Combine the user request with recent project memory.", status: "pending" },
   { id: "target", eventType: "infer-target", label: "Infer target", detail: "Find the safest project file to inspect and edit.", status: "pending" },
@@ -81,7 +83,7 @@ function historyStatus(stage: VerifiedEditState["stage"]): BuilderHistoryEntry["
   return "blocked";
 }
 
-function nextTimeline(current: TimelineStep[], event: BuilderExecutionEvent | { type: "models" | "plan" | "approval"; label: string; detail: string; status: TimelineStep["status"] }) {
+function nextTimeline(current: TimelineStep[], event: BuilderExecutionEvent | { type: "models" | "plan" | "approval" | "criteria"; label: string; detail: string; status: TimelineStep["status"] }) {
   const stepIndex = current.findIndex((step) => step.eventType === event.type);
   if (stepIndex < 0) return current;
   return current.map((step, index) => {
@@ -103,6 +105,7 @@ export function LocalBuilderPanel() {
   const [preparedState, setPreparedState] = React.useState<VerifiedEditState | null>(null);
   const [currentHistoryId, setCurrentHistoryId] = React.useState<string | null>(null);
   const [currentApprovalId, setCurrentApprovalId] = React.useState<string | null>(null);
+  const [currentCriteriaId, setCurrentCriteriaId] = React.useState<string | null>(null);
   const [history, setHistory] = React.useState<BuilderHistoryEntry[]>([]);
   const [approvals, setApprovals] = React.useState<BuilderApprovalItem[]>([]);
 
@@ -114,7 +117,7 @@ export function LocalBuilderPanel() {
   const refreshHistory = React.useCallback(() => setHistory(listBuilderHistory(projectPath)), [projectPath]);
   const refreshApprovals = React.useCallback(() => setApprovals(listBuilderApprovals(projectPath)), [projectPath]);
   const pushLog = React.useCallback((label: string, detail: string, status: BuilderLog["status"]) => setLogs((current) => [makeLog(label, detail, status), ...current].slice(0, 24)), []);
-  const applyTimelineEvent = React.useCallback((event: BuilderExecutionEvent | { type: "models" | "plan" | "approval"; label: string; detail: string; status: TimelineStep["status"] }) => {
+  const applyTimelineEvent = React.useCallback((event: BuilderExecutionEvent | { type: "models" | "plan" | "approval" | "criteria"; label: string; detail: string; status: TimelineStep["status"] }) => {
     setTimeline((current) => nextTimeline(current, event));
     pushLog(event.label, event.detail, event.status);
   }, [pushLog]);
@@ -155,6 +158,16 @@ export function LocalBuilderPanel() {
     const trimmed = task.trim();
     if (!trimmed || running) return;
 
+    const loopState = registerBuilderAttempt(projectPath, trimmed);
+    if (loopState.blocked) {
+      setPhase("blocked");
+      applyTimelineEvent({ type: "criteria", label: "Loop guard stopped task", detail: "Repeated attempts detected. Adjust the request before retrying.", status: "blocked" });
+      return;
+    }
+
+    const criteria = createVerifiedFixSession(projectPath, trimmed);
+    setCurrentCriteriaId(criteria.id);
+
     const start = Date.now();
     setStartedAt(start);
     setElapsedMs(0);
@@ -162,6 +175,7 @@ export function LocalBuilderPanel() {
     setPreparedState(null);
     setResult(null);
     setCurrentApprovalId(null);
+    applyTimelineEvent({ type: "criteria", label: "Acceptance criteria created", detail: "Target behavior, build pass, and no-regression checks are required.", status: "done" });
 
     const continuityContext = buildBuilderHistoryContext(projectPath);
     const historyEntry = addBuilderHistory({ projectPath, task: trimmed, status: "running", summary: "Builder patch preparation started.", stage: "preparing" });
@@ -196,13 +210,7 @@ export function LocalBuilderPanel() {
     setElapsedMs(Date.now() - start);
 
     if (prepared.stage === "diff-ready" && prepared.proposal?.changed) {
-      const approval = addBuilderApproval({
-        projectPath,
-        task: trimmed,
-        relativePath: prepared.proposal.relativePath,
-        diffPreview: prepared.proposal.diffPreview,
-        status: "pending",
-      });
+      const approval = addBuilderApproval({ projectPath, task: trimmed, relativePath: prepared.proposal.relativePath, diffPreview: prepared.proposal.diffPreview, status: "pending" });
       setCurrentApprovalId(approval.id);
       setPhase("approval-ready");
       applyTimelineEvent({ type: "approval", label: "Approval required", detail: `Review ${prepared.proposal.relativePath} before applying.`, status: "active" });
@@ -235,12 +243,19 @@ export function LocalBuilderPanel() {
     const nextResult = await applyAndVerifyEdit(checkpointed, preparedState.message);
     setResult(nextResult);
     const finalStatus = historyStatus(nextResult.stage);
+    const passed = nextResult.stage === "verified" || nextResult.stage === "repaired";
+    if (currentCriteriaId) {
+      updateVerificationCriterion(currentCriteriaId, "build-pass", passed);
+      updateVerificationCriterion(currentCriteriaId, "target-goal", passed);
+      updateVerificationCriterion(currentCriteriaId, "no-regression", passed);
+    }
+    if (passed) resetBuilderAttempts(projectPath, task.trim());
     updateBuilderApproval(currentApprovalId, { status: nextResult.stage === "rolled-back" ? "rolled-back" : "applied" });
     updateBuilderHistory(currentHistoryId, { status: finalStatus, summary: nextResult.message, changedFile: nextResult.proposal?.relativePath, stage: nextResult.stage });
     updateBuilderSession({ projectPath, lastTask: task.trim(), lastStatus: finalStatus, lastChangedFile: nextResult.proposal?.relativePath, updatedAt: new Date().toISOString() });
     refreshApprovals();
     refreshHistory();
-    if (nextResult.stage === "verified" || nextResult.stage === "repaired") setPhase("complete");
+    if (passed) setPhase("complete");
     else setPhase("blocked");
   }
 
@@ -256,51 +271,14 @@ export function LocalBuilderPanel() {
 
   return (
     <section className="local-builder-panel">
-      <div className="local-builder-header">
-        <div>
-          <h2>Local AI Builder</h2>
-          <p>Planner + coder + verified patch loop for the active workspace.</p>
-        </div>
-        <span className={`local-builder-phase ${phase}`}>{phase} • {(elapsedMs / 1000).toFixed(1)}s</span>
-      </div>
-      <div className="local-builder-grid">
-        <div className="local-builder-card"><strong>Workspace</strong><span>{projectPath}</span></div>
-        <div className="local-builder-card"><strong>Planner</strong><span>{plannerModel}</span></div>
-        <div className="local-builder-card"><strong>Coder</strong><span>{coderModel}</span></div>
-      </div>
-      <div className="local-builder-input-card">
-        <textarea value={task} onChange={(event) => setTask(event.target.value)} placeholder="Describe the change Vivus should make to the current project..." />
-        <button type="button" onClick={() => void prepareBuilderPatch()} disabled={running || !task.trim()}>{running ? "Running..." : "Prepare Patch"}</button>
-      </div>
-      <div className="local-builder-result">
-        <div className="local-builder-result-header"><strong>Live execution timeline</strong><span>{running ? "real-time" : phase}</span></div>
-        <div className="local-builder-log">
-          {timeline.map((step) => <div key={step.id} className={`local-builder-log-row ${step.status}`}><span /><div><strong>{step.label}</strong><em>{step.detail}</em></div></div>)}
-        </div>
-      </div>
-      {preparedState?.proposal?.changed && phase === "approval-ready" && (
-        <div className="local-builder-result">
-          <div className="local-builder-result-header"><strong>Approval required</strong><span>{preparedState.proposal.relativePath}</span></div>
-          <p>Review this diff before Vivus writes to disk.</p>
-          <pre>{preparedState.proposal.diffPreview}</pre>
-          <div className="file-editor-actions">
-            <button type="button" onClick={() => void applyApprovedPatch()}>Approve & Apply</button>
-            <button type="button" onClick={rejectPreparedPatch}>Reject</button>
-          </div>
-        </div>
-      )}
-      {approvals.length > 0 && (
-        <div className="local-builder-result">
-          <div className="local-builder-result-header"><strong>Approval queue</strong><span>{approvals.length} saved</span></div>
-          {approvals.slice(0, 5).map((item) => <p key={item.id}><strong>{item.status}</strong> — {item.task} • {item.relativePath}</p>)}
-        </div>
-      )}
-      {history.length > 0 && (
-        <div className="local-builder-result"><div className="local-builder-result-header"><strong>Recent builder history</strong><span>{history.length} saved</span></div>{history.slice(0, 5).map((entry) => <p key={entry.id}><strong>{entry.status}</strong> — {entry.task}{entry.changedFile ? ` • ${entry.changedFile}` : ""}</p>)}</div>
-      )}
-      {result && phase !== "approval-ready" && (
-        <div className="local-builder-result"><div className="local-builder-result-header"><strong>{stageLabel(result)}</strong><span>{result.proposal?.relativePath ?? "No file changed"}</span></div><p>{result.message}</p>{result.proposal?.diffPreview && <pre>{result.proposal.diffPreview}</pre>}</div>
-      )}
+      <div className="local-builder-header"><div><h2>Local AI Builder</h2><p>Planner + coder + verified patch loop for the active workspace.</p></div><span className={`local-builder-phase ${phase}`}>{phase} • {(elapsedMs / 1000).toFixed(1)}s</span></div>
+      <div className="local-builder-grid"><div className="local-builder-card"><strong>Workspace</strong><span>{projectPath}</span></div><div className="local-builder-card"><strong>Planner</strong><span>{plannerModel}</span></div><div className="local-builder-card"><strong>Coder</strong><span>{coderModel}</span></div></div>
+      <div className="local-builder-input-card"><textarea value={task} onChange={(event) => setTask(event.target.value)} placeholder="Describe the change Vivus should make to the current project..." /><button type="button" onClick={() => void prepareBuilderPatch()} disabled={running || !task.trim()}>{running ? "Running..." : "Prepare Patch"}</button></div>
+      <div className="local-builder-result"><div className="local-builder-result-header"><strong>Live execution timeline</strong><span>{running ? "real-time" : phase}</span></div><div className="local-builder-log">{timeline.map((step) => <div key={step.id} className={`local-builder-log-row ${step.status}`}><span /><div><strong>{step.label}</strong><em>{step.detail}</em></div></div>)}</div></div>
+      {preparedState?.proposal?.changed && phase === "approval-ready" && <div className="local-builder-result"><div className="local-builder-result-header"><strong>Approval required</strong><span>{preparedState.proposal.relativePath}</span></div><p>Review this diff before Vivus writes to disk.</p><pre>{preparedState.proposal.diffPreview}</pre><div className="file-editor-actions"><button type="button" onClick={() => void applyApprovedPatch()}>Approve & Apply</button><button type="button" onClick={rejectPreparedPatch}>Reject</button></div></div>}
+      {approvals.length > 0 && <div className="local-builder-result"><div className="local-builder-result-header"><strong>Approval queue</strong><span>{approvals.length} saved</span></div>{approvals.slice(0, 5).map((item) => <p key={item.id}><strong>{item.status}</strong> — {item.task} • {item.relativePath}</p>)}</div>}
+      {history.length > 0 && <div className="local-builder-result"><div className="local-builder-result-header"><strong>Recent builder history</strong><span>{history.length} saved</span></div>{history.slice(0, 5).map((entry) => <p key={entry.id}><strong>{entry.status}</strong> — {entry.task}{entry.changedFile ? ` • ${entry.changedFile}` : ""}</p>)}</div>}
+      {result && phase !== "approval-ready" && <div className="local-builder-result"><div className="local-builder-result-header"><strong>{stageLabel(result)}</strong><span>{result.proposal?.relativePath ?? "No file changed"}</span></div><p>{result.message}</p>{result.proposal?.diffPreview && <pre>{result.proposal.diffPreview}</pre>}</div>}
       <div className="local-builder-log">{logs.map((log) => <div key={log.id} className={`local-builder-log-row ${log.status}`}><span /><div><strong>{log.label}</strong><em>{log.detail}</em></div></div>)}</div>
     </section>
   );
