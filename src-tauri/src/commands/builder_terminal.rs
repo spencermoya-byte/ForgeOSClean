@@ -1,8 +1,14 @@
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 use std::time::Instant;
-use tokio::process::Command;
+use tauri::State;
+use tokio::net::TcpStream;
+use tokio::process::{Child, Command};
 use tokio::time::{timeout, Duration};
+
+const DEV_SERVER_URL: &str = "http://127.0.0.1:1420";
+const DEV_SERVER_HOST_PORT: &str = "127.0.0.1:1420";
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct SafeCommandRequest {
@@ -40,8 +46,22 @@ pub struct DevServerResponse {
     pub ok: bool,
     pub url: String,
     pub pid: Option<u32>,
+    pub status: String,
+    #[serde(rename = "projectPath")]
+    pub project_path: Option<String>,
     #[serde(rename = "blockedReason")]
     pub blocked_reason: Option<String>,
+}
+
+struct RunningDevServer {
+    child: Child,
+    pid: Option<u32>,
+    project_path: String,
+}
+
+#[derive(Default)]
+pub struct PreviewServerState {
+    running: Mutex<Option<RunningDevServer>>,
 }
 
 struct SafeCommandDefinition {
@@ -63,6 +83,17 @@ fn blocked_response(command_id: String, command_display: String, blocked_reason:
     SafeCommandResponse { ok: false, command_id, command_display, exit_code: None, stdout: String::new(), stderr: String::new(), duration_ms, blocked_reason: Some(blocked_reason) }
 }
 
+fn dev_server_response(ok: bool, status: &str, pid: Option<u32>, project_path: Option<String>, blocked_reason: Option<String>) -> DevServerResponse {
+    DevServerResponse {
+        ok,
+        url: if ok { DEV_SERVER_URL.to_string() } else { String::new() },
+        pid,
+        status: status.to_string(),
+        project_path,
+        blocked_reason,
+    }
+}
+
 fn resolve_project_path(project_path: &str) -> Result<PathBuf, String> {
     let requested_path = project_path.trim();
     if requested_path.is_empty() { return Err("Project path is empty.".to_string()); }
@@ -77,6 +108,10 @@ fn resolve_project_path(project_path: &str) -> Result<PathBuf, String> {
 fn path_exists(project_root: &Path, child: &str) -> bool { project_root.join(child).exists() }
 
 async fn executable_available(executable: &str) -> bool { Command::new(executable).arg("--version").output().await.is_ok() }
+
+async fn dev_server_port_is_open() -> bool {
+    timeout(Duration::from_millis(400), TcpStream::connect(DEV_SERVER_HOST_PORT)).await.is_ok()
+}
 
 #[tauri::command]
 pub async fn vivus_run_safe_command(request: SafeCommandRequest) -> Result<SafeCommandResponse, String> {
@@ -115,27 +150,98 @@ pub async fn vivus_run_safe_command(request: SafeCommandRequest) -> Result<SafeC
 }
 
 #[tauri::command]
-pub async fn vivus_start_dev_server(request: DevServerRequest) -> Result<DevServerResponse, String> {
+pub async fn vivus_start_dev_server(request: DevServerRequest, state: State<'_, PreviewServerState>) -> Result<DevServerResponse, String> {
     let project_root = match resolve_project_path(&request.project_path) {
         Ok(path) => path,
-        Err(reason) => return Ok(DevServerResponse { ok: false, url: String::new(), pid: None, blocked_reason: Some(reason) }),
+        Err(reason) => return Ok(dev_server_response(false, "failed", None, None, Some(reason))),
     };
 
+    let canonical_project_path = project_root.to_string_lossy().to_string();
+
+    {
+        let mut running = state.running.lock().map_err(|_| "Preview server state lock failed.".to_string())?;
+
+        if let Some(server) = running.as_mut() {
+            match server.child.try_wait() {
+                Ok(None) if server.project_path == canonical_project_path => {
+                    return Ok(dev_server_response(true, "running", server.pid, Some(server.project_path.clone()), None));
+                }
+                Ok(None) => {
+                    return Ok(dev_server_response(
+                        false,
+                        "blocked",
+                        server.pid,
+                        Some(server.project_path.clone()),
+                        Some("A preview server is already running for a different project folder. Stop it before starting another preview.".to_string()),
+                    ));
+                }
+                Ok(Some(_)) | Err(_) => {
+                    *running = None;
+                }
+            }
+        }
+    }
+
+    if dev_server_port_is_open().await {
+        return Ok(dev_server_response(true, "running", None, Some(canonical_project_path), None));
+    }
+
     if !path_exists(&project_root, "package.json") {
-        return Ok(DevServerResponse { ok: false, url: String::new(), pid: None, blocked_reason: Some("Blocked because package.json was not found in the selected project.".to_string()) });
+        return Ok(dev_server_response(false, "failed", None, Some(canonical_project_path), Some("Blocked because package.json was not found in the selected project.".to_string())));
     }
 
     if !executable_available("npm").await {
-        return Ok(DevServerResponse { ok: false, url: String::new(), pid: None, blocked_reason: Some("Blocked because npm is not available on this machine.".to_string()) });
+        return Ok(dev_server_response(false, "failed", None, Some(canonical_project_path), Some("Blocked because npm is not available on this machine.".to_string())));
     }
 
     let mut command = Command::new("npm");
     command.args(["run", "dev", "--", "--host", "127.0.0.1", "--port", "1420"])
-        .current_dir(project_root)
+        .current_dir(&project_root)
         .kill_on_drop(false);
 
     match command.spawn() {
-        Ok(child) => Ok(DevServerResponse { ok: true, url: "http://127.0.0.1:1420".to_string(), pid: child.id(), blocked_reason: None }),
-        Err(error) => Ok(DevServerResponse { ok: false, url: String::new(), pid: None, blocked_reason: Some(format!("Failed to start dev server: {error}")) }),
+        Ok(child) => {
+            let pid = child.id();
+            let mut running = state.running.lock().map_err(|_| "Preview server state lock failed.".to_string())?;
+            *running = Some(RunningDevServer { child, pid, project_path: canonical_project_path.clone() });
+            Ok(dev_server_response(true, "starting", pid, Some(canonical_project_path), None))
+        }
+        Err(error) => Ok(dev_server_response(false, "failed", None, Some(canonical_project_path), Some(format!("Failed to start dev server: {error}")))),
     }
+}
+
+#[tauri::command]
+pub async fn vivus_stop_dev_server(state: State<'_, PreviewServerState>) -> Result<DevServerResponse, String> {
+    let server = {
+        let mut running = state.running.lock().map_err(|_| "Preview server state lock failed.".to_string())?;
+        running.take()
+    };
+
+    let Some(mut server) = server else {
+        return Ok(dev_server_response(true, "stopped", None, None, None));
+    };
+
+    let project_path = server.project_path.clone();
+    let pid = server.pid;
+
+    match server.child.kill().await {
+        Ok(_) => Ok(dev_server_response(true, "stopped", pid, Some(project_path), None)),
+        Err(error) => Ok(dev_server_response(false, "failed", pid, Some(project_path), Some(format!("Failed to stop dev server: {error}")))),
+    }
+}
+
+#[tauri::command]
+pub async fn vivus_dev_server_status(state: State<'_, PreviewServerState>) -> Result<DevServerResponse, String> {
+    let mut running = state.running.lock().map_err(|_| "Preview server state lock failed.".to_string())?;
+
+    if let Some(server) = running.as_mut() {
+        match server.child.try_wait() {
+            Ok(None) => return Ok(dev_server_response(true, "running", server.pid, Some(server.project_path.clone()), None)),
+            Ok(Some(_)) | Err(_) => {
+                *running = None;
+            }
+        }
+    }
+
+    Ok(dev_server_response(true, "stopped", None, None, None))
 }
