@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useQueryClient } from 'react-query';
 import { createResource, updateResource } from '../../api/resource';
 import { toast } from 'react-toastify';
 
@@ -21,7 +20,6 @@ const ResourceForm: React.FC<ResourceFormProps> = ({ initialData, isEdit = false
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -41,8 +39,7 @@ const ResourceForm: React.FC<ResourceFormProps> = ({ initialData, isEdit = false
         await createResource(formData);
         toast.success('Resource created successfully');
       }
-      
-      await queryClient.invalidateQueries('resources');
+
       navigate('/resources');
     } catch (err) {
       toast.error(isEdit ? 'Failed to update resource' : 'Failed to create resource');
@@ -57,7 +54,7 @@ const ResourceForm: React.FC<ResourceFormProps> = ({ initialData, isEdit = false
       <h2 className="text-2xl font-bold text-white mb-6">
         {isEdit ? 'Edit Resource' : 'Create New Resource'}
       </h2>
-      
+
       <form onSubmit={handleSubmit} className="bg-gray-800 rounded-lg p-6">
         <div className="mb-4">
           <label htmlFor="name" className="block text-white mb-2">Name</label>
@@ -71,7 +68,7 @@ const ResourceForm: React.FC<ResourceFormProps> = ({ initialData, isEdit = false
             className="w-full p-3 border rounded-lg bg-gray-700 text-white border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        
+
         <div className="mb-6">
           <label htmlFor="description" className="block text-white mb-2">Description</label>
           <textarea
@@ -83,7 +80,7 @@ const ResourceForm: React.FC<ResourceFormProps> = ({ initialData, isEdit = false
             className="w-full p-3 border rounded-lg bg-gray-700 text-white border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        
+
         <div className="flex justify-end space-x-3">
           <button
             type="button"
