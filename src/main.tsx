@@ -5,8 +5,10 @@ import './App.css';
 import './workspaceSticky.css';
 import './commitsLayout.css';
 import { startLivePreviewInstaller } from './livePreviewInstaller';
+import { startTerminalWorkflowInstaller } from './terminalWorkflowInstaller';
 
 startLivePreviewInstaller();
+startTerminalWorkflowInstaller();
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
