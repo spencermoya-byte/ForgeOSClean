@@ -10,6 +10,7 @@ import './pluginDock.css';
 import './pluginPanel.css';
 import './pluginApproval.css';
 import './pluginAudit.css';
+import './pluginSandbox.css';
 import { AppErrorBoundary } from './appErrorBoundary';
 import { startLivePreviewInstaller } from './livePreviewInstaller';
 import { startTerminalWorkflowInstaller } from './terminalWorkflowInstaller';
