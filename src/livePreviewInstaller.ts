@@ -11,6 +11,7 @@ type LivePreviewStartResponse = {
 
 const DEFAULT_PREVIEW_URL = "http://127.0.0.1:1420";
 const DEFAULT_PROJECT_PATH = "C:/ForgeOSClean";
+const PREVIEW_PROJECT_PATH_KEY = "vivus.previewProjectPath.v1";
 
 let previewUrl = "";
 let previewPid: number | null = null;
@@ -21,6 +22,41 @@ let mountedPanel: HTMLElement | null = null;
 
 function hasTauriRuntime() {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
+function escapeHtml(value: string) {
+  return value.replace(
+    /[&<>\"]/g,
+    (char) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+      }[char] ?? char)
+  );
+}
+
+function getPreviewProjectPath() {
+  try {
+    const savedPath = window.localStorage.getItem(PREVIEW_PROJECT_PATH_KEY)?.trim();
+    return savedPath || DEFAULT_PROJECT_PATH;
+  } catch {
+    return DEFAULT_PROJECT_PATH;
+  }
+}
+
+function setPreviewProjectPath(path: string) {
+  const trimmedPath = path.trim();
+
+  try {
+    window.localStorage.setItem(
+      PREVIEW_PROJECT_PATH_KEY,
+      trimmedPath || DEFAULT_PROJECT_PATH
+    );
+  } catch {
+    // Local storage is optional. The default path still keeps preview usable.
+  }
 }
 
 function normalizePreviewResponse(response: LivePreviewStartResponse | null | undefined) {
@@ -56,6 +92,7 @@ function refreshPreview() {
 async function startLivePreview() {
   if (previewStatus === "starting") return;
 
+  const projectPath = getPreviewProjectPath();
   setStatus("starting");
 
   if (!hasTauriRuntime()) {
@@ -73,7 +110,7 @@ async function startLivePreview() {
       "vivus_start_dev_server",
       {
         request: {
-          projectPath: DEFAULT_PROJECT_PATH,
+          projectPath,
         },
       }
     );
@@ -113,6 +150,27 @@ function previewFrameUrl() {
   }vivus_refresh=${refreshKey}`;
 }
 
+function bindPreviewControls() {
+  mountedPanel
+    ?.querySelector<HTMLInputElement>('[data-preview-path-input]')
+    ?.addEventListener("input", (event) => {
+      const input = event.currentTarget as HTMLInputElement;
+      setPreviewProjectPath(input.value);
+    });
+
+  mountedPanel
+    ?.querySelector('[data-preview-action="start"]')
+    ?.addEventListener("click", startLivePreview);
+
+  mountedPanel
+    ?.querySelector('[data-preview-action="refresh"]')
+    ?.addEventListener("click", refreshPreview);
+
+  mountedPanel
+    ?.querySelector('[data-preview-action="external"]')
+    ?.addEventListener("click", openExternalPreview);
+}
+
 function renderMountedPanel() {
   if (!mountedPanel) return;
 
@@ -120,17 +178,9 @@ function renderMountedPanel() {
     previewStatus === "running" && Boolean(previewUrl);
 
   const frameUrl = previewFrameUrl();
-
-  const escapedReason = failureReason.replace(
-    /[&<>\"]/g,
-    (char) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-      }[char] ?? char)
-  );
+  const projectPath = getPreviewProjectPath();
+  const escapedReason = escapeHtml(failureReason);
+  const escapedProjectPath = escapeHtml(projectPath);
 
   mountedPanel.innerHTML = `
     <div class="live-preview-header">
@@ -138,13 +188,18 @@ function renderMountedPanel() {
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
         <div>
           <h2>Live Preview</h2>
-          <p>Embedded localhost preview for the current Vivus project.</p>
+          <p>Embedded localhost preview for the selected project folder.</p>
         </div>
       </div>
       <div class="live-preview-status ${previewStatus}">
         <span></span>${previewStatus}
       </div>
     </div>
+
+    <label class="live-preview-path-field">
+      <span>Project folder</span>
+      <input type="text" value="${escapedProjectPath}" spellcheck="false" data-preview-path-input />
+    </label>
 
     <div class="live-preview-actions">
       <button type="button" data-preview-action="start" ${previewStatus === "starting" ? "disabled" : ""}>
@@ -170,17 +225,7 @@ function renderMountedPanel() {
     </div>
   `;
 
-  mountedPanel
-    .querySelector('[data-preview-action="start"]')
-    ?.addEventListener("click", startLivePreview);
-
-  mountedPanel
-    .querySelector('[data-preview-action="refresh"]')
-    ?.addEventListener("click", refreshPreview);
-
-  mountedPanel
-    .querySelector('[data-preview-action="external"]')
-    ?.addEventListener("click", openExternalPreview);
+  bindPreviewControls();
 }
 
 function installLivePreviewPanel() {
