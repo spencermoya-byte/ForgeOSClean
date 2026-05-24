@@ -33,6 +33,15 @@ type SafeCommandResponse = {
   blockedReason?: string;
 };
 
+type DevServerResponse = {
+  ok: boolean;
+  url: string;
+  pid?: number | null;
+  status: string;
+  projectPath?: string | null;
+  blockedReason?: string | null;
+};
+
 const PROJECT_PATH_KEY = "vivus.previewProjectPath.v1";
 const DEFAULT_PROJECT_PATH = "C:/ForgeOSClean";
 
@@ -52,9 +61,11 @@ const COMMANDS: Array<{ id: CommandId; label: string; group: string }> = [
 
 let mountedPanel: HTMLElement | null = null;
 let projectPath = readProjectPath();
-let runningCommand: CommandId | null = null;
+let runningCommand: CommandId | "dev-server" | null = null;
 let output = "";
 let lastStatus = "Idle";
+let devServerStatus = "unknown";
+let devServerUrl = "";
 let activeSession = ensureTerminalSession(projectPath);
 
 function hasTauriRuntime() {
@@ -94,6 +105,7 @@ function persistProjectPath(path: string) {
   } catch {}
 
   restoreSessionOutput();
+  void refreshDevServerStatus();
   renderMountedPanel();
 }
 
@@ -139,6 +151,79 @@ function clearOutput() {
   activeSession = ensureTerminalSession(projectPath);
   lastStatus = "Cleared";
   renderMountedPanel();
+}
+
+async function invokeDevServer(command: "vivus_start_dev_server" | "vivus_stop_dev_server" | "vivus_dev_server_status") {
+  if (!hasTauriRuntime()) {
+    appendOutput("Tauri runtime is required for dev server controls.");
+    return null;
+  }
+
+  const { invoke } = await import("@tauri-apps/api/core");
+  if (command === "vivus_start_dev_server") {
+    return invoke<DevServerResponse>(command, { request: { projectPath } });
+  }
+  return invoke<DevServerResponse>(command);
+}
+
+async function refreshDevServerStatus() {
+  try {
+    const response = await invokeDevServer("vivus_dev_server_status");
+    if (!response) return;
+    devServerStatus = response.status;
+    devServerUrl = response.url || devServerUrl;
+    renderMountedPanel();
+  } catch {
+    devServerStatus = "unknown";
+  }
+}
+
+async function startDevServer() {
+  if (runningCommand) return;
+  runningCommand = "dev-server";
+  lastStatus = "Starting dev server...";
+  appendOutput("\n$ npm run dev\n");
+
+  try {
+    const response = await invokeDevServer("vivus_start_dev_server");
+    if (!response) return;
+    devServerStatus = response.status;
+    devServerUrl = response.url || devServerUrl;
+    lastStatus = response.ok ? `Preview ${response.status}` : "Preview failed";
+    appendOutput(response.ok ? `Preview server ${response.status}: ${response.url || "pending"}` : `Preview failed: ${response.blockedReason ?? "unknown"}`);
+    if (response.ok) window.dispatchEvent(new Event("vivus-preview-refresh"));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    lastStatus = "Preview failed";
+    appendOutput(message);
+  } finally {
+    runningCommand = null;
+    renderMountedPanel();
+  }
+}
+
+async function stopDevServer() {
+  if (runningCommand) return;
+  runningCommand = "dev-server";
+  lastStatus = "Stopping dev server...";
+  appendOutput("\n$ stop preview server\n");
+
+  try {
+    const response = await invokeDevServer("vivus_stop_dev_server");
+    if (!response) return;
+    devServerStatus = response.status;
+    devServerUrl = response.url || "";
+    lastStatus = response.ok ? "Preview stopped" : "Preview stop failed";
+    appendOutput(response.ok ? "Preview server stopped." : `Preview stop failed: ${response.blockedReason ?? "unknown"}`);
+    window.dispatchEvent(new Event("vivus-preview-refresh"));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    lastStatus = "Preview stop failed";
+    appendOutput(message);
+  } finally {
+    runningCommand = null;
+    renderMountedPanel();
+  }
 }
 
 async function runCommand(commandId: CommandId) {
@@ -198,6 +283,9 @@ function bindControls() {
   mountedPanel?.querySelector<HTMLInputElement>("[data-terminal-project-path]")?.addEventListener("input", (event) => persistProjectPath((event.currentTarget as HTMLInputElement).value));
   mountedPanel?.querySelector("[data-terminal-clear]")?.addEventListener("click", clearOutput);
   mountedPanel?.querySelector("[data-terminal-new]")?.addEventListener("click", createSession);
+  mountedPanel?.querySelector("[data-terminal-start-preview]")?.addEventListener("click", () => void startDevServer());
+  mountedPanel?.querySelector("[data-terminal-stop-preview]")?.addEventListener("click", () => void stopDevServer());
+  mountedPanel?.querySelector("[data-terminal-refresh-preview-status]")?.addEventListener("click", () => void refreshDevServerStatus());
 
   mountedPanel?.querySelectorAll<HTMLElement>("[data-terminal-session]").forEach((button) => {
     button.addEventListener("click", () => switchSession(button.dataset.terminalSession ?? activeSession.id));
@@ -238,7 +326,7 @@ function renderMountedPanel() {
     <div class="terminal-workflow-header">
       <div>
         <h2>Console</h2>
-        <p>Persistent project terminal for build, git, verification, and debugging.</p>
+        <p>Persistent project terminal for build, git, verification, preview, and debugging.</p>
       </div>
       <div class="terminal-status ${runningCommand ? "running" : "idle"}">${escapeHtml(lastStatus)}</div>
     </div>
@@ -252,6 +340,14 @@ function renderMountedPanel() {
       <div>${renderSessions()}</div>
       <button type="button" data-terminal-new>+ Terminal</button>
       ${sessions.length > 1 ? `<button type="button" data-terminal-delete-session="${activeSession.id}">Delete Current</button>` : ""}
+    </div>
+
+    <div class="terminal-preview-controls">
+      <strong>Preview server</strong>
+      <span>${escapeHtml(devServerStatus)}${devServerUrl ? ` • ${escapeHtml(devServerUrl)}` : ""}</span>
+      <button type="button" data-terminal-start-preview ${runningCommand ? "disabled" : ""}>Start Preview</button>
+      <button type="button" data-terminal-stop-preview ${runningCommand ? "disabled" : ""}>Stop Preview</button>
+      <button type="button" data-terminal-refresh-preview-status ${runningCommand ? "disabled" : ""}>Status</button>
     </div>
 
     <div class="terminal-command-groups">
@@ -279,6 +375,7 @@ function installTerminalWorkflowPanel() {
   mountedPanel.classList.add("terminal-workflow-panel");
   projectPath = readProjectPath();
   restoreSessionOutput();
+  void refreshDevServerStatus();
   renderMountedPanel();
 }
 
