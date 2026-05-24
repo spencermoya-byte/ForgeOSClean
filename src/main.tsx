@@ -6,6 +6,7 @@ import './workspaceSticky.css';
 import './commitsLayout.css';
 import './executionPolicyStyles.css';
 import './workspaceUtilityRail.css';
+import './vivusResponsiveFix.css';
 import { AppErrorBoundary } from './appErrorBoundary';
 import { startLivePreviewInstaller } from './livePreviewInstaller';
 import { startTerminalWorkflowInstaller } from './terminalWorkflowInstaller';
