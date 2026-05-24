@@ -3,7 +3,6 @@ mod commands;
 pub fn run() {
     tauri::Builder::default()
         .manage(commands::builder_terminal::PreviewServerState::default())
-        .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             commands::builder_execution::vivus_execution_preview,
             commands::builder_terminal::vivus_run_safe_command,
