@@ -15,11 +15,20 @@ export type ExecutionActivity = {
   status: ExecutionActivityStatus;
 };
 
+export type BuildDiagnostic = {
+  file: string | null;
+  line: number | null;
+  column: number | null;
+  code: string | null;
+  message: string;
+};
+
 export type BuilderExecutionResult = {
   backendAvailable: boolean;
   message: string;
   tasks: ExecutionTask[];
   activity: ExecutionActivity[];
+  diagnostics: BuildDiagnostic[];
 };
 
 export type SafeCommandResult = {
@@ -126,6 +135,7 @@ function normalizeExecutionResult(result: TauriExecutionPreview | null | undefin
     message: result?.message ?? "Execution bridge completed with fallback status.",
     tasks: result?.tasks?.length ? result.tasks : fallbackTasks,
     activity: result?.activity?.length ? result.activity : fallbackActivity,
+    diagnostics: Array.isArray(result?.diagnostics) ? (result.diagnostics as BuildDiagnostic[]) : [],
   };
 }
 
