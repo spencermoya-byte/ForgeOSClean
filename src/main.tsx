@@ -4,6 +4,7 @@ import App from './App';
 import './App.css';
 import './workspaceSticky.css';
 import './commitsLayout.css';
+import { AppErrorBoundary } from './appErrorBoundary';
 import { startLivePreviewInstaller } from './livePreviewInstaller';
 import { startTerminalWorkflowInstaller } from './terminalWorkflowInstaller';
 import { startLocalBuilderInstaller } from './localBuilderInstaller';
@@ -17,6 +18,8 @@ const root = ReactDOM.createRoot(
 );
 root.render(
   <React.StrictMode>
-    <App />
+    <AppErrorBoundary>
+      <App />
+    </AppErrorBoundary>
   </React.StrictMode>
 );
