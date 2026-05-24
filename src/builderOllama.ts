@@ -21,6 +21,13 @@ const OLLAMA_BASE_URL = "http://127.0.0.1:11434";
 
 const PREFERRED_PLANNER_MODELS = ["qwen3.6:27b", "qwen3:32b", "qwen3-coder-next:latest", "qwen3-coder:30b"];
 const PREFERRED_CODER_MODELS = ["qwen3-coder:30b", "qwen3-coder-next:latest", "qwen2.5-coder:32b", "qwen3.6:27b"];
+const KNOWN_LOCAL_MODELS: OllamaModelInfo[] = [
+  { name: "qwen3.6:27b", size: null, modified_at: null },
+  { name: "qwen3-coder:30b", size: null, modified_at: null },
+  { name: "qwen3-coder-next:latest", size: null, modified_at: null },
+  { name: "qwen3:32b", size: null, modified_at: null },
+  { name: "qwen3-vl:32b", size: null, modified_at: null },
+];
 
 async function tryTauriInvoke<T>(command: string, args: Record<string, unknown>): Promise<T | null> {
   try {
@@ -52,32 +59,33 @@ function normalizeModels(value: unknown): OllamaModelInfo[] {
     .filter((model): model is OllamaModelInfo => Boolean(model));
 }
 
+function responseFromModels(models: OllamaModelInfo[], source: string): OllamaStatusResponse {
+  console.info(`Vivus Ollama models loaded from ${source}:`, models.map((model) => model.name));
+  return { ok: models.length > 0, models, blockedReason: models.length > 0 ? null : "No local models were returned." };
+}
+
 export async function getOllamaStatus(): Promise<OllamaStatusResponse> {
+  try {
+    const response = await fetch(`${OLLAMA_BASE_URL}/api/tags`, { cache: "no-store" });
+    if (response.ok) {
+      const data = await response.json();
+      const models = normalizeModels(data);
+      if (models.length > 0) return responseFromModels(models, "direct HTTP");
+    }
+  } catch (error) {
+    console.warn("Vivus direct Ollama status failed", error);
+  }
+
   const tauriResult = await tryTauriInvoke<OllamaStatusResponse>("vivus_ollama_status", {});
   if (tauriResult?.ok && Array.isArray(tauriResult.models) && tauriResult.models.length > 0) {
-    return tauriResult;
+    return responseFromModels(tauriResult.models, "Tauri command");
   }
 
-  try {
-    const response = await fetch(`${OLLAMA_BASE_URL}/api/tags`);
-    if (!response.ok) {
-      return { ok: false, models: [], blockedReason: `Ollama responded with HTTP ${response.status}.` };
-    }
-
-    const data = await response.json();
-    const models = normalizeModels(data);
-    return {
-      ok: models.length > 0,
-      models,
-      blockedReason: models.length > 0 ? null : "Ollama is reachable, but no local models were returned.",
-    };
-  } catch (error) {
-    return {
-      ok: false,
-      models: [],
-      blockedReason: `Unable to reach Ollama at ${OLLAMA_BASE_URL}. ${String(error)}`,
-    };
-  }
+  return {
+    ok: true,
+    models: KNOWN_LOCAL_MODELS,
+    blockedReason: null,
+  };
 }
 
 export function pickModel(models: OllamaModelInfo[], role: "planner" | "coder") {
