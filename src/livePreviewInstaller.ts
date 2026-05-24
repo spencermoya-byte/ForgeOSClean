@@ -10,6 +10,7 @@ type LivePreviewStartResponse = {
 };
 
 const DEFAULT_PREVIEW_URL = "http://127.0.0.1:1420";
+const DEFAULT_PROJECT_PATH = "C:/ForgeOSClean";
 
 let previewUrl = "";
 let previewPid: number | null = null;
@@ -24,9 +25,20 @@ function hasTauriRuntime() {
 
 function normalizePreviewResponse(response: LivePreviewStartResponse | null | undefined) {
   const failure = response?.failure_reason ?? response?.failureReason ?? "";
-  const url = typeof response?.url === "string" && response.url.trim() ? response.url.trim() : DEFAULT_PREVIEW_URL;
-  const pid = typeof response?.pid === "number" ? response.pid : null;
-  return { ok: !failure, url, pid, failureReason: failure };
+  const url = typeof response?.url === "string" && response.url.trim()
+    ? response.url.trim()
+    : DEFAULT_PREVIEW_URL;
+
+  const pid = typeof response?.pid === "number"
+    ? response.pid
+    : null;
+
+  return {
+    ok: !failure,
+    url,
+    pid,
+    failureReason: failure,
+  };
 }
 
 function setStatus(status: PreviewStatus, reason = "") {
@@ -43,6 +55,7 @@ function refreshPreview() {
 
 async function startLivePreview() {
   if (previewStatus === "starting") return;
+
   setStatus("starting");
 
   if (!hasTauriRuntime()) {
@@ -55,18 +68,35 @@ async function startLivePreview() {
 
   try {
     const { invoke } = await import("@tauri-apps/api/core");
-    const response = await invoke<LivePreviewStartResponse>("vivus_start_dev_server");
+
+    const response = await invoke<LivePreviewStartResponse>(
+      "vivus_start_dev_server",
+      {
+        request: {
+          projectPath: DEFAULT_PROJECT_PATH,
+        },
+      }
+    );
+
     const normalized = normalizePreviewResponse(response);
+
     if (!normalized.ok) {
-      setStatus("failed", normalized.failureReason || "Preview server failed to start.");
+      setStatus(
+        "failed",
+        normalized.failureReason || "Preview server failed to start."
+      );
       return;
     }
+
     previewUrl = normalized.url;
     previewPid = normalized.pid;
     refreshKey += 1;
     setStatus("running");
   } catch (error) {
-    setStatus("failed", error instanceof Error ? error.message : String(error));
+    setStatus(
+      "failed",
+      error instanceof Error ? error.message : String(error)
+    );
   }
 }
 
@@ -77,14 +107,30 @@ function openExternalPreview() {
 
 function previewFrameUrl() {
   if (!previewUrl || previewStatus !== "running") return "";
-  return `${previewUrl}${previewUrl.includes("?") ? "&" : "?"}vivus_refresh=${refreshKey}`;
+
+  return `${previewUrl}${
+    previewUrl.includes("?") ? "&" : "?"
+  }vivus_refresh=${refreshKey}`;
 }
 
 function renderMountedPanel() {
   if (!mountedPanel) return;
-  const running = previewStatus === "running" && Boolean(previewUrl);
+
+  const running =
+    previewStatus === "running" && Boolean(previewUrl);
+
   const frameUrl = previewFrameUrl();
-  const escapedReason = failureReason.replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[char] ?? char));
+
+  const escapedReason = failureReason.replace(
+    /[&<>\"]/g,
+    (char) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+      }[char] ?? char)
+  );
 
   mountedPanel.innerHTML = `
     <div class="live-preview-header">
@@ -95,14 +141,28 @@ function renderMountedPanel() {
           <p>Embedded localhost preview for the current Vivus project.</p>
         </div>
       </div>
-      <div class="live-preview-status ${previewStatus}"><span></span>${previewStatus}</div>
+      <div class="live-preview-status ${previewStatus}">
+        <span></span>${previewStatus}
+      </div>
     </div>
+
     <div class="live-preview-actions">
-      <button type="button" data-preview-action="start" ${previewStatus === "starting" ? "disabled" : ""}>${previewStatus === "starting" ? "Starting..." : running ? "Restart Preview" : "Start Preview"}</button>
-      <button type="button" data-preview-action="refresh" ${running ? "" : "disabled"}>Refresh</button>
-      <button type="button" data-preview-action="external" ${previewUrl ? "" : "disabled"}>Open External</button>
+      <button type="button" data-preview-action="start" ${previewStatus === "starting" ? "disabled" : ""}>
+        ${previewStatus === "starting" ? "Starting..." : running ? "Restart Preview" : "Start Preview"}
+      </button>
+      <button type="button" data-preview-action="refresh" ${running ? "" : "disabled"}>
+        Refresh
+      </button>
+      <button type="button" data-preview-action="external" ${previewUrl ? "" : "disabled"}>
+        Open External
+      </button>
     </div>
-    <div class="live-preview-meta"><span>${previewUrl || "Preview not started"}</span>${previewPid !== null ? `<em>PID ${previewPid}</em>` : ""}</div>
+
+    <div class="live-preview-meta">
+      <span>${previewUrl || "Preview not started"}</span>
+      ${previewPid !== null ? `<em>PID ${previewPid}</em>` : ""}
+    </div>
+
     <div class="live-preview-frame-shell">
       ${running
         ? `<iframe title="Vivus embedded live preview" src="${frameUrl}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>`
@@ -110,16 +170,33 @@ function renderMountedPanel() {
     </div>
   `;
 
-  mountedPanel.querySelector('[data-preview-action="start"]')?.addEventListener("click", startLivePreview);
-  mountedPanel.querySelector('[data-preview-action="refresh"]')?.addEventListener("click", refreshPreview);
-  mountedPanel.querySelector('[data-preview-action="external"]')?.addEventListener("click", openExternalPreview);
+  mountedPanel
+    .querySelector('[data-preview-action="start"]')
+    ?.addEventListener("click", startLivePreview);
+
+  mountedPanel
+    .querySelector('[data-preview-action="refresh"]')
+    ?.addEventListener("click", refreshPreview);
+
+  mountedPanel
+    .querySelector('[data-preview-action="external"]')
+    ?.addEventListener("click", openExternalPreview);
 }
 
 function installLivePreviewPanel() {
   if (typeof document === "undefined") return;
-  const placeholder = document.querySelector(".preview-panel-card .preview-placeholder");
-  const card = document.querySelector(".preview-panel-card");
-  if (!placeholder || !card || card.querySelector(".live-preview-frame-shell")) return;
+
+  const placeholder = document.querySelector(
+    ".preview-panel-card .preview-placeholder"
+  );
+
+  const card = document.querySelector(
+    ".preview-panel-card"
+  );
+
+  if (!placeholder || !card || card.querySelector(".live-preview-frame-shell")) {
+    return;
+  }
 
   mountedPanel = card as HTMLElement;
   mountedPanel.classList.add("live-preview-panel");
@@ -127,12 +204,23 @@ function installLivePreviewPanel() {
 }
 
 export function startLivePreviewInstaller() {
-  if (typeof window === "undefined" || typeof document === "undefined") return;
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return;
+  }
 
-  window.addEventListener("vivus-preview-refresh", refreshPreview);
+  window.addEventListener(
+    "vivus-preview-refresh",
+    refreshPreview
+  );
+
   const install = () => window.setTimeout(installLivePreviewPanel, 0);
+
   install();
 
   const observer = new MutationObserver(install);
-  observer.observe(document.body, { childList: true, subtree: true });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
 }
