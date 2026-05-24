@@ -6,6 +6,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::builder_execution::vivus_execution_preview,
             commands::builder_terminal::vivus_run_safe_command,
+            commands::builder_terminal::vivus_start_dev_server,
             commands::builder_files::vivus_list_project_tree,
             commands::builder_files::vivus_read_project_file,
             commands::builder_patches::vivus_preview_file_patch,
