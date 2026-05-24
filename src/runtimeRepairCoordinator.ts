@@ -9,7 +9,10 @@ export function runRuntimeRepair(
     failedAttempts,
   );
 
-  if (escalation.shouldRollback) {
+  if (
+    'shouldRollback' in escalation &&
+    escalation.shouldRollback
+  ) {
     return prepareRollback(
       'runtime-repair-failure',
       changedFiles,
