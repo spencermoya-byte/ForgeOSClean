@@ -11,7 +11,7 @@ const VALID_WORKSPACE_MARKERS = [
   'dock'
 ];
 
-export function guardWorkspaceAgainstBlankScreen(projectPath: string, route: string, html?: string): WorkspaceBlankScreenResult {
+export function guardWorkspaceAgainstBlankScreen(_projectPath: string, route: string, html?: string): WorkspaceBlankScreenResult {
   const normalized = (html ?? '').trim();
 
   const looksBlank = !normalized || normalized.length < 60 || !VALID_WORKSPACE_MARKERS.some((marker) => normalized.includes(marker));
