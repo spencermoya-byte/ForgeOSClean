@@ -1,5 +1,5 @@
-import { getTimelinePanelState } from './timelinePanelState';
+import { updateTimelinePanel } from './timelinePanelState';
 
 export function initializeTimelineRuntime() {
-  return getTimelinePanelState();
+  return updateTimelinePanel({});
 }
