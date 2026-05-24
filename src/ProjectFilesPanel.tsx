@@ -286,7 +286,7 @@ export function ProjectFilesPanel({ projectId }: { projectId: string }) {
       const nextTabs = tabs.filter((tab) => tab.path !== path);
 
       if (selectedPath === path) {
-        setSelectedPath(nextTabs.at(-1)?.path ?? "");
+        setSelectedPath(nextTabs[nextTabs.length - 1]?.path ?? "");
       }
 
       return nextTabs;
