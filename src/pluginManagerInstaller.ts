@@ -1,5 +1,6 @@
 import { listVivusPlugins, updateVivusPluginStatus, type VivusPlugin } from './pluginRegistry';
 import { evaluatePluginPermission } from './pluginPermissionPolicy';
+import { getPluginRuntimeSummary } from './pluginRuntimeSummary';
 
 function permissionBadge(plugin: VivusPlugin) {
   return plugin.permissions.map((permission) => {
@@ -10,6 +11,7 @@ function permissionBadge(plugin: VivusPlugin) {
 
 function renderPluginCard(plugin: VivusPlugin) {
   const disabled = plugin.status === 'disabled' || plugin.status === 'blocked';
+  const runtime = getPluginRuntimeSummary(plugin.id);
 
   return `
     <div class="plugin-card" data-plugin-id="${plugin.id}">
@@ -26,7 +28,9 @@ function renderPluginCard(plugin: VivusPlugin) {
         <span>${plugin.version}</span>
         <span>${plugin.author}</span>
         <span>${plugin.status}</span>
+        <span class="plugin-runtime-status">${runtime.status}</span>
       </div>
+      <p class="plugin-runtime-note">${runtime.note}</p>
       <div class="plugin-permissions">
         ${permissionBadge(plugin)}
       </div>
