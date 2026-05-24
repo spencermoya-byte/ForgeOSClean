@@ -1,0 +1,2 @@
+GitHub write test successful.
+This file was created to verify writable repo access from ChatGPT.
