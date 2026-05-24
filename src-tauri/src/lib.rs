@@ -12,6 +12,7 @@ pub fn run() {
             commands::builder_terminal::vivus_dev_server_status,
             commands::builder_files::vivus_list_project_tree,
             commands::builder_files::vivus_read_project_file,
+            commands::builder_files::vivus_write_project_file,
             commands::builder_patches::vivus_preview_file_patch,
             commands::builder_patches::vivus_create_patch_checkpoint,
             commands::builder_patches::vivus_apply_approved_file_patch,
