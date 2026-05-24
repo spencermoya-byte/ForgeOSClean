@@ -1,0 +1,60 @@
+.plugin-marketplace-panel {
+  position: fixed;
+  right: 400px;
+  top: 88px;
+  z-index: 58;
+  width: min(420px, calc(100vw - 36px));
+  max-height: min(520px, calc(100vh - 120px));
+  overflow: auto;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(167,139,250,0.2);
+  background: rgba(12,14,26,0.94);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.48);
+  backdrop-filter: blur(18px);
+}
+.plugin-marketplace-header { margin-bottom: 12px; }
+.plugin-marketplace-header strong { color: #f8fafc; }
+.plugin-marketplace-header p,
+.plugin-marketplace-card p,
+.plugin-marketplace-meta span {
+  color: #a8a0b8;
+  font-size: 12px;
+}
+.plugin-marketplace-list { display: grid; gap: 10px; }
+.plugin-marketplace-card {
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(148,163,184,0.14);
+  background: rgba(255,255,255,0.04);
+}
+.plugin-marketplace-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.plugin-marketplace-install-button {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(167,139,250,0.2);
+  background: rgba(124,58,237,0.18);
+  color: #ede9fe;
+  font-size: 12px;
+  font-weight: 700;
+}
+.plugin-marketplace-meta,
+.plugin-marketplace-permissions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.plugin-marketplace-permissions span {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(148,163,184,0.12);
+  color: #d8d3e5;
+  font-size: 11px;
+}
