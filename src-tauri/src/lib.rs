@@ -2,11 +2,14 @@ mod commands;
 
 pub fn run() {
     tauri::Builder::default()
+        .manage(commands::builder_terminal::PreviewServerState::default())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             commands::builder_execution::vivus_execution_preview,
             commands::builder_terminal::vivus_run_safe_command,
             commands::builder_terminal::vivus_start_dev_server,
+            commands::builder_terminal::vivus_stop_dev_server,
+            commands::builder_terminal::vivus_dev_server_status,
             commands::builder_files::vivus_list_project_tree,
             commands::builder_files::vivus_read_project_file,
             commands::builder_patches::vivus_preview_file_patch,
