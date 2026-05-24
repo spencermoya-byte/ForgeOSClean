@@ -83,10 +83,10 @@ function historyStatus(stage: VerifiedEditState["stage"]): BuilderHistoryEntry["
   return "blocked";
 }
 
-function nextTimeline(current: TimelineStep[], event: BuilderExecutionEvent | { type: "models" | "plan" | "approval" | "criteria"; label: string; detail: string; status: TimelineStep["status"] }) {
+function nextTimeline(current: TimelineStep[], event: BuilderExecutionEvent | { type: "models" | "plan" | "approval" | "criteria"; label: string; detail: string; status: TimelineStep["status"] }): TimelineStep[] {
   const stepIndex = current.findIndex((step) => step.eventType === event.type);
   if (stepIndex < 0) return current;
-  return current.map((step, index) => {
+  return current.map((step, index): TimelineStep => {
     if (index < stepIndex && step.status === "active") return { ...step, status: "done" };
     if (step.eventType === event.type) return { ...step, label: event.label, detail: event.detail, status: event.status };
     return step;
