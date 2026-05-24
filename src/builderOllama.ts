@@ -17,35 +17,67 @@ export type OllamaGenerateResponse = {
   blockedReason?: string | null;
 };
 
+const OLLAMA_BASE_URL = "http://127.0.0.1:11434";
+
 const PREFERRED_PLANNER_MODELS = ["qwen3.6:27b", "qwen3:32b", "qwen3-coder-next:latest", "qwen3-coder:30b"];
 const PREFERRED_CODER_MODELS = ["qwen3-coder:30b", "qwen3-coder-next:latest", "qwen2.5-coder:32b", "qwen3.6:27b"];
 
-async function invokeOrFallback<T>(command: string, args: Record<string, unknown>, fallback: T): Promise<T> {
-  const hasTauriRuntime = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
-
-  if (!hasTauriRuntime) {
-    return fallback;
-  }
-
+async function tryTauriInvoke<T>(command: string, args: Record<string, unknown>): Promise<T | null> {
   try {
     const { invoke } = await import("@tauri-apps/api/core");
     return await invoke<T>(command, args);
   } catch (error) {
-    console.warn(`Vivus Ollama command failed: ${command}`, error);
-    return fallback;
+    console.warn(`Vivus Tauri command failed: ${command}`, error);
+    return null;
   }
 }
 
+function normalizeModels(value: unknown): OllamaModelInfo[] {
+  if (!value || typeof value !== "object") return [];
+  const maybeModels = (value as { models?: unknown }).models;
+  if (!Array.isArray(maybeModels)) return [];
+
+  return maybeModels
+    .map((model) => {
+      if (!model || typeof model !== "object") return null;
+      const item = model as { name?: unknown; model?: unknown; size?: unknown; modified_at?: unknown };
+      const name = typeof item.name === "string" ? item.name : typeof item.model === "string" ? item.model : "";
+      if (!name) return null;
+      return {
+        name,
+        size: typeof item.size === "number" ? item.size : null,
+        modified_at: typeof item.modified_at === "string" ? item.modified_at : null,
+      };
+    })
+    .filter((model): model is OllamaModelInfo => Boolean(model));
+}
+
 export async function getOllamaStatus(): Promise<OllamaStatusResponse> {
-  return invokeOrFallback<OllamaStatusResponse>(
-    "vivus_ollama_status",
-    {},
-    {
+  const tauriResult = await tryTauriInvoke<OllamaStatusResponse>("vivus_ollama_status", {});
+  if (tauriResult?.ok && Array.isArray(tauriResult.models) && tauriResult.models.length > 0) {
+    return tauriResult;
+  }
+
+  try {
+    const response = await fetch(`${OLLAMA_BASE_URL}/api/tags`);
+    if (!response.ok) {
+      return { ok: false, models: [], blockedReason: `Ollama responded with HTTP ${response.status}.` };
+    }
+
+    const data = await response.json();
+    const models = normalizeModels(data);
+    return {
+      ok: models.length > 0,
+      models,
+      blockedReason: models.length > 0 ? null : "Ollama is reachable, but no local models were returned.",
+    };
+  } catch (error) {
+    return {
       ok: false,
       models: [],
-      blockedReason: "Ollama status requires the Tauri runtime.",
-    },
-  );
+      blockedReason: `Unable to reach Ollama at ${OLLAMA_BASE_URL}. ${String(error)}`,
+    };
+  }
 }
 
 export function pickModel(models: OllamaModelInfo[], role: "planner" | "coder") {
@@ -55,16 +87,38 @@ export function pickModel(models: OllamaModelInfo[], role: "planner" | "coder") 
 }
 
 export async function generateWithOllama(model: string, prompt: string, systemPrompt?: string): Promise<OllamaGenerateResponse> {
-  return invokeOrFallback<OllamaGenerateResponse>(
+  const tauriResult = await tryTauriInvoke<OllamaGenerateResponse>(
     "vivus_ollama_generate",
     { request: { model, prompt, systemPrompt } },
-    {
+  );
+  if (tauriResult?.ok) return tauriResult;
+
+  try {
+    const response = await fetch(`${OLLAMA_BASE_URL}/api/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        prompt,
+        system: systemPrompt || undefined,
+        stream: false,
+      }),
+    });
+
+    if (!response.ok) {
+      return { ok: false, model, response: "", blockedReason: `Ollama generation failed with HTTP ${response.status}.` };
+    }
+
+    const data = await response.json();
+    return { ok: true, model, response: typeof data.response === "string" ? data.response : "", blockedReason: null };
+  } catch (error) {
+    return {
       ok: false,
       model,
       response: "",
-      blockedReason: "Ollama generation requires the Tauri runtime.",
-    },
-  );
+      blockedReason: `Unable to reach Ollama generation endpoint. ${String(error)}`,
+    };
+  }
 }
 
 export function extractFullFileResponse(response: string): string | null {
