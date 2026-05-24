@@ -14,6 +14,11 @@ import {
   listSessionActivities,
   startTerminalActivity,
 } from "./terminalActivityState";
+import {
+  appendTerminalStream,
+  clearTerminalStream,
+  listTerminalStream,
+} from "./terminalStreamingState";
 
 type CommandId =
   | "npm_install"
@@ -88,6 +93,13 @@ function readProjectPath() {
 
 function restoreSessionOutput() {
   activeSession = ensureTerminalSession(projectPath);
+  const stream = listTerminalStream(activeSession.id);
+
+  if (stream.length) {
+    output = stream.map((chunk) => chunk.text).join("");
+    if (!output.endsWith("\n")) output += "\n";
+    return;
+  }
 
   if (!activeSession.history.length) {
     output = "Vivus terminal ready. Choose an allowlisted project command.\n";
@@ -131,6 +143,7 @@ function createSession() {
 
 function deleteSession(sessionId: string) {
   activeSession = deleteTerminalSession(projectPath, sessionId);
+  clearTerminalStream(sessionId);
   restoreSessionOutput();
   lastStatus = "Terminal deleted";
   renderMountedPanel();
@@ -145,7 +158,8 @@ function escapeHtml(value: string) {
   }[char] ?? char));
 }
 
-function appendOutput(text: string) {
+function appendOutput(text: string, source: "stdout" | "stderr" | "system" = "system") {
+  appendTerminalStream(activeSession.id, projectPath, source, text.endsWith("\n") ? text : `${text}\n`);
   output += text;
   if (!output.endsWith("\n")) output += "\n";
   renderMountedPanel();
@@ -154,6 +168,7 @@ function appendOutput(text: string) {
 function clearOutput() {
   output = "";
   clearTerminalHistory(activeSession.id);
+  clearTerminalStream(activeSession.id);
   activeSession = ensureTerminalSession(projectPath);
   lastStatus = "Cleared";
   renderMountedPanel();
@@ -198,7 +213,7 @@ async function startDevServer() {
     devServerUrl = response.url || devServerUrl;
     lastStatus = response.ok ? `Preview ${response.status}` : "Preview failed";
     const message = response.ok ? `Preview server ${response.status}: ${response.url || "pending"}` : `Preview failed: ${response.blockedReason ?? "unknown"}`;
-    appendOutput(message);
+    appendOutput(message, response.ok ? "stdout" : "stderr");
     finishTerminalActivity(activity.id, {
       status: response.ok ? "complete" : "error",
       outputPreview: message,
@@ -207,7 +222,7 @@ async function startDevServer() {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     lastStatus = "Preview failed";
-    appendOutput(message);
+    appendOutput(message, "stderr");
     finishTerminalActivity(activity.id, { status: "error", outputPreview: message });
   } finally {
     runningCommand = null;
@@ -229,7 +244,7 @@ async function stopDevServer() {
     devServerUrl = response.url || "";
     lastStatus = response.ok ? "Preview stopped" : "Preview stop failed";
     const message = response.ok ? "Preview server stopped." : `Preview stop failed: ${response.blockedReason ?? "unknown"}`;
-    appendOutput(message);
+    appendOutput(message, response.ok ? "stdout" : "stderr");
     finishTerminalActivity(activity.id, {
       status: response.ok ? "stopped" : "error",
       outputPreview: message,
@@ -238,7 +253,7 @@ async function stopDevServer() {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     lastStatus = "Preview stop failed";
-    appendOutput(message);
+    appendOutput(message, "stderr");
     finishTerminalActivity(activity.id, { status: "error", outputPreview: message });
   } finally {
     runningCommand = null;
@@ -270,18 +285,18 @@ async function runCommand(commandId: CommandId) {
     const stderr = response.stderr?.trimEnd() ?? "";
     const pieces = [stdout, stderr].filter(Boolean);
 
-    if (stdout) appendOutput(stdout);
-    if (stderr) appendOutput(stderr);
+    if (stdout) appendOutput(stdout, "stdout");
+    if (stderr) appendOutput(stderr, "stderr");
 
     if (response.blockedReason) {
       pieces.push(`Blocked: ${response.blockedReason}`);
-      appendOutput(`Blocked: ${response.blockedReason}`);
+      appendOutput(`Blocked: ${response.blockedReason}`, "stderr");
     }
 
     const exitLine = `Exit: ${response.exitCode ?? "n/a"} • ${response.durationMs ?? 0}ms`;
     pieces.push(exitLine);
     lastStatus = response.ok ? `Passed: ${response.commandDisplay ?? commandId}` : `Failed: ${response.commandDisplay ?? commandId}`;
-    appendOutput(`${exitLine}\n`);
+    appendOutput(`${exitLine}\n`, "system");
 
     const commandOutput = pieces.join("\n");
     addTerminalHistory(activeSession.id, { command: commandLabel, output: commandOutput, ok: response.ok });
@@ -299,7 +314,7 @@ async function runCommand(commandId: CommandId) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     lastStatus = "Command failed";
-    appendOutput(message);
+    appendOutput(message, "stderr");
     addTerminalHistory(activeSession.id, { command: commandLabel, output: message, ok: false });
     finishTerminalActivity(activity.id, { status: "error", outputPreview: message });
   } finally {
