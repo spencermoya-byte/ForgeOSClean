@@ -6,9 +6,11 @@ import './workspaceSticky.css';
 import './commitsLayout.css';
 import { startLivePreviewInstaller } from './livePreviewInstaller';
 import { startTerminalWorkflowInstaller } from './terminalWorkflowInstaller';
+import { startLocalBuilderInstaller } from './localBuilderInstaller';
 
 startLivePreviewInstaller();
 startTerminalWorkflowInstaller();
+startLocalBuilderInstaller();
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
