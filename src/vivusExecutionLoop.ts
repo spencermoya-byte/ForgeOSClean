@@ -12,6 +12,7 @@ import {
 } from "./builderPatchEngine";
 import { runBuilderExecutionPreview, type BuildDiagnostic, type BuilderExecutionResult } from "./builderExecution";
 import { extractFullFileResponse, generateWithOllama, getOllamaStatus, pickModel } from "./builderOllama";
+import { getWorkspaceProjectPath, syncWorkspaceFile } from "./workspaceSync";
 
 export type VerifiedEditStage =
   | "idle"
@@ -68,7 +69,6 @@ type TargetCandidate = { relativePath: string; score: number; reason: string };
 type TargetSelection = { relativePath: string; reason: string; candidates: TargetCandidate[] };
 type ContextFile = { relativePath: string; content: string };
 
-const DEFAULT_PROJECT_PATH = ".";
 const DEFAULT_RELATIVE_PATH = "src/App.tsx";
 const SOURCE_EXTENSIONS = [".tsx", ".ts", ".jsx", ".js", ".css", ".rs", ".json"];
 const MAX_CONTEXT_FILES = 4;
@@ -220,7 +220,7 @@ async function prepareRepairProposal(state: VerifiedEditState, diagnostics: Buil
 }
 
 export async function prepareVerifiedEdit(request: VerifiedEditRequest): Promise<VerifiedEditState> {
-  const projectPath = request.projectPath?.trim() || DEFAULT_PROJECT_PATH;
+  const projectPath = request.projectPath?.trim() || getWorkspaceProjectPath();
   const target = await inferTargetFile(projectPath, request.planSummary, request.relativePath);
   const relativePath = target.relativePath;
   const file = await readProjectFile(projectPath, relativePath);
@@ -256,6 +256,7 @@ export async function applyAndVerifyEdit(state: VerifiedEditState, planSummary: 
   const patch = await applyApprovedFilePatch(state.proposal.projectPath, state.proposal.relativePath, state.proposal.currentContent, state.proposal.nextContent, "APPROVE_PATCH");
   if (!patch.ok) return { ...state, stage: "blocked", message: patch.blockedReason ?? "Patch application failed.", patchResult: patch, steps: steps({ target: "done", context: "done", inspect: "done", ai: "done", diff: "done", checkpoint: "done", apply: "blocked" }) };
 
+  syncWorkspaceFile(state.proposal.relativePath);
   const verification = await runBuilderExecutionPreview(planSummary);
   const verified = verification.tasks.every((task) => task.status !== "failed") && verification.activity.every((item) => item.status !== "blocked");
   if (verified) {
@@ -268,6 +269,7 @@ export async function applyAndVerifyEdit(state: VerifiedEditState, planSummary: 
     if (repairProposal) {
       const repairPatch = await applyApprovedFilePatch(repairProposal.projectPath, repairProposal.relativePath, repairProposal.currentContent, repairProposal.nextContent, "APPROVE_PATCH");
       if (repairPatch.ok) {
+        syncWorkspaceFile(repairProposal.relativePath);
         const repairVerification = await runBuilderExecutionPreview(planSummary);
         const repairPassed = repairVerification.tasks.every((task) => task.status !== "failed") && repairVerification.activity.every((item) => item.status !== "blocked");
         if (repairPassed) {
@@ -279,6 +281,7 @@ export async function applyAndVerifyEdit(state: VerifiedEditState, planSummary: 
   }
 
   const rollback = await restorePatchCheckpoint(state.proposal.projectPath, state.checkpoint.checkpointId);
+  if (rollback.ok) syncWorkspaceFile(state.proposal.relativePath);
   return { ...state, stage: rollback.ok ? "rolled-back" : "blocked", message: rollback.ok ? "Verification failed and repair did not succeed, so Vivus restored the rollback checkpoint." : rollback.blockedReason ?? "Verification failed and rollback could not be completed.", patchResult: patch, verification, rollback, repairAttempted: verification.diagnostics.length > 0, steps: steps({ target: "done", context: "done", inspect: "done", ai: "done", diff: "done", checkpoint: "done", apply: "done", verify: "blocked", repair: verification.diagnostics.length > 0 ? "blocked" : "pending", rollback: rollback.ok ? "done" : "blocked" }) };
 }
 
