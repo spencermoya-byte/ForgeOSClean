@@ -10,6 +10,7 @@ import {
   type BuilderHistoryEntry,
 } from "./builderHistory";
 import { getBuilderSession, updateBuilderSession } from "./builderSessionState";
+import { subscribeToBuilderExecutionEvents, type BuilderExecutionEvent } from "./builderExecutionEvents";
 
 type BuilderPhase = "idle" | "checking-models" | "planning" | "running" | "complete" | "blocked";
 
@@ -22,22 +23,25 @@ type BuilderLog = {
 
 type TimelineStep = {
   id: string;
+  eventType: BuilderExecutionEvent["type"] | "models" | "plan";
   label: string;
   detail: string;
   status: "pending" | "active" | "done" | "blocked";
 };
 
 const BASE_TIMELINE: TimelineStep[] = [
-  { id: "models", label: "Check models", detail: "Connect to Ollama and select local planner/coder models.", status: "pending" },
-  { id: "plan", label: "Plan request", detail: "Combine the user request with recent project memory.", status: "pending" },
-  { id: "target", label: "Infer target", detail: "Find the safest project file to inspect and edit.", status: "pending" },
-  { id: "context", label: "Load context", detail: "Read relevant repo files for project-aware generation.", status: "pending" },
-  { id: "generate", label: "Generate patch", detail: "Use the local coder model to create a full-file patch.", status: "pending" },
-  { id: "diff", label: "Build diff", detail: "Prepare a reviewable patch preview.", status: "pending" },
-  { id: "checkpoint", label: "Checkpoint", detail: "Create rollback backup before writing.", status: "pending" },
-  { id: "apply", label: "Apply", detail: "Write the approved patch to disk.", status: "pending" },
-  { id: "verify", label: "Verify", detail: "Run build/verification checks.", status: "pending" },
-  { id: "repair", label: "Repair or rollback", detail: "Repair build diagnostics or restore checkpoint if needed.", status: "pending" },
+  { id: "models", eventType: "models", label: "Check models", detail: "Connect to Ollama and select local planner/coder models.", status: "pending" },
+  { id: "plan", eventType: "plan", label: "Plan request", detail: "Combine the user request with recent project memory.", status: "pending" },
+  { id: "target", eventType: "infer-target", label: "Infer target", detail: "Find the safest project file to inspect and edit.", status: "pending" },
+  { id: "context", eventType: "load-context", label: "Load context", detail: "Read relevant repo files for project-aware generation.", status: "pending" },
+  { id: "generate", eventType: "generate-patch", label: "Generate patch", detail: "Use the local coder model to create a full-file patch.", status: "pending" },
+  { id: "diff", eventType: "build-diff", label: "Build diff", detail: "Prepare a reviewable patch preview.", status: "pending" },
+  { id: "checkpoint", eventType: "checkpoint", label: "Checkpoint", detail: "Create rollback backup before writing.", status: "pending" },
+  { id: "apply", eventType: "apply", label: "Apply", detail: "Write the approved patch to disk.", status: "pending" },
+  { id: "verify", eventType: "verify", label: "Verify", detail: "Run build/verification checks.", status: "pending" },
+  { id: "repair", eventType: "repair", label: "Repair", detail: "Repair build diagnostics if available.", status: "pending" },
+  { id: "rollback", eventType: "rollback", label: "Rollback", detail: "Restore checkpoint if verification cannot pass.", status: "pending" },
+  { id: "verified", eventType: "verified", label: "Verified", detail: "Patch is verified or safely resolved.", status: "pending" },
 ];
 
 function makeLog(label: string, detail: string, status: BuilderLog["status"]): BuilderLog {
@@ -69,11 +73,13 @@ function historyStatus(stage: VerifiedEditState["stage"]): BuilderHistoryEntry["
   return "blocked";
 }
 
-function nextTimeline(current: TimelineStep[], stepId: string, status: TimelineStep["status"]) {
-  const stepIndex = current.findIndex((step) => step.id === stepId);
+function nextTimeline(current: TimelineStep[], event: BuilderExecutionEvent | { type: "models" | "plan"; label: string; detail: string; status: TimelineStep["status"] }) {
+  const stepIndex = current.findIndex((step) => step.eventType === event.type);
+  if (stepIndex < 0) return current;
+
   return current.map((step, index) => {
-    if (step.id === stepId) return { ...step, status };
-    if (status === "active" && index < stepIndex && step.status === "active") return { ...step, status: "done" };
+    if (index < stepIndex && step.status === "active") return { ...step, status: "done" };
+    if (step.eventType === event.type) return { ...step, label: event.label, detail: event.detail, status: event.status };
     return step;
   });
 }
@@ -104,9 +110,18 @@ export function LocalBuilderPanel() {
     setLogs((current) => [makeLog(label, detail, status), ...current].slice(0, 20));
   }, []);
 
-  const setStep = React.useCallback((stepId: string, status: TimelineStep["status"]) => {
-    setTimeline((current) => nextTimeline(current, stepId, status));
-  }, []);
+  const applyTimelineEvent = React.useCallback((event: BuilderExecutionEvent | { type: "models" | "plan"; label: string; detail: string; status: TimelineStep["status"] }) => {
+    setTimeline((current) => nextTimeline(current, event));
+    pushLog(event.label, event.detail, event.status);
+  }, [pushLog]);
+
+  React.useEffect(() => {
+    return subscribeToBuilderExecutionEvents((event) => {
+      applyTimelineEvent(event);
+      if (event.type === "blocked") setPhase("blocked");
+      if (event.type === "verified") setPhase("complete");
+    });
+  }, [applyTimelineEvent]);
 
   React.useEffect(() => {
     if (!startedAt || !running) return undefined;
@@ -168,14 +183,13 @@ export function LocalBuilderPanel() {
     refreshHistory();
     setResult(null);
     setPhase("checking-models");
-    setStep("models", "active");
-    pushLog("Checking local models", "Connecting to Ollama and selecting planner/coder models.", "active");
+    applyTimelineEvent({ type: "models", label: "Checking local models", detail: "Connecting to Ollama and selecting planner/coder models.", status: "active" });
 
     const status = await getOllamaStatus();
     if (!status.ok || status.models.length === 0) {
       setModels([]);
       setPhase("blocked");
-      setStep("models", "blocked");
+      applyTimelineEvent({ type: "models", label: "Ollama unavailable", detail: status.blockedReason ?? "No local models found.", status: "blocked" });
       updateBuilderHistory(historyEntry.id, {
         status: "blocked",
         summary: status.blockedReason ?? "No local models found.",
@@ -188,31 +202,19 @@ export function LocalBuilderPanel() {
         updatedAt: new Date().toISOString(),
       });
       refreshHistory();
-      pushLog("Ollama unavailable", status.blockedReason ?? "No local models found.", "blocked");
       return;
     }
 
     setModels(status.models);
-    setStep("models", "done");
-    pushLog("Models selected", `Planner: ${modelLabel(status.models, "planner")} • Coder: ${modelLabel(status.models, "coder")}`, "done");
+    applyTimelineEvent({ type: "models", label: "Models selected", detail: `Planner: ${modelLabel(status.models, "planner")} • Coder: ${modelLabel(status.models, "coder")}`, status: "done" });
 
     setPhase("planning");
-    setStep("plan", "active");
-    pushLog("Planning task", "Converting request into a verified edit plan with prior project context.", "active");
+    applyTimelineEvent({ type: "plan", label: "Planning task", detail: "Converting request into a verified edit plan with prior project context.", status: "active" });
 
     const planSummary = `User requested: ${trimmed}\n\nProject path: ${projectPath}\n\nRecent builder history:\n${continuityContext}\n\nUse the smallest safe edit. Preserve existing behavior unless the request requires changing it. Verify after applying.`;
 
     setPhase("running");
-    setStep("plan", "done");
-    setStep("target", "active");
-    pushLog("Finding target file", "Ranking source files and selecting the safest edit target.", "active");
-    window.setTimeout(() => setStep("context", "active"), 500);
-    window.setTimeout(() => setStep("generate", "active"), 1100);
-    window.setTimeout(() => setStep("diff", "active"), 1800);
-    window.setTimeout(() => setStep("checkpoint", "active"), 2500);
-    window.setTimeout(() => setStep("apply", "active"), 3200);
-    window.setTimeout(() => setStep("verify", "active"), 3900);
-    pushLog("Running verified edit loop", "Inferring target, gathering context, generating patch, checkpointing, applying, verifying, and repairing if needed.", "active");
+    applyTimelineEvent({ type: "plan", label: "Plan ready", detail: "Verified edit loop is starting with project memory included.", status: "done" });
 
     const nextResult = await runVerifiedEditLoop({
       projectPath,
@@ -236,21 +238,17 @@ export function LocalBuilderPanel() {
       updatedAt: new Date().toISOString(),
     });
     refreshHistory();
+    setElapsedMs(Date.now() - start);
 
     if (nextResult.stage === "verified" || nextResult.stage === "repaired") {
       setPhase("complete");
-      setTimeline((current) => current.map((step) => ({ ...step, status: "done" })));
-      setElapsedMs(Date.now() - start);
+      setTimeline((current) => current.map((step) => step.status === "pending" || step.status === "active" ? { ...step, status: "done" } : step));
       pushLog("Builder complete", nextResult.message, "done");
     } else if (nextResult.stage === "rolled-back") {
       setPhase("blocked");
-      setStep("repair", "done");
-      setElapsedMs(Date.now() - start);
       pushLog("Rolled back", nextResult.message, "blocked");
     } else {
       setPhase("blocked");
-      setStep("repair", "blocked");
-      setElapsedMs(Date.now() - start);
       pushLog("Builder blocked", nextResult.message, "blocked");
     }
   }
@@ -294,7 +292,7 @@ export function LocalBuilderPanel() {
       <div className="local-builder-result">
         <div className="local-builder-result-header">
           <strong>Live execution timeline</strong>
-          <span>{running ? "active" : phase}</span>
+          <span>{running ? "real-time" : phase}</span>
         </div>
         <div className="local-builder-log">
           {timeline.map((step) => (
