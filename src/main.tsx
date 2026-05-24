@@ -9,6 +9,7 @@ import './pluginManager.css';
 import './pluginDock.css';
 import './pluginPanel.css';
 import './pluginApproval.css';
+import './pluginAudit.css';
 import { AppErrorBoundary } from './appErrorBoundary';
 import { startLivePreviewInstaller } from './livePreviewInstaller';
 import { startTerminalWorkflowInstaller } from './terminalWorkflowInstaller';
@@ -18,6 +19,7 @@ import { startPluginManagerInstaller } from './pluginManagerInstaller';
 import { startPluginDockInstaller } from './pluginDockInstaller';
 import { startPluginPanelRenderer } from './pluginPanelRenderer';
 import { startPluginApprovalPanel } from './pluginApprovalPanel';
+import { startPluginAuditPanel } from './pluginAuditPanel';
 
 startLivePreviewInstaller();
 startTerminalWorkflowInstaller();
@@ -27,6 +29,7 @@ startPluginManagerInstaller();
 startPluginDockInstaller();
 startPluginPanelRenderer();
 startPluginApprovalPanel();
+startPluginAuditPanel();
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
