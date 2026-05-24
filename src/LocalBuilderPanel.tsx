@@ -2,6 +2,14 @@ import React from "react";
 import { runVerifiedEditLoop, type VerifiedEditState } from "./vivusExecutionLoop";
 import { getOllamaStatus, pickModel, type OllamaModelInfo } from "./builderOllama";
 import { getWorkspaceProjectPath } from "./workspaceSync";
+import {
+  addBuilderHistory,
+  buildBuilderHistoryContext,
+  listBuilderHistory,
+  updateBuilderHistory,
+  type BuilderHistoryEntry,
+} from "./builderHistory";
+import { getBuilderSession, updateBuilderSession } from "./builderSessionState";
 
 type BuilderPhase = "idle" | "checking-models" | "planning" | "running" | "complete" | "blocked";
 
@@ -35,6 +43,12 @@ function stageLabel(state: VerifiedEditState | null) {
   return state.stage;
 }
 
+function historyStatus(stage: VerifiedEditState["stage"]): BuilderHistoryEntry["status"] {
+  if (stage === "verified" || stage === "repaired") return "complete";
+  if (stage === "rolled-back") return "rolled-back";
+  return "blocked";
+}
+
 export function LocalBuilderPanel() {
   const [task, setTask] = React.useState("");
   const [phase, setPhase] = React.useState<BuilderPhase>("idle");
@@ -43,15 +57,29 @@ export function LocalBuilderPanel() {
   ]);
   const [models, setModels] = React.useState<OllamaModelInfo[]>([]);
   const [result, setResult] = React.useState<VerifiedEditState | null>(null);
+  const [history, setHistory] = React.useState<BuilderHistoryEntry[]>([]);
 
   const projectPath = getWorkspaceProjectPath();
   const plannerModel = modelLabel(models, "planner");
   const coderModel = modelLabel(models, "coder");
   const running = phase === "checking-models" || phase === "planning" || phase === "running";
 
+  const refreshHistory = React.useCallback(() => {
+    setHistory(listBuilderHistory(projectPath));
+  }, [projectPath]);
+
   const pushLog = React.useCallback((label: string, detail: string, status: BuilderLog["status"]) => {
     setLogs((current) => [makeLog(label, detail, status), ...current].slice(0, 20));
   }, []);
+
+  React.useEffect(() => {
+    refreshHistory();
+    const session = getBuilderSession(projectPath);
+    if (session?.lastTask) {
+      setTask(session.lastTask);
+      setLogs((current) => [makeLog("Session restored", `Last task: ${session.lastTask}`, "done"), ...current].slice(0, 20));
+    }
+  }, [projectPath, refreshHistory]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -74,6 +102,23 @@ export function LocalBuilderPanel() {
     const trimmed = task.trim();
     if (!trimmed || running) return;
 
+    const continuityContext = buildBuilderHistoryContext(projectPath);
+    const historyEntry = addBuilderHistory({
+      projectPath,
+      task: trimmed,
+      status: "running",
+      summary: "Builder started.",
+      stage: "started",
+    });
+
+    updateBuilderSession({
+      projectPath,
+      lastTask: trimmed,
+      lastStatus: "running",
+      updatedAt: new Date().toISOString(),
+    });
+
+    refreshHistory();
     setResult(null);
     setPhase("checking-models");
     pushLog("Checking local models", "Connecting to Ollama and selecting planner/coder models.", "active");
@@ -82,6 +127,18 @@ export function LocalBuilderPanel() {
     if (!status.ok || status.models.length === 0) {
       setModels([]);
       setPhase("blocked");
+      updateBuilderHistory(historyEntry.id, {
+        status: "blocked",
+        summary: status.blockedReason ?? "No local models found.",
+        stage: "ollama-blocked",
+      });
+      updateBuilderSession({
+        projectPath,
+        lastTask: trimmed,
+        lastStatus: "blocked",
+        updatedAt: new Date().toISOString(),
+      });
+      refreshHistory();
       pushLog("Ollama unavailable", status.blockedReason ?? "No local models found.", "blocked");
       return;
     }
@@ -90,9 +147,9 @@ export function LocalBuilderPanel() {
     pushLog("Models selected", `Planner: ${modelLabel(status.models, "planner")} • Coder: ${modelLabel(status.models, "coder")}`, "done");
 
     setPhase("planning");
-    pushLog("Planning task", "Converting request into a verified edit plan for the active project.", "active");
+    pushLog("Planning task", "Converting request into a verified edit plan with prior project context.", "active");
 
-    const planSummary = `User requested: ${trimmed}\n\nProject path: ${projectPath}\n\nUse the smallest safe edit. Preserve existing behavior unless the request requires changing it. Verify after applying.`;
+    const planSummary = `User requested: ${trimmed}\n\nProject path: ${projectPath}\n\nRecent builder history:\n${continuityContext}\n\nUse the smallest safe edit. Preserve existing behavior unless the request requires changing it. Verify after applying.`;
 
     setPhase("running");
     pushLog("Running verified edit loop", "Inferring file target, gathering context, generating patch, checkpointing, applying, verifying, and repairing if needed.", "active");
@@ -103,6 +160,22 @@ export function LocalBuilderPanel() {
     });
 
     setResult(nextResult);
+
+    const finalStatus = historyStatus(nextResult.stage);
+    updateBuilderHistory(historyEntry.id, {
+      status: finalStatus,
+      summary: nextResult.message,
+      changedFile: nextResult.proposal?.relativePath,
+      stage: nextResult.stage,
+    });
+    updateBuilderSession({
+      projectPath,
+      lastTask: trimmed,
+      lastStatus: finalStatus,
+      lastChangedFile: nextResult.proposal?.relativePath,
+      updatedAt: new Date().toISOString(),
+    });
+    refreshHistory();
 
     if (nextResult.stage === "verified" || nextResult.stage === "repaired") {
       setPhase("complete");
@@ -151,6 +224,20 @@ export function LocalBuilderPanel() {
           {running ? "Running..." : "Run Local Builder"}
         </button>
       </div>
+
+      {history.length > 0 && (
+        <div className="local-builder-result">
+          <div className="local-builder-result-header">
+            <strong>Recent builder history</strong>
+            <span>{history.length} saved</span>
+          </div>
+          {history.slice(0, 5).map((entry) => (
+            <p key={entry.id}>
+              <strong>{entry.status}</strong> — {entry.task}{entry.changedFile ? ` • ${entry.changedFile}` : ""}
+            </p>
+          ))}
+        </div>
+      )}
 
       {result && (
         <div className="local-builder-result">
