@@ -31,6 +31,8 @@ type OpenTab = {
   savedContent: string;
 };
 
+type OpenFileEvent = CustomEvent<{ relativePath: string }>;
+
 function readInitialProjectPath() {
   try {
     return window.localStorage.getItem(PROJECT_PATH_KEY)?.trim() || DEFAULT_PROJECT_PATH;
@@ -147,11 +149,11 @@ export function ProjectFilesPanel({ projectId }: { projectId: string }) {
     }
   }, [projectPath, hasTauri, listDirectory]);
 
-  const openFile = React.useCallback(async (relativePath: string) => {
+  const openFile = React.useCallback(async (relativePath: string, forceReload = false) => {
     if (!hasTauri) return;
 
     const existing = openTabs.find((tab) => tab.path === relativePath);
-    if (existing) {
+    if (existing && !forceReload) {
       setSelectedPath(relativePath);
       return;
     }
@@ -171,14 +173,25 @@ export function ProjectFilesPanel({ projectId }: { projectId: string }) {
         return;
       }
 
-      setOpenTabs((tabs) => [
-        ...tabs,
-        {
-          path: relativePath,
-          content: response.content,
-          savedContent: response.content,
-        },
-      ]);
+      setOpenTabs((tabs) => {
+        const alreadyOpen = tabs.some((tab) => tab.path === relativePath);
+        if (alreadyOpen) {
+          return tabs.map((tab) =>
+            tab.path === relativePath
+              ? { ...tab, content: response.content, savedContent: response.content }
+              : tab
+          );
+        }
+
+        return [
+          ...tabs,
+          {
+            path: relativePath,
+            content: response.content,
+            savedContent: response.content,
+          },
+        ];
+      });
 
       setSelectedPath(relativePath);
       setStatus(`Opened ${relativePath}`);
@@ -283,6 +296,26 @@ export function ProjectFilesPanel({ projectId }: { projectId: string }) {
   React.useEffect(() => {
     void loadProjectTree();
   }, [loadProjectTree, projectId]);
+
+  React.useEffect(() => {
+    const handleOpenFile = (event: Event) => {
+      const detail = (event as OpenFileEvent).detail;
+      if (detail?.relativePath) void openFile(detail.relativePath, true);
+    };
+
+    const handleRefresh = () => {
+      void loadProjectTree();
+      if (selectedPath) void openFile(selectedPath, true);
+    };
+
+    window.addEventListener("vivus-open-file", handleOpenFile);
+    window.addEventListener("vivus-files-refresh", handleRefresh);
+
+    return () => {
+      window.removeEventListener("vivus-open-file", handleOpenFile);
+      window.removeEventListener("vivus-files-refresh", handleRefresh);
+    };
+  }, [openFile, loadProjectTree, selectedPath]);
 
   return (
     <section className="workspace-content files-workspace">
