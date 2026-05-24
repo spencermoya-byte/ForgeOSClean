@@ -1,7 +1,7 @@
 import { createVivusImplementationPlan, planToCoderSummary } from './builderPlanner';
 import { prepareVerifiedEdit, checkpointVerifiedEdit, applyAndVerifyEdit } from './vivusExecutionLoop';
 
-export async function runVivusPlannedExecution(request) {
+export async function runVivusPlannedExecution(request: any) {
   const plan = await createVivusImplementationPlan(request.planSummary);
 
   const plannedRequest = {
