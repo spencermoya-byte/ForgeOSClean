@@ -4,6 +4,9 @@ export type VerificationCriterion = {
   description: string;
   required: boolean;
   passed: boolean;
+  evidence?: string;
+  note?: string;
+  updatedAt?: string;
 };
 
 export type VerifiedFixSession = {
@@ -12,16 +15,23 @@ export type VerifiedFixSession = {
   task: string;
   criteria: VerificationCriterion[];
   verificationPassed: boolean;
+  status: "pending" | "running" | "passed" | "needs-review" | "blocked";
+  summary?: string;
   createdAt: string;
   updatedAt: string;
 };
 
 const STORAGE_KEY = "vivus.verifiedFixCriteria.v1";
+const MAX_SESSIONS = 150;
 
 function readSessions(): VerifiedFixSession[] {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const sessions = raw ? JSON.parse(raw) : [];
+    return sessions.map((session: VerifiedFixSession) => ({
+      ...session,
+      status: session.status ?? (session.verificationPassed ? "passed" : "pending"),
+    }));
   } catch {
     return [];
   }
@@ -29,8 +39,12 @@ function readSessions(): VerifiedFixSession[] {
 
 function writeSessions(sessions: VerifiedFixSession[]) {
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions.slice(0, MAX_SESSIONS)));
   } catch {}
+}
+
+function requiredCriteriaPassed(criteria: VerificationCriterion[]) {
+  return criteria.every((criterion) => !criterion.required || criterion.passed);
 }
 
 export function createVerifiedFixSession(projectPath: string, task: string) {
@@ -66,6 +80,8 @@ export function createVerifiedFixSession(projectPath: string, task: string) {
     task,
     criteria,
     verificationPassed: false,
+    status: "running",
+    summary: "Verification session started.",
     createdAt: now,
     updatedAt: now,
   };
@@ -77,7 +93,8 @@ export function createVerifiedFixSession(projectPath: string, task: string) {
 export function updateVerificationCriterion(
   sessionId: string,
   criterionId: string,
-  passed: boolean
+  passed: boolean,
+  detail?: { evidence?: string; note?: string }
 ) {
   const now = new Date().toISOString();
 
@@ -86,16 +103,23 @@ export function updateVerificationCriterion(
 
     const criteria = session.criteria.map((criterion) =>
       criterion.id === criterionId
-        ? { ...criterion, passed }
+        ? {
+            ...criterion,
+            passed,
+            evidence: detail?.evidence ?? criterion.evidence,
+            note: detail?.note ?? criterion.note,
+            updatedAt: now,
+          }
         : criterion
     );
+
+    const verificationPassed = requiredCriteriaPassed(criteria);
 
     return {
       ...session,
       criteria,
-      verificationPassed: criteria.every(
-        (criterion) => !criterion.required || criterion.passed
-      ),
+      verificationPassed,
+      status: verificationPassed ? "passed" : session.status === "blocked" ? "blocked" : "running",
       updatedAt: now,
     };
   });
@@ -103,8 +127,44 @@ export function updateVerificationCriterion(
   writeSessions(sessions);
 }
 
-export function listVerifiedFixSessions(projectPath: string) {
-  return readSessions().filter(
-    (session) => session.projectPath === projectPath
+export function completeVerifiedFixSession(sessionId: string, passed: boolean, summary: string) {
+  const now = new Date().toISOString();
+  writeSessions(
+    readSessions().map((session) =>
+      session.id === sessionId
+        ? {
+            ...session,
+            verificationPassed: passed,
+            status: passed ? "passed" : "needs-review",
+            summary,
+            updatedAt: now,
+          }
+        : session
+    )
   );
+}
+
+export function blockVerifiedFixSession(sessionId: string, summary: string) {
+  const now = new Date().toISOString();
+  writeSessions(
+    readSessions().map((session) =>
+      session.id === sessionId
+        ? {
+            ...session,
+            verificationPassed: false,
+            status: "blocked",
+            summary,
+            updatedAt: now,
+          }
+        : session
+    )
+  );
+}
+
+export function getVerifiedFixSession(sessionId: string) {
+  return readSessions().find((session) => session.id === sessionId);
+}
+
+export function listVerifiedFixSessions(projectPath: string) {
+  return readSessions().filter((session) => session.projectPath === projectPath);
 }
