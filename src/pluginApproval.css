@@ -1,0 +1,72 @@
+.plugin-approval-panel {
+  position: fixed;
+  right: 18px;
+  top: 88px;
+  z-index: 58;
+  width: min(380px, calc(100vw - 36px));
+  max-height: min(480px, calc(100vh - 120px));
+  overflow: auto;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(167,139,250,0.2);
+  background: rgba(12,14,26,0.94);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.48);
+  backdrop-filter: blur(18px);
+}
+
+.plugin-approval-header {
+  margin-bottom: 12px;
+}
+
+.plugin-approval-header strong {
+  color: #f8fafc;
+}
+
+.plugin-approval-header p,
+.plugin-approval-card p,
+.plugin-approval-card span,
+.plugin-approval-empty {
+  color: #a8a0b8;
+  font-size: 12px;
+}
+
+.plugin-approval-list {
+  display: grid;
+  gap: 10px;
+}
+
+.plugin-approval-card {
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(148,163,184,0.14);
+  background: rgba(255,255,255,0.04);
+}
+
+.plugin-approval-card.pending {
+  border-color: rgba(245,158,11,0.28);
+}
+
+.plugin-approval-card.approved {
+  border-color: rgba(34,197,94,0.28);
+}
+
+.plugin-approval-card.denied {
+  border-color: rgba(239,68,68,0.28);
+}
+
+.plugin-approval-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.plugin-approval-actions button {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(167,139,250,0.2);
+  background: rgba(255,255,255,0.05);
+  color: #ede9fe;
+  font-size: 12px;
+  font-weight: 700;
+}
