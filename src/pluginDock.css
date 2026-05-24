@@ -1,0 +1,49 @@
+.plugin-dock-panel {
+  position: fixed;
+  left: 18px;
+  bottom: 76px;
+  z-index: 58;
+  width: min(260px, calc(100vw - 36px));
+  padding: 12px;
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  border-radius: 16px;
+  background: rgba(12, 14, 26, 0.94);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(18px);
+}
+
+.plugin-dock-header {
+  padding: 2px 4px 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  margin-bottom: 10px;
+}
+
+.plugin-dock-header strong {
+  color: #f8fafc;
+  font-size: 14px;
+}
+
+.plugin-dock-list {
+  display: grid;
+  gap: 7px;
+}
+
+.plugin-dock-item {
+  width: 100%;
+  min-height: 36px;
+  padding: 0 11px;
+  border-radius: 11px;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  color: #d8d3e5;
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.plugin-dock-item.active,
+.plugin-dock-item:hover {
+  color: white;
+  border-color: rgba(167, 139, 250, 0.45);
+  background: rgba(124, 58, 237, 0.2);
+}
