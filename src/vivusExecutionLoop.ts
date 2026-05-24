@@ -13,6 +13,7 @@ import {
 import { runBuilderExecutionPreview, type BuildDiagnostic, type BuilderExecutionResult } from "./builderExecution";
 import { extractFullFileResponse, generateWithOllama, getOllamaStatus, pickModel } from "./builderOllama";
 import { getWorkspaceProjectPath, syncWorkspaceFile } from "./workspaceSync";
+import { emitBuilderExecutionEvent } from "./builderExecutionEvents";
 
 export type VerifiedEditStage =
   | "idle"
@@ -74,6 +75,10 @@ const SOURCE_EXTENSIONS = [".tsx", ".ts", ".jsx", ".js", ".css", ".rs", ".json"]
 const MAX_CONTEXT_FILES = 4;
 const MAX_CONTEXT_CHARS_PER_FILE = 6_000;
 
+function emitExecution(type: Parameters<typeof emitBuilderExecutionEvent>[0]["type"], label: string, detail: string, status: Parameters<typeof emitBuilderExecutionEvent>[0]["status"]) {
+  emitBuilderExecutionEvent({ type, label, detail, status });
+}
+
 function dispatchPreviewRefresh() {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent("vivus-preview-refresh"));
@@ -95,6 +100,7 @@ function steps(overrides: Partial<Record<string, VerifiedEditStep["status"]>> = 
 }
 
 function blocked(message: string, overrides: Partial<Record<string, VerifiedEditStep["status"]>> = {}): VerifiedEditState {
+  emitExecution("blocked", "Blocked", message, "blocked");
   return { stage: "blocked", message, steps: steps(overrides) };
 }
 
@@ -147,15 +153,24 @@ async function collectProjectFiles(projectPath: string) {
 }
 
 async function inferTargetFile(projectPath: string, planSummary: string, explicitRelativePath?: string): Promise<TargetSelection> {
+  emitExecution("infer-target", "Infer target file", "Ranking source files for the safest edit target.", "active");
   const entries = await collectProjectFiles(projectPath);
   const candidates = entries.map((entry) => scoreEntry(entry, planSummary)).sort((a, b) => b.score - a.score);
-  if (explicitRelativePath?.trim()) return { relativePath: explicitRelativePath.trim(), reason: "explicit target supplied", candidates };
+  if (explicitRelativePath?.trim()) {
+    emitExecution("infer-target", "Target selected", explicitRelativePath.trim(), "done");
+    return { relativePath: explicitRelativePath.trim(), reason: "explicit target supplied", candidates };
+  }
   const best = candidates.find((candidate) => candidate.score > 0) ?? candidates[0];
-  if (best) return { relativePath: best.relativePath, reason: `${best.reason}; score ${best.score}`, candidates };
+  if (best) {
+    emitExecution("infer-target", "Target selected", `${best.relativePath} (${best.reason})`, "done");
+    return { relativePath: best.relativePath, reason: `${best.reason}; score ${best.score}`, candidates };
+  }
+  emitExecution("infer-target", "Target selected", DEFAULT_RELATIVE_PATH, "done");
   return { relativePath: DEFAULT_RELATIVE_PATH, reason: "fallback default target", candidates: [] };
 }
 
 async function buildContextPack(projectPath: string, target: TargetSelection): Promise<ContextFile[]> {
+  emitExecution("load-context", "Load repo context", "Reading nearby relevant files for project-aware generation.", "active");
   const contextPaths = target.candidates.filter((candidate) => candidate.relativePath !== target.relativePath).slice(0, MAX_CONTEXT_FILES).map((candidate) => candidate.relativePath);
   const context: ContextFile[] = [];
   for (const relativePath of contextPaths) {
@@ -163,6 +178,7 @@ async function buildContextPack(projectPath: string, target: TargetSelection): P
     if (!file.ok) continue;
     context.push({ relativePath, content: truncateForContext(file.content) });
   }
+  emitExecution("load-context", "Repo context loaded", `${context.length} context file(s) loaded.`, "done");
   return context;
 }
 
@@ -186,6 +202,7 @@ function buildCoderPrompt(relativePath: string, currentContent: string, planSumm
 
 async function generateNextContent(relativePath: string, currentContent: string, planSummary: string, targetReason: string, contextFiles: ContextFile[], explicitNextContent?: string, diagnostics: BuildDiagnostic[] = []) {
   if (explicitNextContent) return { content: explicitNextContent, generatedBy: "manual override" };
+  emitExecution("generate-patch", "Generate AI patch", "Calling the local coder model for a full-file replacement candidate.", "active");
   const status = await getOllamaStatus();
   if (!status.ok || status.models.length === 0) return { content: makeFallbackNextContent(currentContent, planSummary), generatedBy: status.blockedReason ?? "fallback patch" };
   const model = pickModel(status.models, "coder");
@@ -194,11 +211,13 @@ async function generateNextContent(relativePath: string, currentContent: string,
   if (!result.ok) return { content: makeFallbackNextContent(currentContent, planSummary), generatedBy: result.blockedReason ?? `fallback patch: ${model} failed` };
   const extracted = extractFullFileResponse(result.response);
   if (!extracted) return { content: makeFallbackNextContent(currentContent, planSummary), generatedBy: `fallback patch: ${model} returned no extractable file` };
+  emitExecution("generate-patch", "AI patch generated", model, "done");
   return { content: extracted, generatedBy: diagnostics.length ? `${model} repair` : model };
 }
 
 async function prepareRepairProposal(state: VerifiedEditState, diagnostics: BuildDiagnostic[], planSummary: string) {
   if (!state.proposal) return null;
+  emitExecution("repair", "Repair attempt", "Using verification diagnostics for one local repair pass.", "active");
   const currentAfterPatch = await readProjectFile(state.proposal.projectPath, state.proposal.relativePath);
   if (!currentAfterPatch.ok) return null;
   const contextFiles = await Promise.all((state.proposal.contextFiles ?? []).map(async (relativePath) => {
@@ -209,6 +228,7 @@ async function prepareRepairProposal(state: VerifiedEditState, diagnostics: Buil
   const generated = await generateNextContent(state.proposal.relativePath, currentAfterPatch.content, planSummary, state.proposal.targetReason ?? "repair target", validContext, undefined, diagnostics);
   const diff = await previewFilePatch(state.proposal.projectPath, state.proposal.relativePath, generated.content);
   if (!diff.ok || !diff.changed) return null;
+  emitExecution("repair", "Repair patch prepared", state.proposal.relativePath, "done");
   return {
     ...state.proposal,
     currentContent: currentAfterPatch.content,
@@ -220,6 +240,7 @@ async function prepareRepairProposal(state: VerifiedEditState, diagnostics: Buil
 }
 
 export async function prepareVerifiedEdit(request: VerifiedEditRequest): Promise<VerifiedEditState> {
+  emitExecution("planning", "Prepare verified edit", "Starting target inference, context loading, generation, and diff preparation.", "active");
   const projectPath = request.projectPath?.trim() || getWorkspaceProjectPath();
   const target = await inferTargetFile(projectPath, request.planSummary, request.relativePath);
   const relativePath = target.relativePath;
@@ -229,10 +250,12 @@ export async function prepareVerifiedEdit(request: VerifiedEditRequest): Promise
 
   const contextFiles = await buildContextPack(projectPath, target);
   const generated = await generateNextContent(relativePath, file.content, request.planSummary, target.reason, contextFiles, request.nextContent);
+  emitExecution("build-diff", "Build diff preview", "Generating reviewable patch preview.", "active");
   const diff = await previewFilePatch(projectPath, relativePath, generated.content);
 
   if (!diff.ok) return blocked(diff.blockedReason ?? "Unable to generate diff preview.", { target: "done", context: "done", inspect: "done", ai: "done", diff: "blocked" });
 
+  emitExecution("build-diff", "Diff ready", relativePath, diff.changed ? "done" : "blocked");
   return {
     stage: "diff-ready",
     message: diff.changed ? `Diff preview is ready for ${relativePath}. Target reason: ${target.reason}. Context files: ${contextFiles.length}. Patch generated by ${generated.generatedBy}.` : `No textual changes detected for ${relativePath}. Target reason: ${target.reason}. Context files: ${contextFiles.length}. Patch source: ${generated.generatedBy}.`,
@@ -243,8 +266,13 @@ export async function prepareVerifiedEdit(request: VerifiedEditRequest): Promise
 
 export async function checkpointVerifiedEdit(state: VerifiedEditState): Promise<VerifiedEditState> {
   if (!state.proposal) return blocked("Cannot create checkpoint without a prepared proposal.", { target: "done", context: "done", inspect: "done", ai: "done", diff: "done", checkpoint: "blocked" });
+  emitExecution("checkpoint", "Create checkpoint", "Creating rollback checkpoint before writing.", "active");
   const checkpoint = await createPatchCheckpoint(state.proposal.projectPath, [state.proposal.relativePath]);
-  if (!checkpoint.ok) return { ...state, stage: "blocked", message: checkpoint.blockedReason ?? "Checkpoint creation failed.", checkpoint, steps: steps({ target: "done", context: "done", inspect: "done", ai: "done", diff: "done", checkpoint: "blocked" }) };
+  if (!checkpoint.ok) {
+    emitExecution("checkpoint", "Checkpoint failed", checkpoint.blockedReason ?? "Checkpoint creation failed.", "blocked");
+    return { ...state, stage: "blocked", message: checkpoint.blockedReason ?? "Checkpoint creation failed.", checkpoint, steps: steps({ target: "done", context: "done", inspect: "done", ai: "done", diff: "done", checkpoint: "blocked" }) };
+  }
+  emitExecution("checkpoint", "Checkpoint ready", checkpoint.checkpointId ?? "checkpoint created", "done");
   return { ...state, stage: "checkpoint-ready", message: `Checkpoint created: ${checkpoint.checkpointId}`, checkpoint, steps: steps({ target: "done", context: "done", inspect: "done", ai: "done", diff: "done", checkpoint: "done" }) };
 }
 
@@ -253,26 +281,38 @@ export async function applyAndVerifyEdit(state: VerifiedEditState, planSummary: 
     return { ...state, stage: "blocked", message: "Cannot apply patch until a proposal and checkpoint exist.", steps: steps({ target: "done", context: "done", inspect: "done", ai: "done", diff: "done", checkpoint: state.checkpoint?.ok ? "done" : "blocked", apply: "blocked" }) };
   }
 
+  emitExecution("apply", "Apply patch", `Writing ${state.proposal.relativePath}.`, "active");
   const patch = await applyApprovedFilePatch(state.proposal.projectPath, state.proposal.relativePath, state.proposal.currentContent, state.proposal.nextContent, "APPROVE_PATCH");
-  if (!patch.ok) return { ...state, stage: "blocked", message: patch.blockedReason ?? "Patch application failed.", patchResult: patch, steps: steps({ target: "done", context: "done", inspect: "done", ai: "done", diff: "done", checkpoint: "done", apply: "blocked" }) };
+  if (!patch.ok) {
+    emitExecution("apply", "Patch failed", patch.blockedReason ?? "Patch application failed.", "blocked");
+    return { ...state, stage: "blocked", message: patch.blockedReason ?? "Patch application failed.", patchResult: patch, steps: steps({ target: "done", context: "done", inspect: "done", ai: "done", diff: "done", checkpoint: "done", apply: "blocked" }) };
+  }
 
+  emitExecution("apply", "Patch applied", state.proposal.relativePath, "done");
   syncWorkspaceFile(state.proposal.relativePath);
+  emitExecution("verify", "Run verification", "Running safe build/execution checks.", "active");
   const verification = await runBuilderExecutionPreview(planSummary);
   const verified = verification.tasks.every((task) => task.status !== "failed") && verification.activity.every((item) => item.status !== "blocked");
   if (verified) {
+    emitExecution("verify", "Verification passed", "Build checks passed.", "done");
+    emitExecution("verified", "Verified fixed", "Patch applied and verification passed.", "done");
     dispatchPreviewRefresh();
     return { ...state, stage: "verified", message: "Patch applied and verification passed.", patchResult: patch, verification, steps: steps({ target: "done", context: "done", inspect: "done", ai: "done", diff: "done", checkpoint: "done", apply: "done", verify: "done" }) };
   }
 
+  emitExecution("verify", "Verification failed", "Attempting repair if diagnostics are available.", "blocked");
   if (verification.diagnostics.length > 0) {
     const repairProposal = await prepareRepairProposal({ ...state, patchResult: patch, verification }, verification.diagnostics, planSummary);
     if (repairProposal) {
+      emitExecution("repair", "Apply repair", repairProposal.relativePath, "active");
       const repairPatch = await applyApprovedFilePatch(repairProposal.projectPath, repairProposal.relativePath, repairProposal.currentContent, repairProposal.nextContent, "APPROVE_PATCH");
       if (repairPatch.ok) {
         syncWorkspaceFile(repairProposal.relativePath);
+        emitExecution("verify", "Verify repair", "Running verification after repair.", "active");
         const repairVerification = await runBuilderExecutionPreview(planSummary);
         const repairPassed = repairVerification.tasks.every((task) => task.status !== "failed") && repairVerification.activity.every((item) => item.status !== "blocked");
         if (repairPassed) {
+          emitExecution("repair", "Repair verified", "Repair pass succeeded.", "done");
           dispatchPreviewRefresh();
           return { ...state, stage: "repaired", message: "Initial verification failed, but Vivus repaired the build and verification passed.", proposal: repairProposal, patchResult: repairPatch, verification, repairVerification, repairAttempted: true, steps: steps({ target: "done", context: "done", inspect: "done", ai: "done", diff: "done", checkpoint: "done", apply: "done", verify: "blocked", repair: "done" }) };
         }
@@ -280,8 +320,14 @@ export async function applyAndVerifyEdit(state: VerifiedEditState, planSummary: 
     }
   }
 
+  emitExecution("rollback", "Rollback", "Restoring checkpoint after failed verification.", "active");
   const rollback = await restorePatchCheckpoint(state.proposal.projectPath, state.checkpoint.checkpointId);
-  if (rollback.ok) syncWorkspaceFile(state.proposal.relativePath);
+  if (rollback.ok) {
+    emitExecution("rollback", "Rollback complete", state.proposal.relativePath, "done");
+    syncWorkspaceFile(state.proposal.relativePath);
+  } else {
+    emitExecution("rollback", "Rollback failed", rollback.blockedReason ?? "Rollback could not be completed.", "blocked");
+  }
   return { ...state, stage: rollback.ok ? "rolled-back" : "blocked", message: rollback.ok ? "Verification failed and repair did not succeed, so Vivus restored the rollback checkpoint." : rollback.blockedReason ?? "Verification failed and rollback could not be completed.", patchResult: patch, verification, rollback, repairAttempted: verification.diagnostics.length > 0, steps: steps({ target: "done", context: "done", inspect: "done", ai: "done", diff: "done", checkpoint: "done", apply: "done", verify: "blocked", repair: verification.diagnostics.length > 0 ? "blocked" : "pending", rollback: rollback.ok ? "done" : "blocked" }) };
 }
 
