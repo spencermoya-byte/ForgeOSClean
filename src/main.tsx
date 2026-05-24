@@ -4,6 +4,9 @@ import App from './App';
 import './App.css';
 import './workspaceSticky.css';
 import './commitsLayout.css';
+import { startLivePreviewInstaller } from './livePreviewInstaller';
+
+startLivePreviewInstaller();
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
