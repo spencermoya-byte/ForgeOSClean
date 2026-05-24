@@ -23,6 +23,7 @@ export function createMultiFilePlan(
     relativePath: file,
     reason: `Selected for task: ${task}`,
     priority: inferFilePriority(file),
+    status: "planned",
   }));
 
   createMultiFileExecutionPlan(projectPath, task, plannedFiles);
