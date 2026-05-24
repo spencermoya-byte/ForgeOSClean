@@ -30,6 +30,7 @@
   color: #cbd5e1;
   background: rgba(255, 255, 255, 0.04);
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .terminal-status.running {
@@ -45,7 +46,9 @@
 
 .terminal-project-path span,
 .terminal-command-groups strong,
-.terminal-output-toolbar span {
+.terminal-output-toolbar span,
+.terminal-preview-controls strong,
+.terminal-activity-list > strong {
   color: #a8a0b8;
   font-size: 12px;
   font-weight: 700;
@@ -63,15 +66,20 @@
   font-size: 13px;
 }
 
-.terminal-session-tabs {
+.terminal-session-tabs,
+.terminal-preview-controls,
+.terminal-activity-list {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
   padding: 10px;
   border: 1px solid rgba(148, 163, 184, 0.12);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.025);
+}
+
+.terminal-session-tabs {
+  justify-content: space-between;
 }
 
 .terminal-session-tabs > div {
@@ -81,7 +89,8 @@
   gap: 8px;
 }
 
-.terminal-session-tabs button {
+.terminal-session-tabs button,
+.terminal-preview-controls button {
   height: 32px;
   padding: 0 12px;
   border-radius: 999px;
@@ -98,9 +107,21 @@
   box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.12) inset;
 }
 
-.terminal-session-tabs button:hover {
+.terminal-session-tabs button:hover,
+.terminal-preview-controls button:hover {
   border-color: rgba(167, 139, 250, 0.42);
   background: rgba(124, 58, 237, 0.18);
+}
+
+.terminal-preview-controls {
+  flex-wrap: wrap;
+}
+
+.terminal-preview-controls span {
+  flex: 1;
+  min-width: 180px;
+  color: #cbd5e1;
+  font-size: 12px;
 }
 
 .terminal-command-groups {
@@ -141,9 +162,55 @@
 }
 
 .terminal-command-groups button:disabled,
-.terminal-output-toolbar button:disabled {
+.terminal-output-toolbar button:disabled,
+.terminal-preview-controls button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.terminal-activity-list {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.terminal-activity-list p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.terminal-activity-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: #cbd5e1;
+  background: rgba(6, 8, 18, 0.48);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  font-size: 12px;
+}
+
+.terminal-activity-row span {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.terminal-activity-row.busy {
+  border-color: rgba(245, 158, 11, 0.24);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.terminal-activity-row.complete,
+.terminal-activity-row.stopped {
+  border-color: rgba(34, 197, 94, 0.18);
+  background: rgba(34, 197, 94, 0.07);
+}
+
+.terminal-activity-row.error {
+  border-color: rgba(248, 113, 113, 0.24);
+  background: rgba(248, 113, 113, 0.08);
 }
 
 .terminal-output-toolbar {
@@ -155,17 +222,38 @@
 
 .terminal-output {
   flex: 1;
-  min-height: 360px;
-  max-height: 520px;
+  min-height: 380px;
+  max-height: 560px;
   margin: 0;
-  padding: 15px;
+  padding: 16px;
   overflow: auto;
   border-radius: 15px;
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  border: 1px solid rgba(148, 163, 184, 0.16);
   color: #d1d5db;
-  background: #05070d;
+  background:
+    radial-gradient(circle at top left, rgba(124, 58, 237, 0.12), transparent 32%),
+    #05070d;
   font-family: "JetBrains Mono", "Cascadia Code", Consolas, monospace;
   font-size: 12px;
-  line-height: 1.55;
+  line-height: 1.6;
   white-space: pre-wrap;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 18px 45px rgba(0, 0, 0, 0.28);
+}
+
+.terminal-output::selection {
+  background: rgba(167, 139, 250, 0.35);
+}
+
+@media (max-width: 920px) {
+  .terminal-command-groups {
+    grid-template-columns: 1fr;
+  }
+
+  .terminal-workflow-header,
+  .terminal-output-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }
