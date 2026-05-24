@@ -4,6 +4,7 @@ import { recordExecutionTransparencyEvent, recordPolicyTransparency } from './ex
 
 const MODE_KEY = 'vivus.autonomyMode.v1';
 const POLICY_SNAPSHOT_KEY = 'vivus.executionPolicySnapshot.v1';
+const POLICY_APPROVAL_KEY = 'vivus.executionPolicyApproval.v1';
 const modes: AutonomyMode[] = ['light', 'medium', 'full'];
 let lastPublishedSignature = '';
 
@@ -19,6 +20,30 @@ function readMode(): AutonomyMode {
 function writeMode(mode: AutonomyMode) {
   try {
     window.localStorage.setItem(MODE_KEY, mode);
+  } catch {}
+}
+
+function approvalSignature(report: ExecutionPolicyReport) {
+  return `${report.autonomyMode}:${report.allowed.join('|')}:${report.approvalRequired.join('|')}:${report.blocked.join('|')}`;
+}
+
+function isPolicyApproved(report: ExecutionPolicyReport) {
+  try {
+    return window.localStorage.getItem(POLICY_APPROVAL_KEY) === approvalSignature(report);
+  } catch {
+    return false;
+  }
+}
+
+function approvePolicy(report: ExecutionPolicyReport) {
+  try {
+    window.localStorage.setItem(POLICY_APPROVAL_KEY, approvalSignature(report));
+  } catch {}
+}
+
+function clearPolicyApproval() {
+  try {
+    window.localStorage.removeItem(POLICY_APPROVAL_KEY);
   } catch {}
 }
 
@@ -43,6 +68,10 @@ function getCurrentReport() {
   return createExecutionPolicyReport(readMode(), defaultExecutionPermissions);
 }
 
+function policyRequiresExplicitApproval(report: ExecutionPolicyReport) {
+  return report.policy.requiresApproval || report.approvalRequired.length > 0 || report.blocked.length > 0;
+}
+
 function ensurePreviewPolicyNotice(report: ExecutionPolicyReport) {
   const actions = document.querySelector('.builder-workflow-actions');
   if (!actions?.parentElement) return;
@@ -50,14 +79,35 @@ function ensurePreviewPolicyNotice(report: ExecutionPolicyReport) {
   const existing = document.querySelector('.execution-policy-preview-notice');
   existing?.remove();
 
+  const approved = isPolicyApproved(report);
+  const requiresApproval = policyRequiresExplicitApproval(report);
   const notice = document.createElement('div');
-  notice.className = 'builder-plan-section execution-policy-preview-notice';
+  notice.className = `builder-plan-section execution-policy-preview-notice ${approved ? 'approved' : requiresApproval ? 'needs-approval' : ''}`;
   notice.innerHTML = `
     <strong>Execution preview policy snapshot</strong>
-    <p>The next execution preview will use the selected autonomy and permission policy.</p>
+    <p>${requiresApproval && !approved ? 'Approve this policy before running execution preview.' : 'The next execution preview will use the selected autonomy and permission policy.'}</p>
     <pre class="execution-policy-report">${report.summary}</pre>
+    ${requiresApproval ? `<button type="button" class="execution-policy-approve-button">${approved ? 'Policy approved' : 'Approve execution policy'}</button>` : ''}
   `;
   actions.parentElement.insertBefore(notice, actions);
+
+  notice.querySelector<HTMLButtonElement>('.execution-policy-approve-button')?.addEventListener('click', () => {
+    approvePolicy(report);
+    recordExecutionTransparencyEvent('Execution policy approved', `${report.autonomyMode} autonomy policy approved for execution preview.`, 'done');
+    ensurePreviewPolicyNotice(report);
+    updatePreviewButtonGate(report);
+  });
+}
+
+function updatePreviewButtonGate(report = getCurrentReport()) {
+  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('.builder-workflow-actions button'));
+  const previewButton = buttons.find((button) => button.textContent?.toLowerCase().includes('execution preview'));
+  if (!previewButton) return;
+
+  const requiresApproval = policyRequiresExplicitApproval(report);
+  const approved = isPolicyApproved(report);
+  previewButton.disabled = requiresApproval && !approved;
+  previewButton.title = previewButton.disabled ? 'Approve the execution policy before running preview.' : '';
 }
 
 function bindExecutionPreviewButton() {
@@ -66,8 +116,19 @@ function bindExecutionPreviewButton() {
   if (!previewButton || previewButton.dataset.executionPolicyBound === 'true') return;
 
   previewButton.dataset.executionPolicyBound = 'true';
-  previewButton.addEventListener('click', () => {
+  previewButton.addEventListener('click', (event) => {
     const report = getCurrentReport();
+    const requiresApproval = policyRequiresExplicitApproval(report);
+    if (requiresApproval && !isPolicyApproved(report)) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      publishPolicy(report, true);
+      recordExecutionTransparencyEvent('Execution preview blocked', 'Execution policy approval is required before preview can run.', 'blocked');
+      ensurePreviewPolicyNotice(report);
+      updatePreviewButtonGate(report);
+      return;
+    }
+
     publishPolicy(report, true);
     recordExecutionTransparencyEvent('Execution preview started', `Preview started with ${report.autonomyMode} autonomy.`, 'active');
     ensurePreviewPolicyNotice(report);
@@ -91,10 +152,13 @@ function renderPolicyPanel(container: HTMLElement) {
     button.addEventListener('click', () => {
       const next = button.dataset.autonomyMode as AutonomyMode;
       writeMode(next);
+      clearPolicyApproval();
       renderPolicyPanel(container);
       const nextReport = getCurrentReport();
       publishPolicy(nextReport, true);
+      recordExecutionTransparencyEvent('Autonomy mode changed', `${next} autonomy selected. Execution policy approval reset.`, 'active');
       ensurePreviewPolicyNotice(nextReport);
+      updatePreviewButtonGate(nextReport);
     });
   });
 }
@@ -116,6 +180,9 @@ function installExecutionPolicyPanel() {
     renderPolicyPanel(panel);
   }
 
+  const report = getCurrentReport();
+  ensurePreviewPolicyNotice(report);
+  updatePreviewButtonGate(report);
   bindExecutionPreviewButton();
 }
 
