@@ -2,9 +2,13 @@ import "./LivePreviewPanel.css";
 
 type PreviewStatus = "stopped" | "starting" | "running" | "failed";
 
-type LivePreviewStartResponse = {
+type LivePreviewResponse = {
+  ok?: boolean;
   url?: string;
   pid?: number;
+  status?: string;
+  projectPath?: string;
+  blockedReason?: string;
   failure_reason?: string;
   failureReason?: string;
 };
@@ -19,60 +23,43 @@ let previewStatus: PreviewStatus = "stopped";
 let failureReason = "";
 let refreshKey = 0;
 let mountedPanel: HTMLElement | null = null;
+let statusPollInterval: number | null = null;
 
 function hasTauriRuntime() {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
 function escapeHtml(value: string) {
-  return value.replace(
-    /[&<>\"]/g,
-    (char) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-      }[char] ?? char)
-  );
+  return value.replace(/[&<>\"]/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+  }[char] ?? char));
 }
 
 function getPreviewProjectPath() {
   try {
-    const savedPath = window.localStorage.getItem(PREVIEW_PROJECT_PATH_KEY)?.trim();
-    return savedPath || DEFAULT_PROJECT_PATH;
+    return window.localStorage.getItem(PREVIEW_PROJECT_PATH_KEY)?.trim() || DEFAULT_PROJECT_PATH;
   } catch {
     return DEFAULT_PROJECT_PATH;
   }
 }
 
 function setPreviewProjectPath(path: string) {
-  const trimmedPath = path.trim();
-
   try {
-    window.localStorage.setItem(
-      PREVIEW_PROJECT_PATH_KEY,
-      trimmedPath || DEFAULT_PROJECT_PATH
-    );
-  } catch {
-    // Local storage is optional. The default path still keeps preview usable.
-  }
+    window.localStorage.setItem(PREVIEW_PROJECT_PATH_KEY, path.trim() || DEFAULT_PROJECT_PATH);
+  } catch {}
 }
 
-function normalizePreviewResponse(response: LivePreviewStartResponse | null | undefined) {
-  const failure = response?.failure_reason ?? response?.failureReason ?? "";
-  const url = typeof response?.url === "string" && response.url.trim()
-    ? response.url.trim()
-    : DEFAULT_PREVIEW_URL;
-
-  const pid = typeof response?.pid === "number"
-    ? response.pid
-    : null;
+function normalizeResponse(response: LivePreviewResponse | null | undefined) {
+  const failure = response?.blockedReason ?? response?.failureReason ?? response?.failure_reason ?? "";
 
   return {
-    ok: !failure,
-    url,
-    pid,
+    ok: Boolean(response?.ok ?? !failure),
+    url: response?.url?.trim() || DEFAULT_PREVIEW_URL,
+    pid: typeof response?.pid === "number" ? response.pid : null,
+    status: response?.status ?? "stopped",
     failureReason: failure,
   };
 }
@@ -87,6 +74,37 @@ function refreshPreview() {
   if (!previewUrl) return;
   refreshKey += 1;
   renderMountedPanel();
+}
+
+async function syncPreviewStatus() {
+  if (!hasTauriRuntime()) return;
+
+  try {
+    const { invoke } = await import("@tauri-apps/api/core");
+    const response = await invoke<LivePreviewResponse>("vivus_dev_server_status");
+    const normalized = normalizeResponse(response);
+
+    if (normalized.status === "running") {
+      previewUrl = normalized.url;
+      previewPid = normalized.pid;
+      previewStatus = "running";
+    } else if (previewStatus !== "starting") {
+      previewPid = null;
+      previewStatus = "stopped";
+    }
+
+    renderMountedPanel();
+  } catch {
+    // Silent status failures.
+  }
+}
+
+function startStatusPolling() {
+  if (statusPollInterval !== null) return;
+
+  statusPollInterval = window.setInterval(() => {
+    void syncPreviewStatus();
+  }, 2500);
 }
 
 async function startLivePreview() {
@@ -106,34 +124,48 @@ async function startLivePreview() {
   try {
     const { invoke } = await import("@tauri-apps/api/core");
 
-    const response = await invoke<LivePreviewStartResponse>(
-      "vivus_start_dev_server",
-      {
-        request: {
-          projectPath,
-        },
-      }
-    );
+    const response = await invoke<LivePreviewResponse>("vivus_start_dev_server", {
+      request: { projectPath },
+    });
 
-    const normalized = normalizePreviewResponse(response);
+    const normalized = normalizeResponse(response);
 
     if (!normalized.ok) {
-      setStatus(
-        "failed",
-        normalized.failureReason || "Preview server failed to start."
-      );
+      setStatus("failed", normalized.failureReason || "Preview server failed to start.");
       return;
     }
 
     previewUrl = normalized.url;
     previewPid = normalized.pid;
     refreshKey += 1;
-    setStatus("running");
+    setStatus(normalized.status === "starting" ? "starting" : "running");
+
+    window.setTimeout(() => {
+      void syncPreviewStatus();
+    }, 2500);
   } catch (error) {
-    setStatus(
-      "failed",
-      error instanceof Error ? error.message : String(error)
-    );
+    setStatus("failed", error instanceof Error ? error.message : String(error));
+  }
+}
+
+async function stopLivePreview() {
+  if (!hasTauriRuntime()) {
+    previewStatus = "stopped";
+    previewPid = null;
+    renderMountedPanel();
+    return;
+  }
+
+  try {
+    const { invoke } = await import("@tauri-apps/api/core");
+    await invoke("vivus_stop_dev_server");
+
+    previewStatus = "stopped";
+    previewPid = null;
+    failureReason = "";
+    renderMountedPanel();
+  } catch (error) {
+    setStatus("failed", error instanceof Error ? error.message : String(error));
   }
 }
 
@@ -144,48 +176,29 @@ function openExternalPreview() {
 
 function previewFrameUrl() {
   if (!previewUrl || previewStatus !== "running") return "";
-
-  return `${previewUrl}${
-    previewUrl.includes("?") ? "&" : "?"
-  }vivus_refresh=${refreshKey}`;
+  return `${previewUrl}${previewUrl.includes("?") ? "&" : "?"}vivus_refresh=${refreshKey}`;
 }
 
 function bindPreviewControls() {
-  mountedPanel
-    ?.querySelector<HTMLInputElement>('[data-preview-path-input]')
-    ?.addEventListener("input", (event) => {
-      const input = event.currentTarget as HTMLInputElement;
-      setPreviewProjectPath(input.value);
-    });
+  mountedPanel?.querySelector<HTMLInputElement>('[data-preview-path-input]')?.addEventListener("input", (event) => {
+    setPreviewProjectPath((event.currentTarget as HTMLInputElement).value);
+  });
 
-  mountedPanel
-    ?.querySelector('[data-preview-action="start"]')
-    ?.addEventListener("click", startLivePreview);
-
-  mountedPanel
-    ?.querySelector('[data-preview-action="refresh"]')
-    ?.addEventListener("click", refreshPreview);
-
-  mountedPanel
-    ?.querySelector('[data-preview-action="external"]')
-    ?.addEventListener("click", openExternalPreview);
+  mountedPanel?.querySelector('[data-preview-action="start"]')?.addEventListener("click", startLivePreview);
+  mountedPanel?.querySelector('[data-preview-action="stop"]')?.addEventListener("click", stopLivePreview);
+  mountedPanel?.querySelector('[data-preview-action="refresh"]')?.addEventListener("click", refreshPreview);
+  mountedPanel?.querySelector('[data-preview-action="external"]')?.addEventListener("click", openExternalPreview);
 }
 
 function renderMountedPanel() {
   if (!mountedPanel) return;
 
-  const running =
-    previewStatus === "running" && Boolean(previewUrl);
-
+  const running = previewStatus === "running" && Boolean(previewUrl);
   const frameUrl = previewFrameUrl();
-  const projectPath = getPreviewProjectPath();
-  const escapedReason = escapeHtml(failureReason);
-  const escapedProjectPath = escapeHtml(projectPath);
 
   mountedPanel.innerHTML = `
     <div class="live-preview-header">
       <div class="tool-panel-heading">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
         <div>
           <h2>Live Preview</h2>
           <p>Embedded localhost preview for the selected project folder.</p>
@@ -198,19 +211,18 @@ function renderMountedPanel() {
 
     <label class="live-preview-path-field">
       <span>Project folder</span>
-      <input type="text" value="${escapedProjectPath}" spellcheck="false" data-preview-path-input />
+      <input type="text" value="${escapeHtml(getPreviewProjectPath())}" spellcheck="false" data-preview-path-input />
     </label>
 
     <div class="live-preview-actions">
       <button type="button" data-preview-action="start" ${previewStatus === "starting" ? "disabled" : ""}>
-        ${previewStatus === "starting" ? "Starting..." : running ? "Restart Preview" : "Start Preview"}
+        ${running ? "Restart Preview" : previewStatus === "starting" ? "Starting..." : "Start Preview"}
       </button>
-      <button type="button" data-preview-action="refresh" ${running ? "" : "disabled"}>
-        Refresh
+      <button type="button" data-preview-action="stop" ${running || previewStatus === "starting" ? "" : "disabled"}>
+        Stop Preview
       </button>
-      <button type="button" data-preview-action="external" ${previewUrl ? "" : "disabled"}>
-        Open External
-      </button>
+      <button type="button" data-preview-action="refresh" ${running ? "" : "disabled"}>Refresh</button>
+      <button type="button" data-preview-action="external" ${previewUrl ? "" : "disabled"}>Open External</button>
     </div>
 
     <div class="live-preview-meta">
@@ -221,7 +233,7 @@ function renderMountedPanel() {
     <div class="live-preview-frame-shell">
       ${running
         ? `<iframe title="Vivus embedded live preview" src="${frameUrl}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>`
-        : `<div class="live-preview-empty"><div class="preview-window"><div class="preview-window-top"></div><div class="preview-window-body">${previewStatus === "failed" ? escapedReason || "Preview failed to start." : "Preview not started."}</div></div><p>${previewStatus === "failed" ? "Fix the dev server issue, then start preview again." : "Start the local dev server to load http://127.0.0.1:1420 here."}</p></div>`}
+        : `<div class="live-preview-empty"><div class="preview-window"><div class="preview-window-top"></div><div class="preview-window-body">${escapeHtml(failureReason || (previewStatus === "starting" ? "Starting preview server..." : "Preview not started."))}</div></div></div>`}
     </div>
   `;
 
@@ -231,13 +243,8 @@ function renderMountedPanel() {
 function installLivePreviewPanel() {
   if (typeof document === "undefined") return;
 
-  const placeholder = document.querySelector(
-    ".preview-panel-card .preview-placeholder"
-  );
-
-  const card = document.querySelector(
-    ".preview-panel-card"
-  );
+  const placeholder = document.querySelector(".preview-panel-card .preview-placeholder");
+  const card = document.querySelector(".preview-panel-card");
 
   if (!placeholder || !card || card.querySelector(".live-preview-frame-shell")) {
     return;
@@ -249,23 +256,14 @@ function installLivePreviewPanel() {
 }
 
 export function startLivePreviewInstaller() {
-  if (typeof window === "undefined" || typeof document === "undefined") {
-    return;
-  }
+  if (typeof window === "undefined" || typeof document === "undefined") return;
 
-  window.addEventListener(
-    "vivus-preview-refresh",
-    refreshPreview
-  );
+  startStatusPolling();
+  void syncPreviewStatus();
 
   const install = () => window.setTimeout(installLivePreviewPanel, 0);
-
   install();
 
   const observer = new MutationObserver(install);
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
+  observer.observe(document.body, { childList: true, subtree: true });
 }
