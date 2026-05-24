@@ -1,0 +1,32 @@
+.plugin-sandbox-panel {
+  position: fixed;
+  right: 18px;
+  bottom: 76px;
+  z-index: 58;
+  width: min(360px, calc(100vw - 36px));
+  max-height: min(360px, calc(100vh - 120px));
+  overflow: auto;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(167,139,250,0.2);
+  background: rgba(12,14,26,0.94);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.48);
+  backdrop-filter: blur(18px);
+}
+.plugin-sandbox-header { margin-bottom: 12px; }
+.plugin-sandbox-header strong { color: #f8fafc; }
+.plugin-sandbox-header p,
+.plugin-sandbox-card span { color: #a8a0b8; font-size: 12px; }
+.plugin-sandbox-list { display: grid; gap: 10px; }
+.plugin-sandbox-card {
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(148,163,184,0.14);
+  background: rgba(255,255,255,0.04);
+}
+.plugin-sandbox-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
