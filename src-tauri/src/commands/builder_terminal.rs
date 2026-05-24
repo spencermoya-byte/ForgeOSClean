@@ -78,9 +78,14 @@ const SAFE_COMMANDS: &[SafeCommandDefinition] = &[
     SafeCommandDefinition { command_id: "git_status", executable: "git", args: &["status", "--short"], display: "git status --short", requires_package_json: false, requires_git: true, timeout_seconds: 30 },
     SafeCommandDefinition { command_id: "git_diff_stat", executable: "git", args: &["diff", "--stat"], display: "git diff --stat", requires_package_json: false, requires_git: true, timeout_seconds: 30 },
     SafeCommandDefinition { command_id: "git_diff", executable: "git", args: &["diff"], display: "git diff", requires_package_json: false, requires_git: true, timeout_seconds: 45 },
+    SafeCommandDefinition { command_id: "git_log", executable: "git", args: &["log", "--oneline", "-n", "20"], display: "git log --oneline -n 20", requires_package_json: false, requires_git: true, timeout_seconds: 30 },
+    SafeCommandDefinition { command_id: "git_branch", executable: "git", args: &["branch", "--show-current"], display: "git branch --show-current", requires_package_json: false, requires_git: true, timeout_seconds: 30 },
+    SafeCommandDefinition { command_id: "git_cached_diff", executable: "git", args: &["diff", "--cached"], display: "git diff --cached", requires_package_json: false, requires_git: true, timeout_seconds: 45 },
     SafeCommandDefinition { command_id: "npm_install", executable: "npm", args: &["install"], display: "npm install", requires_package_json: true, requires_git: false, timeout_seconds: 180 },
     SafeCommandDefinition { command_id: "npm_build", executable: "npm", args: &["run", "build"], display: "npm run build", requires_package_json: true, requires_git: false, timeout_seconds: 120 },
     SafeCommandDefinition { command_id: "npm_test", executable: "npm", args: &["test"], display: "npm test", requires_package_json: true, requires_git: false, timeout_seconds: 120 },
+    SafeCommandDefinition { command_id: "npm_lint", executable: "npm", args: &["run", "lint"], display: "npm run lint", requires_package_json: true, requires_git: false, timeout_seconds: 120 },
+    SafeCommandDefinition { command_id: "npm_typecheck", executable: "npm", args: &["run", "typecheck"], display: "npm run typecheck", requires_package_json: true, requires_git: false, timeout_seconds: 120 },
 ];
 
 fn blocked_response(command_id: String, command_display: String, blocked_reason: String, duration_ms: u128) -> SafeCommandResponse {
