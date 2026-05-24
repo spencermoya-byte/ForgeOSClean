@@ -1,5 +1,6 @@
+import { getGitCheckpoint } from "./gitCheckpointState";
+import { rollbackToCheckpoint } from "./gitRollbackCoordinator";
 import { addGitTimelineEvent } from "./gitTimelineState";
-import { getGitCheckpoint, rollbackToCheckpoint } from "./gitRollbackCoordinator";
 
 export type GitSafeUndoResult = {
   ok: boolean;
