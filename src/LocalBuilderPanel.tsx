@@ -1,5 +1,4 @@
 import React from "react";
-import "./BuilderDashboard.css";
 import {
   applyAndVerifyEdit,
   checkpointVerifiedEdit,
@@ -271,65 +270,16 @@ export function LocalBuilderPanel() {
   }
 
   return (
-    <section className="builder-dash">
-      <div className="builder-dash-main">
-        <section className="builder-dash-card builder-hero">
-          <div className="builder-hero-mark">V</div>
-          <div>
-            <h2>Vivus · Local Agent Orchestrator</h2>
-            <p>Plan → Build → Verify → Patch<br />You are in control. Vivus executes locally.</p>
-          </div>
-          <div className="builder-status-box">
-            <strong>● READY</strong>
-            <span>All Systems Operational</span>
-          </div>
-          <button type="button" className="builder-hero-button">View System Health ›</button>
-        </section>
-
-        <section className="builder-dash-card builder-input-card">
-          <textarea value={task} onChange={(event) => setTask(event.target.value)} placeholder="Describe the change Vivus should make to the current project..." />
-          <div className="builder-actions">
-            <button type="button" className="builder-action-button primary" onClick={() => void prepareBuilderPatch()} disabled={running || !task.trim()}>{running ? "Running..." : "Prepare Patch"}</button>
-            <span className="spacer" />
-            <button type="button" className="builder-action-button">Attach Context</button>
-            <button type="button" className="builder-action-button">Add Criteria</button>
-            <button type="button" className="builder-action-button primary">Builder: Local</button>
-          </div>
-        </section>
-
-        <section className="builder-dash-card builder-timeline">
-          <div className="builder-timeline-title"><strong>Live execution timeline</strong><span>{running ? "real-time" : phase}</span></div>
-          <div className="builder-timeline-list">
-            {timeline.map((step) => <div key={step.id} className={`builder-step ${step.status}`}><span className="builder-step-dot" /><div><strong>{step.label}</strong><em>{step.detail}</em></div></div>)}
-          </div>
-          <div className="builder-dock-space" />
-        </section>
-
-        {preparedState?.proposal?.changed && phase === "approval-ready" && <section className="builder-dash-card builder-timeline"><div className="builder-timeline-title"><strong>Approval required</strong><span>{preparedState.proposal.relativePath}</span></div><p>Review this diff before Vivus writes to disk.</p><pre>{preparedState.proposal.diffPreview}</pre><div className="file-editor-actions"><button type="button" onClick={() => void applyApprovedPatch()}>Approve & Apply</button><button type="button" onClick={rejectPreparedPatch}>Reject</button></div></section>}
-        {result && phase !== "approval-ready" && <section className="builder-dash-card builder-timeline"><div className="builder-timeline-title"><strong>{stageLabel(result)}</strong><span>{result.proposal?.relativePath ?? "No file changed"}</span></div><p>{result.message}</p>{result.proposal?.diffPreview && <pre>{result.proposal.diffPreview}</pre>}</section>}
-        {logs.length > 0 && <section className="builder-dash-card builder-side"><div className="builder-timeline-title"><strong>Builder activity</strong><span>{logs.length}</span></div>{logs.slice(0, 3).map((log) => <p key={log.id}><strong>{log.label}</strong> {log.detail}</p>)}</section>}
-      </div>
-
-      <aside className="builder-dash-rail">
-        <section className="builder-dash-card builder-side">
-          <div className="builder-count">0<br />Pending</div>
-          <h3>Plugin Approvals</h3>
-          <p>Review permission requests before risky plugin actions run.</p>
-          <p>No pending permission requests.</p>
-        </section>
-        <section className="builder-dash-card builder-side">
-          <h3>Plugin Manager</h3>
-          <p>Runtime status and permissions for active plugins.</p>
-          <div className="builder-plugin-row"><div><strong>Live Preview</strong><span>Runs and displays local project previews inside Vivus.</span></div><em className="builder-ok">● READY</em></div>
-          <div className="builder-plugin-row"><div><strong>Terminal</strong><span>Provides allowlisted local command execution and terminal workflows.</span></div><em className="builder-wait">● NEEDS APPROVAL</em></div>
-          <div className="builder-plugin-row"><div><strong>Commits</strong><span>Tracks checkpoints, commits, rollback, and project history.</span></div><em className="builder-wait">● NEEDS APPROVAL</em></div>
-        </section>
-        <section className="builder-dash-card builder-side">
-          <h3>Plugin Audit</h3>
-          <p>Recent plugin events and security decisions.</p>
-          <p>No recent events.</p>
-        </section>
-      </aside>
+    <section className="local-builder-panel">
+      <div className="local-builder-header"><div><h2>Local AI Builder</h2><p>Planner + coder + verified patch loop for the active workspace.</p></div><span className={`local-builder-phase ${phase}`}>{phase} • {(elapsedMs / 1000).toFixed(1)}s</span></div>
+      <div className="local-builder-grid"><div className="local-builder-card"><strong>Workspace</strong><span>{projectPath}</span></div><div className="local-builder-card"><strong>Planner</strong><span>{plannerModel}</span></div><div className="local-builder-card"><strong>Coder</strong><span>{coderModel}</span></div></div>
+      <div className="local-builder-input-card"><textarea value={task} onChange={(event) => setTask(event.target.value)} placeholder="Describe the change Vivus should make to the current project..." /><button type="button" onClick={() => void prepareBuilderPatch()} disabled={running || !task.trim()}>{running ? "Running..." : "Prepare Patch"}</button></div>
+      <div className="local-builder-result"><div className="local-builder-result-header"><strong>Live execution timeline</strong><span>{running ? "real-time" : phase}</span></div><div className="local-builder-log">{timeline.map((step) => <div key={step.id} className={`local-builder-log-row ${step.status}`}><span /><div><strong>{step.label}</strong><em>{step.detail}</em></div></div>)}</div></div>
+      {preparedState?.proposal?.changed && phase === "approval-ready" && <div className="local-builder-result"><div className="local-builder-result-header"><strong>Approval required</strong><span>{preparedState.proposal.relativePath}</span></div><p>Review this diff before Vivus writes to disk.</p><pre>{preparedState.proposal.diffPreview}</pre><div className="file-editor-actions"><button type="button" onClick={() => void applyApprovedPatch()}>Approve & Apply</button><button type="button" onClick={rejectPreparedPatch}>Reject</button></div></div>}
+      {approvals.length > 0 && <div className="local-builder-result"><div className="local-builder-result-header"><strong>Approval queue</strong><span>{approvals.length} saved</span></div>{approvals.slice(0, 5).map((item) => <p key={item.id}><strong>{item.status}</strong> — {item.task} • {item.relativePath}</p>)}</div>}
+      {history.length > 0 && <div className="local-builder-result"><div className="local-builder-result-header"><strong>Recent builder history</strong><span>{history.length} saved</span></div>{history.slice(0, 5).map((entry) => <p key={entry.id}><strong>{entry.status}</strong> — {entry.task}{entry.changedFile ? ` • ${entry.changedFile}` : ""}</p>)}</div>}
+      {result && phase !== "approval-ready" && <div className="local-builder-result"><div className="local-builder-result-header"><strong>{stageLabel(result)}</strong><span>{result.proposal?.relativePath ?? "No file changed"}</span></div><p>{result.message}</p>{result.proposal?.diffPreview && <pre>{result.proposal.diffPreview}</pre>}</div>}
+      <div className="local-builder-log">{logs.map((log) => <div key={log.id} className={`local-builder-log-row ${log.status}`}><span /><div><strong>{log.label}</strong><em>{log.detail}</em></div></div>)}</div>
     </section>
   );
 }
