@@ -1,9 +1,11 @@
 import { createExecutionPolicyReport, defaultExecutionPermissions, type ExecutionPolicyReport } from './executionPolicy';
 import type { AutonomyMode } from './autonomyPolicy';
+import { recordExecutionTransparencyEvent, recordPolicyTransparency } from './executionTransparencyBridge';
 
 const MODE_KEY = 'vivus.autonomyMode.v1';
 const POLICY_SNAPSHOT_KEY = 'vivus.executionPolicySnapshot.v1';
 const modes: AutonomyMode[] = ['light', 'medium', 'full'];
+let lastPublishedSignature = '';
 
 function readMode(): AutonomyMode {
   try {
@@ -26,9 +28,15 @@ function persistPolicySnapshot(report: ExecutionPolicyReport) {
   } catch {}
 }
 
-function publishPolicy(report: ExecutionPolicyReport) {
+function publishPolicy(report: ExecutionPolicyReport, forceTransparency = false) {
   persistPolicySnapshot(report);
   window.dispatchEvent(new CustomEvent('vivus-execution-policy-updated', { detail: report }));
+
+  const signature = `${report.autonomyMode}:${report.allowed.length}:${report.approvalRequired.length}:${report.blocked.length}`;
+  if (forceTransparency || signature !== lastPublishedSignature) {
+    lastPublishedSignature = signature;
+    recordPolicyTransparency(report);
+  }
 }
 
 function getCurrentReport() {
@@ -60,7 +68,8 @@ function bindExecutionPreviewButton() {
   previewButton.dataset.executionPolicyBound = 'true';
   previewButton.addEventListener('click', () => {
     const report = getCurrentReport();
-    publishPolicy(report);
+    publishPolicy(report, true);
+    recordExecutionTransparencyEvent('Execution preview started', `Preview started with ${report.autonomyMode} autonomy.`, 'active');
     ensurePreviewPolicyNotice(report);
   }, { capture: true });
 }
@@ -83,7 +92,9 @@ function renderPolicyPanel(container: HTMLElement) {
       const next = button.dataset.autonomyMode as AutonomyMode;
       writeMode(next);
       renderPolicyPanel(container);
-      ensurePreviewPolicyNotice(getCurrentReport());
+      const nextReport = getCurrentReport();
+      publishPolicy(nextReport, true);
+      ensurePreviewPolicyNotice(nextReport);
     });
   });
 }
