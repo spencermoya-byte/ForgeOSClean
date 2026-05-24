@@ -1,5 +1,13 @@
 import "./TerminalWorkflowPanel.css";
-import { addTerminalHistory, clearTerminalHistory, ensureTerminalSession } from "./terminalSessionStore";
+import {
+  activateTerminalSession,
+  addTerminalHistory,
+  clearTerminalHistory,
+  createTerminalSession,
+  deleteTerminalSession,
+  ensureTerminalSession,
+  listTerminalSessions,
+} from "./terminalSessionStore";
 
 type CommandId =
   | "npm_install"
@@ -89,6 +97,27 @@ function persistProjectPath(path: string) {
   renderMountedPanel();
 }
 
+function switchSession(sessionId: string) {
+  activeSession = activateTerminalSession(projectPath, sessionId);
+  restoreSessionOutput();
+  lastStatus = `Active: ${activeSession.name}`;
+  renderMountedPanel();
+}
+
+function createSession() {
+  activeSession = createTerminalSession(projectPath);
+  restoreSessionOutput();
+  lastStatus = `Created: ${activeSession.name}`;
+  renderMountedPanel();
+}
+
+function deleteSession(sessionId: string) {
+  activeSession = deleteTerminalSession(projectPath, sessionId);
+  restoreSessionOutput();
+  lastStatus = "Terminal deleted";
+  renderMountedPanel();
+}
+
 function escapeHtml(value: string) {
   return value.replace(/[&<>\"]/g, (char) => ({
     "&": "&amp;",
@@ -128,10 +157,7 @@ async function runCommand(commandId: CommandId) {
   try {
     const { invoke } = await import("@tauri-apps/api/core");
     const response = await invoke<SafeCommandResponse>("vivus_run_safe_command", {
-      request: {
-        projectPath,
-        commandId,
-      },
+      request: { projectPath, commandId },
     });
 
     const stdout = response.stdout?.trimEnd() ?? "";
@@ -148,37 +174,20 @@ async function runCommand(commandId: CommandId) {
 
     const exitLine = `Exit: ${response.exitCode ?? "n/a"} • ${response.durationMs ?? 0}ms`;
     pieces.push(exitLine);
-
-    lastStatus = response.ok
-      ? `Passed: ${response.commandDisplay ?? commandId}`
-      : `Failed: ${response.commandDisplay ?? commandId}`;
-
+    lastStatus = response.ok ? `Passed: ${response.commandDisplay ?? commandId}` : `Failed: ${response.commandDisplay ?? commandId}`;
     appendOutput(`${exitLine}\n`);
 
-    addTerminalHistory(activeSession.id, {
-      command: commandLabel,
-      output: pieces.join("\n"),
-      ok: response.ok,
-    });
-
+    addTerminalHistory(activeSession.id, { command: commandLabel, output: pieces.join("\n"), ok: response.ok });
     activeSession = ensureTerminalSession(projectPath);
 
-    if (
-      response.ok &&
-      ["npm_build", "npm_test", "npm_lint", "npm_typecheck"].includes(commandId)
-    ) {
+    if (response.ok && ["npm_build", "npm_test", "npm_lint", "npm_typecheck"].includes(commandId)) {
       window.dispatchEvent(new Event("vivus-preview-refresh"));
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     lastStatus = "Command failed";
     appendOutput(message);
-
-    addTerminalHistory(activeSession.id, {
-      command: commandLabel,
-      output: message,
-      ok: false,
-    });
+    addTerminalHistory(activeSession.id, { command: commandLabel, output: message, ok: false });
   } finally {
     runningCommand = null;
     renderMountedPanel();
@@ -186,47 +195,44 @@ async function runCommand(commandId: CommandId) {
 }
 
 function bindControls() {
-  mountedPanel
-    ?.querySelector<HTMLInputElement>("[data-terminal-project-path]")
-    ?.addEventListener("input", (event) => {
-      persistProjectPath((event.currentTarget as HTMLInputElement).value);
-    });
+  mountedPanel?.querySelector<HTMLInputElement>("[data-terminal-project-path]")?.addEventListener("input", (event) => persistProjectPath((event.currentTarget as HTMLInputElement).value));
+  mountedPanel?.querySelector("[data-terminal-clear]")?.addEventListener("click", clearOutput);
+  mountedPanel?.querySelector("[data-terminal-new]")?.addEventListener("click", createSession);
 
-  mountedPanel
-    ?.querySelector("[data-terminal-clear]")
-    ?.addEventListener("click", clearOutput);
+  mountedPanel?.querySelectorAll<HTMLElement>("[data-terminal-session]").forEach((button) => {
+    button.addEventListener("click", () => switchSession(button.dataset.terminalSession ?? activeSession.id));
+  });
 
-  mountedPanel
-    ?.querySelectorAll<HTMLElement>("[data-terminal-command]")
-    .forEach((button) => {
-      button.addEventListener("click", () => {
-        const commandId = button.dataset.terminalCommand as CommandId;
-        void runCommand(commandId);
-      });
+  mountedPanel?.querySelectorAll<HTMLElement>("[data-terminal-delete-session]").forEach((button) => {
+    button.addEventListener("click", () => deleteSession(button.dataset.terminalDeleteSession ?? activeSession.id));
+  });
+
+  mountedPanel?.querySelectorAll<HTMLElement>("[data-terminal-command]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const commandId = button.dataset.terminalCommand as CommandId;
+      void runCommand(commandId);
     });
+  });
 }
 
 function renderMountedPanel() {
   if (!mountedPanel) return;
 
-  const projectCommands = COMMANDS.filter(
-    (command) => command.group === "Project"
-  );
+  const sessions = listTerminalSessions(projectPath);
+  const projectCommands = COMMANDS.filter((command) => command.group === "Project");
+  const gitCommands = COMMANDS.filter((command) => command.group === "Git");
 
-  const gitCommands = COMMANDS.filter(
-    (command) => command.group === "Git"
-  );
-
-  const renderButtons = (commands: typeof COMMANDS) =>
-    commands
-      .map(
-        (command) => `
+  const renderButtons = (commands: typeof COMMANDS) => commands.map((command) => `
     <button type="button" data-terminal-command="${command.id}" ${runningCommand ? "disabled" : ""}>
       ${escapeHtml(command.label)}
     </button>
-  `
-      )
-      .join("");
+  `).join("");
+
+  const renderSessions = () => sessions.map((session) => `
+    <button type="button" data-terminal-session="${session.id}" class="${session.id === activeSession.id ? "active" : ""}">
+      ${escapeHtml(session.name)}
+    </button>
+  `).join("");
 
   mountedPanel.innerHTML = `
     <div class="terminal-workflow-header">
@@ -234,38 +240,27 @@ function renderMountedPanel() {
         <h2>Console</h2>
         <p>Persistent project terminal for build, git, verification, and debugging.</p>
       </div>
-      <div class="terminal-status ${runningCommand ? "running" : "idle"}">
-        ${escapeHtml(lastStatus)}
-      </div>
+      <div class="terminal-status ${runningCommand ? "running" : "idle"}">${escapeHtml(lastStatus)}</div>
     </div>
 
     <label class="terminal-project-path">
       <span>Project folder</span>
-      <input
-        type="text"
-        value="${escapeHtml(projectPath)}"
-        spellcheck="false"
-        data-terminal-project-path
-      />
+      <input type="text" value="${escapeHtml(projectPath)}" spellcheck="false" data-terminal-project-path />
     </label>
 
-    <div class="terminal-command-groups">
-      <section>
-        <strong>Project</strong>
-        <div>${renderButtons(projectCommands)}</div>
-      </section>
+    <div class="terminal-session-tabs">
+      <div>${renderSessions()}</div>
+      <button type="button" data-terminal-new>+ Terminal</button>
+      ${sessions.length > 1 ? `<button type="button" data-terminal-delete-session="${activeSession.id}">Delete Current</button>` : ""}
+    </div>
 
-      <section>
-        <strong>Git</strong>
-        <div>${renderButtons(gitCommands)}</div>
-      </section>
+    <div class="terminal-command-groups">
+      <section><strong>Project</strong><div>${renderButtons(projectCommands)}</div></section>
+      <section><strong>Git</strong><div>${renderButtons(gitCommands)}</div></section>
     </div>
 
     <div class="terminal-output-toolbar">
-      <span>
-        ${escapeHtml(activeSession.name)} • ${activeSession.history.length}
-        saved command${activeSession.history.length === 1 ? "" : "s"}
-      </span>
+      <span>${escapeHtml(activeSession.name)} • ${activeSession.history.length} saved command${activeSession.history.length === 1 ? "" : "s"}</span>
       <button type="button" data-terminal-clear>Clear</button>
     </div>
 
@@ -277,22 +272,9 @@ function renderMountedPanel() {
 
 function installTerminalWorkflowPanel() {
   if (typeof document === "undefined") return;
-
-  const cards = Array.from(
-    document.querySelectorAll<HTMLElement>(".tool-panel-card")
-  );
-
-  const consoleCard = cards.find((card) =>
-    card.textContent?.includes("Console")
-  );
-
-  if (
-    !consoleCard ||
-    consoleCard.querySelector(".terminal-workflow-header")
-  ) {
-    return;
-  }
-
+  const cards = Array.from(document.querySelectorAll<HTMLElement>(".tool-panel-card"));
+  const consoleCard = cards.find((card) => card.textContent?.includes("Console"));
+  if (!consoleCard || consoleCard.querySelector(".terminal-workflow-header")) return;
   mountedPanel = consoleCard;
   mountedPanel.classList.add("terminal-workflow-panel");
   projectPath = readProjectPath();
@@ -301,16 +283,9 @@ function installTerminalWorkflowPanel() {
 }
 
 export function startTerminalWorkflowInstaller() {
-  if (typeof window === "undefined" || typeof document === "undefined") {
-    return;
-  }
-
+  if (typeof window === "undefined" || typeof document === "undefined") return;
   const install = () => window.setTimeout(installTerminalWorkflowPanel, 0);
   install();
-
   const observer = new MutationObserver(install);
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
+  observer.observe(document.body, { childList: true, subtree: true });
 }
