@@ -1,4 +1,5 @@
 import "./TerminalWorkflowPanel.css";
+import { addTerminalHistory, clearTerminalHistory, ensureTerminalSession } from "./terminalSessionStore";
 
 type CommandId = "npm_install" | "npm_build" | "npm_test" | "git_status" | "git_diff_stat" | "git_diff";
 
@@ -28,8 +29,9 @@ const COMMANDS: Array<{ id: CommandId; label: string; group: string }> = [
 let mountedPanel: HTMLElement | null = null;
 let projectPath = readProjectPath();
 let runningCommand: CommandId | null = null;
-let output = "Vivus terminal ready. Choose an allowlisted project command.\n";
+let output = "";
 let lastStatus = "Idle";
+let activeSession = ensureTerminalSession(projectPath);
 
 function hasTauriRuntime() {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -43,12 +45,31 @@ function readProjectPath() {
   }
 }
 
+function restoreSessionOutput() {
+  activeSession = ensureTerminalSession(projectPath);
+  if (!activeSession.history.length) {
+    output = "Vivus terminal ready. Choose an allowlisted project command.\n";
+    return;
+  }
+
+  output = activeSession.history
+    .slice()
+    .reverse()
+    .map((entry) => `$ ${entry.command}\n${entry.output}`)
+    .join("\n\n");
+
+  if (!output.endsWith("\n")) output += "\n";
+}
+
 function persistProjectPath(path: string) {
   projectPath = path.trim() || DEFAULT_PROJECT_PATH;
 
   try {
     window.localStorage.setItem(PROJECT_PATH_KEY, projectPath);
   } catch {}
+
+  restoreSessionOutput();
+  renderMountedPanel();
 }
 
 function escapeHtml(value: string) {
@@ -68,6 +89,8 @@ function appendOutput(text: string) {
 
 function clearOutput() {
   output = "";
+  clearTerminalHistory(activeSession.id);
+  activeSession = ensureTerminalSession(projectPath);
   lastStatus = "Cleared";
   renderMountedPanel();
 }
@@ -80,9 +103,10 @@ async function runCommand(commandId: CommandId) {
     return;
   }
 
+  const commandLabel = COMMANDS.find((command) => command.id === commandId)?.label ?? commandId;
   runningCommand = commandId;
-  lastStatus = `Running ${commandId}...`;
-  appendOutput(`\n$ ${COMMANDS.find((command) => command.id === commandId)?.label ?? commandId}\n`);
+  lastStatus = `Running ${commandLabel}...`;
+  appendOutput(`\n$ ${commandLabel}\n`);
 
   try {
     const { invoke } = await import("@tauri-apps/api/core");
@@ -95,26 +119,43 @@ async function runCommand(commandId: CommandId) {
 
     const stdout = response.stdout?.trimEnd() ?? "";
     const stderr = response.stderr?.trimEnd() ?? "";
+    const pieces = [stdout, stderr].filter(Boolean);
 
     if (stdout) appendOutput(stdout);
     if (stderr) appendOutput(stderr);
 
     if (response.blockedReason) {
+      pieces.push(`Blocked: ${response.blockedReason}`);
       appendOutput(`Blocked: ${response.blockedReason}`);
     }
+
+    const exitLine = `Exit: ${response.exitCode ?? "n/a"} • ${response.durationMs ?? 0}ms`;
+    pieces.push(exitLine);
 
     lastStatus = response.ok
       ? `Passed: ${response.commandDisplay ?? commandId}`
       : `Failed: ${response.commandDisplay ?? commandId}`;
 
-    appendOutput(`Exit: ${response.exitCode ?? "n/a"} • ${response.durationMs ?? 0}ms\n`);
+    appendOutput(`${exitLine}\n`);
+    addTerminalHistory(activeSession.id, {
+      command: commandLabel,
+      output: pieces.join("\n"),
+      ok: response.ok,
+    });
+    activeSession = ensureTerminalSession(projectPath);
 
     if (response.ok && (commandId === "npm_build" || commandId === "npm_test")) {
       window.dispatchEvent(new Event("vivus-preview-refresh"));
     }
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     lastStatus = "Command failed";
-    appendOutput(error instanceof Error ? error.message : String(error));
+    appendOutput(message);
+    addTerminalHistory(activeSession.id, {
+      command: commandLabel,
+      output: message,
+      ok: false,
+    });
   } finally {
     runningCommand = null;
     renderMountedPanel();
@@ -152,7 +193,7 @@ function renderMountedPanel() {
     <div class="terminal-workflow-header">
       <div>
         <h2>Console</h2>
-        <p>Project-aware command runner and verification output.</p>
+        <p>Project-aware command runner with persistent per-project output.</p>
       </div>
       <div class="terminal-status ${runningCommand ? "running" : "idle"}">${escapeHtml(lastStatus)}</div>
     </div>
@@ -174,7 +215,7 @@ function renderMountedPanel() {
     </div>
 
     <div class="terminal-output-toolbar">
-      <span>Output</span>
+      <span>${escapeHtml(activeSession.name)} • ${activeSession.history.length} saved command${activeSession.history.length === 1 ? "" : "s"}</span>
       <button type="button" data-terminal-clear>Clear</button>
     </div>
 
@@ -195,6 +236,7 @@ function installTerminalWorkflowPanel() {
   mountedPanel = consoleCard;
   mountedPanel.classList.add("terminal-workflow-panel");
   projectPath = readProjectPath();
+  restoreSessionOutput();
   renderMountedPanel();
 }
 
