@@ -8,6 +8,7 @@ import './executionPolicyStyles.css';
 import './pluginManager.css';
 import './pluginDock.css';
 import './pluginPanel.css';
+import './pluginApproval.css';
 import { AppErrorBoundary } from './appErrorBoundary';
 import { startLivePreviewInstaller } from './livePreviewInstaller';
 import { startTerminalWorkflowInstaller } from './terminalWorkflowInstaller';
@@ -16,6 +17,7 @@ import { startExecutionPolicyInstaller } from './executionPolicyInstaller';
 import { startPluginManagerInstaller } from './pluginManagerInstaller';
 import { startPluginDockInstaller } from './pluginDockInstaller';
 import { startPluginPanelRenderer } from './pluginPanelRenderer';
+import { startPluginApprovalPanel } from './pluginApprovalPanel';
 
 startLivePreviewInstaller();
 startTerminalWorkflowInstaller();
@@ -24,6 +26,7 @@ startExecutionPolicyInstaller();
 startPluginManagerInstaller();
 startPluginDockInstaller();
 startPluginPanelRenderer();
+startPluginApprovalPanel();
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
