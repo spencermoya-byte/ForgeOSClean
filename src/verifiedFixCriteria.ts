@@ -98,7 +98,7 @@ export function updateVerificationCriterion(
 ) {
   const now = new Date().toISOString();
 
-  const sessions = readSessions().map((session) => {
+  const sessions: VerifiedFixSession[] = readSessions().map((session) => {
     if (session.id !== sessionId) return session;
 
     const criteria = session.criteria.map((criterion) =>
@@ -119,7 +119,7 @@ export function updateVerificationCriterion(
       ...session,
       criteria,
       verificationPassed,
-      status: verificationPassed ? "passed" : session.status === "blocked" ? "blocked" : "running",
+      status: (verificationPassed ? "passed" : session.status === "blocked" ? "blocked" : "running") as VerifiedFixSession['status'],
       updatedAt: now,
     };
   });
