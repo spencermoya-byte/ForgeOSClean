@@ -216,7 +216,7 @@ export default function App() {
   }
 
   function seedWorkspace(project: ProjectRecord, startWithPrompt = false) {
-    initializeProjectFiles(project.id);
+    initializeProjectFiles();
     setActiveProjectId(project.id);
     setWorkspaceTab("builder");
     setShowProjectMenu(false);
@@ -248,7 +248,7 @@ export default function App() {
       status: "active",
     };
 
-    initializeProjectFiles(project.id);
+    initializeProjectFiles();
     setProjects((current) => [project, ...current]);
     setHomePrompt("");
     seedWorkspace(project, true);
@@ -257,7 +257,7 @@ export default function App() {
   }
 
   function openProject(project: ProjectRecord) {
-    initializeProjectFiles(project.id);
+    initializeProjectFiles();
     const updated = { ...project, updatedAt: new Date().toISOString(), status: "active" as const };
     setProjects((current) => current.map((item) => (item.id === project.id ? updated : item)));
     seedWorkspace(updated, false);
