@@ -2,6 +2,8 @@ import React from "react";
 import Editor from "@monaco-editor/react";
 
 const DEFAULT_PROJECT_PATH = "C:/ForgeOSClean";
+const PROJECT_PATH_KEY = "vivus.previewProjectPath.v1";
+const MAX_TREE_DEPTH = 4;
 
 type TreeEntry = {
   name: string;
@@ -26,7 +28,22 @@ type FileResponse = {
 type OpenTab = {
   path: string;
   content: string;
+  savedContent: string;
 };
+
+function readInitialProjectPath() {
+  try {
+    return window.localStorage.getItem(PROJECT_PATH_KEY)?.trim() || DEFAULT_PROJECT_PATH;
+  } catch {
+    return DEFAULT_PROJECT_PATH;
+  }
+}
+
+function persistProjectPath(path: string) {
+  try {
+    window.localStorage.setItem(PROJECT_PATH_KEY, path.trim() || DEFAULT_PROJECT_PATH);
+  } catch {}
+}
 
 function languageFromPath(path: string) {
   const ext = path.split(".").pop()?.toLowerCase();
@@ -53,40 +70,82 @@ function languageFromPath(path: string) {
   }
 }
 
+function fileDepth(path: string) {
+  return Math.max(0, path.split("/").length - 1);
+}
+
 export function initializeProjectFiles() {}
 
 export function ProjectFilesPanel({ projectId }: { projectId: string }) {
-  const [projectPath, setProjectPath] = React.useState(DEFAULT_PROJECT_PATH);
-  const [files, setFiles] = React.useState<TreeEntry[]>([]);
+  const [projectPath, setProjectPath] = React.useState(readInitialProjectPath);
+  const [entries, setEntries] = React.useState<TreeEntry[]>([]);
   const [openTabs, setOpenTabs] = React.useState<OpenTab[]>([]);
   const [selectedPath, setSelectedPath] = React.useState("");
   const [saving, setSaving] = React.useState(false);
+  const [loadingTree, setLoadingTree] = React.useState(false);
   const [status, setStatus] = React.useState("Ready");
 
   const hasTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
   const selectedTab = openTabs.find((tab) => tab.path === selectedPath);
+  const dirtyTabs = openTabs.filter((tab) => tab.content !== tab.savedContent);
+
+  const listDirectory = React.useCallback(async (relativePath = "") => {
+    const { invoke } = await import("@tauri-apps/api/core");
+
+    return invoke<TreeResponse>("vivus_list_project_tree", {
+      request: {
+        projectPath,
+        relativePath,
+      },
+    });
+  }, [projectPath]);
 
   const loadProjectTree = React.useCallback(async () => {
-    if (!hasTauri) return;
+    if (!hasTauri) {
+      setStatus("Filesystem editing requires Tauri runtime.");
+      return;
+    }
+
+    persistProjectPath(projectPath);
+    setLoadingTree(true);
 
     try {
-      const { invoke } = await import("@tauri-apps/api/core");
+      const collected: TreeEntry[] = [];
+      const queue: Array<{ path: string; depth: number }> = [{ path: "", depth: 0 }];
 
-      const response = await invoke<TreeResponse>("vivus_list_project_tree", {
-        request: { projectPath },
-      });
+      while (queue.length > 0) {
+        const current = queue.shift();
+        if (!current) continue;
 
-      if (!response.ok) {
-        setStatus(response.blockedReason ?? "Unable to load project.");
-        return;
+        const response = await listDirectory(current.path);
+
+        if (!response.ok) {
+          setStatus(response.blockedReason ?? "Unable to load project.");
+          continue;
+        }
+
+        for (const entry of response.entries) {
+          collected.push(entry);
+
+          if (entry.entryType === "directory" && current.depth < MAX_TREE_DEPTH) {
+            queue.push({ path: entry.relativePath, depth: current.depth + 1 });
+          }
+        }
       }
 
-      setFiles(response.entries.filter((entry) => entry.entryType === "file"));
-      setStatus(`${response.entries.length} entries loaded`);
+      collected.sort((a, b) => {
+        if (a.entryType !== b.entryType) return a.entryType === "directory" ? -1 : 1;
+        return a.relativePath.localeCompare(b.relativePath);
+      });
+
+      setEntries(collected);
+      setStatus(`${collected.filter((entry) => entry.entryType === "file").length} files loaded`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : String(error));
+    } finally {
+      setLoadingTree(false);
     }
-  }, [projectPath, hasTauri]);
+  }, [projectPath, hasTauri, listDirectory]);
 
   const openFile = React.useCallback(async (relativePath: string) => {
     if (!hasTauri) return;
@@ -117,10 +176,12 @@ export function ProjectFilesPanel({ projectId }: { projectId: string }) {
         {
           path: relativePath,
           content: response.content,
+          savedContent: response.content,
         },
       ]);
 
       setSelectedPath(relativePath);
+      setStatus(`Opened ${relativePath}`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : String(error));
     }
@@ -138,38 +199,86 @@ export function ProjectFilesPanel({ projectId }: { projectId: string }) {
     );
   }, [selectedPath]);
 
-  const saveFile = React.useCallback(async () => {
-    if (!selectedTab || !hasTauri) return;
+  const saveTab = React.useCallback(async (tab: OpenTab) => {
+    if (!hasTauri) return false;
+
+    const { invoke } = await import("@tauri-apps/api/core");
+
+    const response = await invoke<{ ok: boolean; blockedReason?: string }>(
+      "vivus_write_project_file",
+      {
+        request: {
+          projectPath,
+          relativePath: tab.path,
+          content: tab.content,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      setStatus(response.blockedReason ?? `Save failed: ${tab.path}`);
+      return false;
+    }
+
+    setOpenTabs((tabs) =>
+      tabs.map((current) =>
+        current.path === tab.path
+          ? { ...current, savedContent: tab.content }
+          : current
+      )
+    );
+
+    return true;
+  }, [projectPath, hasTauri]);
+
+  const saveCurrentFile = React.useCallback(async () => {
+    if (!selectedTab) return;
 
     setSaving(true);
 
     try {
-      const { invoke } = await import("@tauri-apps/api/core");
-
-      const response = await invoke<{ ok: boolean; blockedReason?: string }>(
-        "vivus_write_project_file",
-        {
-          request: {
-            projectPath,
-            relativePath: selectedTab.path,
-            content: selectedTab.content,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        setStatus(response.blockedReason ?? "Save failed.");
-        return;
+      const ok = await saveTab(selectedTab);
+      if (ok) {
+        setStatus(`Saved ${selectedTab.path}`);
+        window.dispatchEvent(new Event("vivus-preview-refresh"));
       }
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : String(error));
+    } finally {
+      setSaving(false);
+    }
+  }, [selectedTab, saveTab]);
 
-      setStatus(`Saved ${selectedTab.path}`);
+  const saveAllFiles = React.useCallback(async () => {
+    if (dirtyTabs.length === 0) return;
+
+    setSaving(true);
+
+    try {
+      let saved = 0;
+      for (const tab of dirtyTabs) {
+        if (await saveTab(tab)) saved += 1;
+      }
+      setStatus(`Saved ${saved} file${saved === 1 ? "" : "s"}`);
       window.dispatchEvent(new Event("vivus-preview-refresh"));
     } catch (error) {
       setStatus(error instanceof Error ? error.message : String(error));
     } finally {
       setSaving(false);
     }
-  }, [selectedTab, projectPath, hasTauri]);
+  }, [dirtyTabs, saveTab]);
+
+  const closeTab = React.useCallback((path: string) => {
+    setOpenTabs((tabs) => {
+      const nextTabs = tabs.filter((tab) => tab.path !== path);
+
+      if (selectedPath === path) {
+        setSelectedPath(nextTabs.at(-1)?.path ?? "");
+      }
+
+      return nextTabs;
+    });
+  }, [selectedPath]);
 
   React.useEffect(() => {
     void loadProjectTree();
@@ -180,7 +289,7 @@ export function ProjectFilesPanel({ projectId }: { projectId: string }) {
       <aside className="file-explorer-panel">
         <div className="file-explorer-header">
           <strong>Project Files</strong>
-          <span>{files.length} files</span>
+          <span>{entries.filter((entry) => entry.entryType === "file").length} files</span>
         </div>
 
         <div className="project-path-input-wrap">
@@ -191,20 +300,24 @@ export function ProjectFilesPanel({ projectId }: { projectId: string }) {
             spellCheck={false}
           />
 
-          <button type="button" onClick={() => void loadProjectTree()}>
-            Load
+          <button type="button" onClick={() => void loadProjectTree()} disabled={loadingTree}>
+            {loadingTree ? "Loading" : "Load"}
           </button>
         </div>
 
-        <div className="file-list">
-          {files.map((file) => (
+        <div className="file-list nested-file-list">
+          {entries.map((entry) => (
             <button
-              key={file.relativePath}
+              key={entry.relativePath}
               type="button"
-              className={selectedPath === file.relativePath ? "file-row active" : "file-row"}
-              onClick={() => void openFile(file.relativePath)}
+              className={`${entry.entryType === "directory" ? "file-row directory" : "file-row"} ${selectedPath === entry.relativePath ? "active" : ""}`.trim()}
+              style={{ paddingLeft: `${12 + fileDepth(entry.relativePath) * 14}px` }}
+              onClick={() => {
+                if (entry.entryType === "file") void openFile(entry.relativePath);
+              }}
             >
-              {file.relativePath}
+              <span>{entry.entryType === "directory" ? "▸" : ""} {entry.name}</span>
+              {entry.entryType === "file" && dirtyTabs.some((tab) => tab.path === entry.relativePath) && <em>●</em>}
             </button>
           ))}
         </div>
@@ -212,16 +325,37 @@ export function ProjectFilesPanel({ projectId }: { projectId: string }) {
 
       <section className="file-editor-panel">
         <div className="editor-tabs">
-          {openTabs.map((tab) => (
-            <button
-              key={tab.path}
-              type="button"
-              className={tab.path === selectedPath ? "editor-tab active" : "editor-tab"}
-              onClick={() => setSelectedPath(tab.path)}
-            >
-              {tab.path.split("/").pop()}
-            </button>
-          ))}
+          {openTabs.map((tab) => {
+            const dirty = tab.content !== tab.savedContent;
+
+            return (
+              <button
+                key={tab.path}
+                type="button"
+                className={tab.path === selectedPath ? "editor-tab active" : "editor-tab"}
+                onClick={() => setSelectedPath(tab.path)}
+              >
+                <span>{tab.path.split("/").pop()}{dirty ? " ●" : ""}</span>
+                <em
+                  role="button"
+                  tabIndex={0}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    closeTab(tab.path);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      closeTab(tab.path);
+                    }
+                  }}
+                >
+                  ×
+                </em>
+              </button>
+            );
+          })}
         </div>
 
         <div className="file-editor-header">
@@ -230,12 +364,17 @@ export function ProjectFilesPanel({ projectId }: { projectId: string }) {
             <span>{status}</span>
           </div>
 
-          <button type="button" onClick={() => void saveFile()} disabled={!selectedTab || saving}>
-            {saving ? "Saving..." : "Save"}
-          </button>
+          <div className="file-editor-actions">
+            <button type="button" onClick={() => void saveAllFiles()} disabled={saving || dirtyTabs.length === 0}>
+              Save All
+            </button>
+            <button type="button" onClick={() => void saveCurrentFile()} disabled={!selectedTab || saving}>
+              {saving ? "Saving..." : "Save"}
+            </button>
+          </div>
         </div>
 
-        <div style={{ flex: 1, minHeight: 0 }}>
+        <div className="monaco-editor-shell">
           <Editor
             height="100%"
             theme="vs-dark"
