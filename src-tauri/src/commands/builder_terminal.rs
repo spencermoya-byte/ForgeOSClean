@@ -71,12 +71,16 @@ struct SafeCommandDefinition {
     display: &'static str,
     requires_package_json: bool,
     requires_git: bool,
+    timeout_seconds: u64,
 }
 
 const SAFE_COMMANDS: &[SafeCommandDefinition] = &[
-    SafeCommandDefinition { command_id: "git_status", executable: "git", args: &["status", "--short"], display: "git status --short", requires_package_json: false, requires_git: true },
-    SafeCommandDefinition { command_id: "git_diff_stat", executable: "git", args: &["diff", "--stat"], display: "git diff --stat", requires_package_json: false, requires_git: true },
-    SafeCommandDefinition { command_id: "npm_build", executable: "npm", args: &["run", "build"], display: "npm run build", requires_package_json: true, requires_git: false },
+    SafeCommandDefinition { command_id: "git_status", executable: "git", args: &["status", "--short"], display: "git status --short", requires_package_json: false, requires_git: true, timeout_seconds: 30 },
+    SafeCommandDefinition { command_id: "git_diff_stat", executable: "git", args: &["diff", "--stat"], display: "git diff --stat", requires_package_json: false, requires_git: true, timeout_seconds: 30 },
+    SafeCommandDefinition { command_id: "git_diff", executable: "git", args: &["diff"], display: "git diff", requires_package_json: false, requires_git: true, timeout_seconds: 45 },
+    SafeCommandDefinition { command_id: "npm_install", executable: "npm", args: &["install"], display: "npm install", requires_package_json: true, requires_git: false, timeout_seconds: 180 },
+    SafeCommandDefinition { command_id: "npm_build", executable: "npm", args: &["run", "build"], display: "npm run build", requires_package_json: true, requires_git: false, timeout_seconds: 120 },
+    SafeCommandDefinition { command_id: "npm_test", executable: "npm", args: &["test"], display: "npm test", requires_package_json: true, requires_git: false, timeout_seconds: 120 },
 ];
 
 fn blocked_response(command_id: String, command_display: String, blocked_reason: String, duration_ms: u128) -> SafeCommandResponse {
@@ -118,7 +122,7 @@ pub async fn vivus_run_safe_command(request: SafeCommandRequest) -> Result<SafeC
     let started = Instant::now();
     let command_id = request.command_id.trim().to_string();
     let Some(definition) = SAFE_COMMANDS.iter().find(|command| command.command_id == command_id) else {
-        return Ok(blocked_response(command_id, "blocked command".to_string(), "Unknown command_id. Vivus only supports allowlisted verification commands.".to_string(), started.elapsed().as_millis()));
+        return Ok(blocked_response(command_id, "blocked command".to_string(), "Unknown command_id. Vivus only supports allowlisted project commands.".to_string(), started.elapsed().as_millis()));
     };
 
     let project_root = match resolve_project_path(&request.project_path) {
@@ -140,10 +144,10 @@ pub async fn vivus_run_safe_command(request: SafeCommandRequest) -> Result<SafeC
 
     let mut command = Command::new(definition.executable);
     command.args(definition.args).current_dir(project_root);
-    let command_result = timeout(Duration::from_secs(90), command.output()).await;
+    let command_result = timeout(Duration::from_secs(definition.timeout_seconds), command.output()).await;
 
     match command_result {
-        Err(_) => Ok(SafeCommandResponse { ok: false, command_id, command_display: definition.display.to_string(), exit_code: None, stdout: String::new(), stderr: "Command timed out after 90 seconds.".to_string(), duration_ms: started.elapsed().as_millis(), blocked_reason: Some("Command timed out and was stopped by the Vivus safety runner.".to_string()) }),
+        Err(_) => Ok(SafeCommandResponse { ok: false, command_id, command_display: definition.display.to_string(), exit_code: None, stdout: String::new(), stderr: format!("Command timed out after {} seconds.", definition.timeout_seconds), duration_ms: started.elapsed().as_millis(), blocked_reason: Some("Command timed out and was stopped by the Vivus safety runner.".to_string()) }),
         Ok(Err(error)) => Ok(SafeCommandResponse { ok: false, command_id, command_display: definition.display.to_string(), exit_code: None, stdout: String::new(), stderr: error.to_string(), duration_ms: started.elapsed().as_millis(), blocked_reason: Some("Command failed to start.".to_string()) }),
         Ok(Ok(output)) => Ok(SafeCommandResponse { ok: output.status.success(), command_id, command_display: definition.display.to_string(), exit_code: output.status.code(), stdout: String::from_utf8_lossy(&output.stdout).to_string(), stderr: String::from_utf8_lossy(&output.stderr).to_string(), duration_ms: started.elapsed().as_millis(), blocked_reason: None }),
     }
