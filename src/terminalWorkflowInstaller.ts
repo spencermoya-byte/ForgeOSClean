@@ -8,6 +8,12 @@ import {
   ensureTerminalSession,
   listTerminalSessions,
 } from "./terminalSessionStore";
+import {
+  finishTerminalActivity,
+  getBusyTerminalActivity,
+  listSessionActivities,
+  startTerminalActivity,
+} from "./terminalActivityState";
 
 type CommandId =
   | "npm_install"
@@ -180,6 +186,7 @@ async function refreshDevServerStatus() {
 
 async function startDevServer() {
   if (runningCommand) return;
+  const activity = startTerminalActivity(activeSession.id, projectPath, "Start Preview", "npm run dev");
   runningCommand = "dev-server";
   lastStatus = "Starting dev server...";
   appendOutput("\n$ npm run dev\n");
@@ -190,12 +197,18 @@ async function startDevServer() {
     devServerStatus = response.status;
     devServerUrl = response.url || devServerUrl;
     lastStatus = response.ok ? `Preview ${response.status}` : "Preview failed";
-    appendOutput(response.ok ? `Preview server ${response.status}: ${response.url || "pending"}` : `Preview failed: ${response.blockedReason ?? "unknown"}`);
+    const message = response.ok ? `Preview server ${response.status}: ${response.url || "pending"}` : `Preview failed: ${response.blockedReason ?? "unknown"}`;
+    appendOutput(message);
+    finishTerminalActivity(activity.id, {
+      status: response.ok ? "complete" : "error",
+      outputPreview: message,
+    });
     if (response.ok) window.dispatchEvent(new Event("vivus-preview-refresh"));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     lastStatus = "Preview failed";
     appendOutput(message);
+    finishTerminalActivity(activity.id, { status: "error", outputPreview: message });
   } finally {
     runningCommand = null;
     renderMountedPanel();
@@ -204,6 +217,7 @@ async function startDevServer() {
 
 async function stopDevServer() {
   if (runningCommand) return;
+  const activity = startTerminalActivity(activeSession.id, projectPath, "Stop Preview", "stop preview server");
   runningCommand = "dev-server";
   lastStatus = "Stopping dev server...";
   appendOutput("\n$ stop preview server\n");
@@ -214,12 +228,18 @@ async function stopDevServer() {
     devServerStatus = response.status;
     devServerUrl = response.url || "";
     lastStatus = response.ok ? "Preview stopped" : "Preview stop failed";
-    appendOutput(response.ok ? "Preview server stopped." : `Preview stop failed: ${response.blockedReason ?? "unknown"}`);
+    const message = response.ok ? "Preview server stopped." : `Preview stop failed: ${response.blockedReason ?? "unknown"}`;
+    appendOutput(message);
+    finishTerminalActivity(activity.id, {
+      status: response.ok ? "stopped" : "error",
+      outputPreview: message,
+    });
     window.dispatchEvent(new Event("vivus-preview-refresh"));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     lastStatus = "Preview stop failed";
     appendOutput(message);
+    finishTerminalActivity(activity.id, { status: "error", outputPreview: message });
   } finally {
     runningCommand = null;
     renderMountedPanel();
@@ -235,6 +255,7 @@ async function runCommand(commandId: CommandId) {
   }
 
   const commandLabel = COMMANDS.find((command) => command.id === commandId)?.label ?? commandId;
+  const activity = startTerminalActivity(activeSession.id, projectPath, commandLabel, commandId);
   runningCommand = commandId;
   lastStatus = `Running ${commandLabel}...`;
   appendOutput(`\n$ ${commandLabel}\n`);
@@ -262,7 +283,14 @@ async function runCommand(commandId: CommandId) {
     lastStatus = response.ok ? `Passed: ${response.commandDisplay ?? commandId}` : `Failed: ${response.commandDisplay ?? commandId}`;
     appendOutput(`${exitLine}\n`);
 
-    addTerminalHistory(activeSession.id, { command: commandLabel, output: pieces.join("\n"), ok: response.ok });
+    const commandOutput = pieces.join("\n");
+    addTerminalHistory(activeSession.id, { command: commandLabel, output: commandOutput, ok: response.ok });
+    finishTerminalActivity(activity.id, {
+      status: response.ok ? "complete" : "error",
+      exitCode: response.exitCode,
+      durationMs: response.durationMs,
+      outputPreview: commandOutput.slice(0, 700),
+    });
     activeSession = ensureTerminalSession(projectPath);
 
     if (response.ok && ["npm_build", "npm_test", "npm_lint", "npm_typecheck"].includes(commandId)) {
@@ -273,6 +301,7 @@ async function runCommand(commandId: CommandId) {
     lastStatus = "Command failed";
     appendOutput(message);
     addTerminalHistory(activeSession.id, { command: commandLabel, output: message, ok: false });
+    finishTerminalActivity(activity.id, { status: "error", outputPreview: message });
   } finally {
     runningCommand = null;
     renderMountedPanel();
@@ -309,6 +338,8 @@ function renderMountedPanel() {
   const sessions = listTerminalSessions(projectPath);
   const projectCommands = COMMANDS.filter((command) => command.group === "Project");
   const gitCommands = COMMANDS.filter((command) => command.group === "Git");
+  const activities = listSessionActivities(activeSession.id).slice(0, 4);
+  const busyActivity = getBusyTerminalActivity(activeSession.id);
 
   const renderButtons = (commands: typeof COMMANDS) => commands.map((command) => `
     <button type="button" data-terminal-command="${command.id}" ${runningCommand ? "disabled" : ""}>
@@ -322,13 +353,20 @@ function renderMountedPanel() {
     </button>
   `).join("");
 
+  const renderActivities = () => activities.length ? activities.map((activity) => `
+    <div class="terminal-activity-row ${activity.status}">
+      <strong>${escapeHtml(activity.label)}</strong>
+      <span>${escapeHtml(activity.status)}${activity.durationMs ? ` • ${activity.durationMs}ms` : ""}</span>
+    </div>
+  `).join("") : `<p>No recent terminal activity.</p>`;
+
   mountedPanel.innerHTML = `
     <div class="terminal-workflow-header">
       <div>
         <h2>Console</h2>
         <p>Persistent project terminal for build, git, verification, preview, and debugging.</p>
       </div>
-      <div class="terminal-status ${runningCommand ? "running" : "idle"}">${escapeHtml(lastStatus)}</div>
+      <div class="terminal-status ${runningCommand ? "running" : "idle"}">${escapeHtml(busyActivity?.label ?? lastStatus)}</div>
     </div>
 
     <label class="terminal-project-path">
@@ -353,6 +391,11 @@ function renderMountedPanel() {
     <div class="terminal-command-groups">
       <section><strong>Project</strong><div>${renderButtons(projectCommands)}</div></section>
       <section><strong>Git</strong><div>${renderButtons(gitCommands)}</div></section>
+    </div>
+
+    <div class="terminal-activity-list">
+      <strong>Recent activity</strong>
+      ${renderActivities()}
     </div>
 
     <div class="terminal-output-toolbar">
