@@ -1,63 +1,75 @@
+.workspace-content {
+  position: relative;
+}
+
+.builder-workspace,
+.builder-conversation-state,
+.builder-empty-state {
+  padding-right: 420px;
+}
+
 .workspace-utility-rail {
   position: absolute;
-  top: 24px;
+  top: 20px;
   right: 24px;
   width: 360px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  z-index: 10;
+  gap: 18px;
+  z-index: 4;
 }
 
 .workspace-utility-card {
-  border-radius: 22px;
-  border: 1px solid rgba(120,120,160,0.14);
-  background: rgba(10,14,28,0.84);
-  backdrop-filter: blur(22px);
-  padding: 18px;
-  box-shadow: 0 12px 48px rgba(0,0,0,0.28);
+  border-radius: 24px;
+  border: 1px solid rgba(120,120,160,0.12);
+  background: rgba(9,12,24,0.92);
+  backdrop-filter: blur(20px);
+  padding: 20px;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.32);
 }
 
 .utility-card-header {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .utility-card-header strong,
 .utility-plugin-row strong,
 .utility-row strong {
   color: #f8fafc;
+  font-size: 18px;
 }
 
 .utility-card-header p,
 .utility-plugin-row p,
 .utility-row p,
 .utility-empty {
-  color: #a8a0b8;
-  font-size: 12px;
+  color: #9ca3af;
+  font-size: 13px;
+  line-height: 1.45;
 }
 
-.utility-plugin-list,
-.utility-row {
+.utility-plugin-list {
   display: grid;
-  gap: 10px;
+  gap: 14px;
 }
 
 .utility-plugin-row {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 0;
+  padding-top: 14px;
   border-top: 1px solid rgba(255,255,255,0.06);
 }
 
 .runtime-pill {
-  height: fit-content;
-  padding: 6px 10px;
+  padding: 7px 12px;
   border-radius: 999px;
   background: rgba(124,58,237,0.18);
   color: #ede9fe;
   font-size: 11px;
+  white-space: nowrap;
 }
