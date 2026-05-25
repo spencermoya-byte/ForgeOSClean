@@ -21,6 +21,7 @@ import { startWorkspaceLegacyStateWriteBlocker } from './workspaceLegacyStateWri
 import { startWorkspaceOwnershipCutoverRuntime } from './workspaceOwnershipCutoverRuntime';
 import { startWorkspacePreviewRuntimeInstaller } from './workspacePreviewRuntimeInstaller';
 import { startWorkspaceRouteRuntimeInstaller } from './workspaceRouteRuntimeInstaller';
+import { startWorkspaceRuntimeHealthInstaller } from './workspaceRuntimeHealthInstaller';
 import { startWorkspaceRuntimeReadinessInstaller } from './workspaceRuntimeReadinessInstaller';
 import { startWorkspaceSystemRuntimeInstaller } from './workspaceSystemRuntimeInstaller';
 import { startWorkspaceTerminalRuntimeInstaller } from './workspaceTerminalRuntimeInstaller';
@@ -52,6 +53,7 @@ startWorkspaceLegacyStateBlocker();
 startWorkspaceLegacyStateWriteBlocker();
 startWorkspaceCutoverVerificationRuntime();
 startWorkspaceRuntimeReadinessInstaller();
+startWorkspaceRuntimeHealthInstaller();
 startWorkspaceSystemRuntimeInstaller();
 startWorkspaceRouteRuntimeInstaller();
 startWorkspaceBuilderRuntimeInstaller();
