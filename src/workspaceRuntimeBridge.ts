@@ -4,6 +4,7 @@ import {
   emitWorkspaceRefresh,
   VIVUS_WORKSPACE_CHANGED,
 } from "./workspaceEvents";
+import { withWorkspaceBridgeWrite } from "./workspaceBridgeLoopGuard";
 import { workspaceProjectsToAppRecords } from "./workspaceProjectAdapter";
 
 const ACTIVE_PROJECT_KEY = "vivus.activeProject.v1";
@@ -20,13 +21,15 @@ function syncLegacyAppStateFromWorkspace() {
   const snapshot = getWorkspaceSnapshot();
   const legacyProjects = workspaceProjectsToAppRecords(snapshot.projects);
 
-  window.localStorage.setItem(PROJECTS_KEY, JSON.stringify(legacyProjects));
+  withWorkspaceBridgeWrite(() => {
+    window.localStorage.setItem(PROJECTS_KEY, JSON.stringify(legacyProjects));
 
-  if (snapshot.activeProject) {
-    window.localStorage.setItem(ACTIVE_PROJECT_KEY, snapshot.activeProject.id);
-  } else {
-    window.localStorage.removeItem(ACTIVE_PROJECT_KEY);
-  }
+    if (snapshot.activeProject) {
+      window.localStorage.setItem(ACTIVE_PROJECT_KEY, snapshot.activeProject.id);
+    } else {
+      window.localStorage.removeItem(ACTIVE_PROJECT_KEY);
+    }
+  });
 }
 
 export function startWorkspaceRuntimeBridge() {
