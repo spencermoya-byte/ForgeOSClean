@@ -20,6 +20,14 @@ export type ProtectedPatchVerification = {
   blockedReason: string | null;
 };
 
+export type ProtectedPatchRollback = {
+  attempted: boolean;
+  ok: boolean;
+  checkpointId: string | null;
+  restoredFiles: string[];
+  blockedReason: string | null;
+};
+
 export type ProtectedPatchResult = {
   ok: boolean;
   projectPath: string;
@@ -28,6 +36,7 @@ export type ProtectedPatchResult = {
   diff: string;
   checkpointId: string | null;
   verification: ProtectedPatchVerification | null;
+  rollback: ProtectedPatchRollback | null;
   blockedReason: string | null;
 };
 
@@ -92,6 +101,7 @@ function blockedPatchResult(projectPath: string, relativePath: string, reason: s
     diff: "",
     checkpointId: null,
     verification: null,
+    rollback: null,
     blockedReason: reason,
   };
 }
@@ -148,6 +158,34 @@ async function createProtectedPatchCheckpoint(projectPath: string, relativePath:
   });
 }
 
+async function restoreProtectedPatchCheckpoint(projectPath: string, checkpointId: string): Promise<ProtectedPatchRollback> {
+  try {
+    const { invoke } = await import("@tauri-apps/api/core");
+    const result = await invoke<BackendCheckpointResponse>("vivus_restore_patch_checkpoint", {
+      request: {
+        projectPath,
+        checkpointId,
+      },
+    });
+
+    return {
+      attempted: true,
+      ok: Boolean(result?.ok),
+      checkpointId,
+      restoredFiles: result?.files ?? [],
+      blockedReason: result?.blockedReason ?? null,
+    };
+  } catch (error) {
+    return {
+      attempted: true,
+      ok: false,
+      checkpointId,
+      restoredFiles: [],
+      blockedReason: error instanceof Error ? error.message : "Rollback failed.",
+    };
+  }
+}
+
 async function verifyProtectedPatchBuild(projectPath: string): Promise<ProtectedPatchVerification> {
   const terminalDecision = checkTerminalExecutionAllowed({ cwd: projectPath, commandId: "npm_build" });
 
@@ -196,6 +234,7 @@ export async function runProtectedPatchExecution(request: ProtectedPatchRequest)
       diff: "",
       checkpointId: null,
       verification: null,
+      rollback: null,
       blockedReason: null,
     };
   }
@@ -231,6 +270,7 @@ export async function runProtectedPatchExecution(request: ProtectedPatchRequest)
     });
 
     if (!result?.ok) {
+      const rollback = await restoreProtectedPatchCheckpoint(guard.projectPath, checkpoint.checkpointId);
       return {
         ok: false,
         projectPath: guard.projectPath,
@@ -241,14 +281,34 @@ export async function runProtectedPatchExecution(request: ProtectedPatchRequest)
           makeSimpleDiff(request.relativePath, request.originalContent, request.nextContent),
         checkpointId: checkpoint.checkpointId,
         verification: null,
+        rollback,
         blockedReason: result?.blockedReason ?? "Protected patch backend rejected the write.",
       };
     }
 
     const verification = await verifyProtectedPatchBuild(guard.projectPath);
 
+    if (!verification.ok) {
+      const rollback = await restoreProtectedPatchCheckpoint(guard.projectPath, checkpoint.checkpointId);
+      return {
+        ok: false,
+        projectPath: guard.projectPath,
+        relativePath: result.relativePath ?? request.relativePath,
+        changed: false,
+        diff:
+          result.diffPreview ??
+          makeSimpleDiff(request.relativePath, request.originalContent, request.nextContent),
+        checkpointId: checkpoint.checkpointId,
+        verification,
+        rollback,
+        blockedReason:
+          verification.blockedReason ??
+          (rollback.ok ? "Build verification failed after patch. Changes were rolled back." : "Build verification failed after patch. Rollback failed."),
+      };
+    }
+
     return {
-      ok: verification.ok,
+      ok: true,
       projectPath: guard.projectPath,
       relativePath: result.relativePath ?? request.relativePath,
       changed: Boolean(result.changed),
@@ -257,7 +317,8 @@ export async function runProtectedPatchExecution(request: ProtectedPatchRequest)
         makeSimpleDiff(request.relativePath, request.originalContent, request.nextContent),
       checkpointId: checkpoint.checkpointId,
       verification,
-      blockedReason: verification.ok ? null : verification.blockedReason ?? "Build verification failed after patch.",
+      rollback: null,
+      blockedReason: null,
     };
   } catch (error) {
     return blockedPatchResult(
