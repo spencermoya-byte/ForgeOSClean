@@ -1221,3 +1221,126 @@ button:hover,
     grid-template-columns: 1fr;
   }
 }
+
+.vivus-builder-v2 {
+  width: min(1120px, 100%);
+  margin: 18px auto 0;
+  padding: 0 20px;
+}
+
+.builder-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.builder-top-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.builder-status-card {
+  min-height: 56px;
+  border-radius: 18px;
+  border: 1px solid rgba(132, 88, 255, 0.14);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(18,18,30,0.94),
+      rgba(10,10,18,0.96)
+    );
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.builder-status-card span {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.58);
+}
+
+.builder-status-card strong {
+  margin-top: 4px;
+  font-size: 1rem;
+  color: white;
+}
+
+.builder-main-card {
+  border-radius: 28px;
+  border: 1px solid rgba(132,88,255,0.14);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(22,18,42,0.94),
+      rgba(12,12,22,0.96)
+    );
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.builder-main-input {
+  width: 100%;
+  min-height: 120px;
+  resize: none;
+  border: none;
+  outline: none;
+  border-radius: 20px;
+  background: rgba(0,0,0,0.18);
+  color: white;
+  font-size: 15px;
+  padding: 18px;
+}
+
+.builder-main-input::placeholder {
+  color: rgba(255,255,255,0.42);
+}
+
+.builder-patch-button {
+  align-self: flex-start;
+  border: none;
+  border-radius: 18px;
+  padding: 12px 20px;
+  cursor: pointer;
+  color: white;
+  font-weight: 600;
+  background:
+    linear-gradient(
+      135deg,
+      #6c4cff,
+      #8758ff
+    );
+}
+
+.builder-card {
+  border-radius: 24px;
+  border: 1px solid rgba(132,88,255,0.12);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(14,14,25,0.96),
+      rgba(8,8,16,0.96)
+    );
+  padding: 18px 20px;
+}
+
+.builder-card-header {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 14px;
+  color: white;
+}
+
+.builder-history-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.builder-history-row:last-child {
+  border-bottom: none;
+}

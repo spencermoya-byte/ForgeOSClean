@@ -5,16 +5,12 @@ import "./BuilderWorkflow.css";
 import "./VerifiedEditPanel.css";
 import { CommitPanel } from "./CommitPanel";
 import { ProjectFilesPanel, initializeProjectFiles } from "./ProjectFilesPanel";
-import { runBuilderExecutionPreview } from "./builderExecution";
-import { VerifiedEditPanel } from "./VerifiedEditPanel";
 import { WorkspacePreviewPanel } from "./WorkspacePreviewPanel";
+import { VivusWorkspaceUI } from "./ui/VivusWorkspaceUI";
 import { useAppWorkspaceRuntime } from "./AppWorkspaceRuntime";
 import { createWorkspaceFromUserInput } from "./workspaceCreateRuntime";
 import { activateWorkspaceById } from "./workspaceSwitcherController";
 import {
-  applyAndVerifyEdit,
-  checkpointVerifiedEdit,
-  prepareVerifiedEdit,
   type VerifiedEditState,
 } from "./vivusExecutionLoop";
 import {
@@ -144,16 +140,17 @@ export default function App() {
   const [buildInput, setBuildInput] = React.useState("");
   const [buildMessages, setBuildMessages] = React.useState<BuildMessage[]>([]);
   const [currentMode, setCurrentMode] = React.useState<BuildMode>("build");
-  const [planApproved, setPlanApproved] = React.useState(false);
+  const [_, setPlanApproved] = React.useState(false);
   const [builderPlan, setBuilderPlan] = React.useState<BuilderPlan | null>(null);
   const [builderTasks, setBuilderTasks] = React.useState<BuilderTask[]>([]);
   const [builderActivity, setBuilderActivity] = React.useState<BuilderActivity[]>([]);
-  const [executionPreviewed, setExecutionPreviewed] = React.useState(false);
-  const [isExecuting, setIsExecuting] = React.useState(false);
+  const [__, setIsExecuting] = React.useState(false);
   const [verifiedEdit, setVerifiedEdit] = React.useState<VerifiedEditState | null>(null);
-  const [isVerifiedEditRunning, setIsVerifiedEditRunning] = React.useState(false);
+  const [
+  ___,
+  setIsVerifiedEditRunning,
+] = React.useState(false);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
-  const hasStartedConversation = buildMessages.length > 0;
 
   React.useEffect(() => {
     const handleHash = () => setRoute(normalizeRoute(window.location.hash || "create"));
@@ -180,17 +177,12 @@ export default function App() {
     setToast(label);
   }
 
-  function greetingMessage(project: ProjectRecord | null) {
-    return project ? `${project.name} is loaded. What should we build first?` : "What would you like to build today?";
-  }
-
   function resetBuilderWorkflow() {
     setBuildInput("");
     setPlanApproved(false);
     setBuilderPlan(null);
     setBuilderTasks([]);
     setBuilderActivity([]);
-    setExecutionPreviewed(false);
     setIsExecuting(false);
     setVerifiedEdit(null);
     setIsVerifiedEditRunning(false);
@@ -276,72 +268,10 @@ export default function App() {
   function handleApprovePlan() {
     setPlanApproved(true);
     setCurrentMode("build");
-    setExecutionPreviewed(false);
     setVerifiedEdit(null);
     setBuilderTasks(makeTasks("approved"));
     setBuilderActivity(makeActivity("approved"));
     setBuildMessages((current) => [...current, { role: "assistant", content: "Plan approved. The execution queue is staged and source verification is next." }]);
-  }
-
-  function handleRevisePlan() {
-    setCurrentMode("plan");
-    setPlanApproved(false);
-    setExecutionPreviewed(false);
-    setVerifiedEdit(null);
-    setBuilderTasks(makeTasks("planned"));
-    setBuilderActivity(makeActivity("planned"));
-    setBuildMessages((current) => [...current, { role: "assistant", content: "Plan revision mode is active. Send the changes you want and I’ll regenerate the build plan." }]);
-  }
-
-  async function handleExecutionPreview() {
-    if (!planApproved || !builderPlan || isExecuting) return;
-    setIsExecuting(true);
-    setBuilderTasks(makeTasks("approved"));
-    setBuilderActivity([
-      { id: "activity-1", label: "Execution bridge", detail: "Calling local execution bridge...", status: "active" },
-      { id: "activity-2", label: "Source verification", detail: "Waiting for backend response.", status: "pending" },
-    ]);
-
-    const result = await runBuilderExecutionPreview(builderPlan.summary);
-
-    setExecutionPreviewed(true);
-    setIsExecuting(false);
-    setBuilderTasks(result.tasks as BuilderTask[]);
-    setBuilderActivity(result.activity as BuilderActivity[]);
-    setBuildMessages((current) => [
-      ...current,
-      {
-        role: "assistant",
-        content: result.message,
-      },
-    ]);
-  }
-
-  async function handlePrepareVerifiedEdit() {
-    if (!planApproved || !builderPlan || isVerifiedEditRunning) return;
-    setIsVerifiedEditRunning(true);
-    setBuildMessages((current) => [...current, { role: "assistant", content: "Preparing verified edit: inspecting source and generating diff preview." }]);
-    const nextState = await prepareVerifiedEdit({ planSummary: builderPlan.summary });
-    setVerifiedEdit(nextState);
-    setIsVerifiedEditRunning(false);
-  }
-
-  async function handleRunVerifiedEdit() {
-    if (!builderPlan || !verifiedEdit || isVerifiedEditRunning) return;
-    setIsVerifiedEditRunning(true);
-    const checkpointed = await checkpointVerifiedEdit(verifiedEdit);
-    setVerifiedEdit(checkpointed);
-
-    if (checkpointed.stage !== "checkpoint-ready") {
-      setBuildMessages((current) => [...current, { role: "assistant", content: checkpointed.message }]);
-      setIsVerifiedEditRunning(false);
-      return;
-    }
-
-    const result = await applyAndVerifyEdit(checkpointed, builderPlan.summary);
-    setVerifiedEdit(result);
-    setIsVerifiedEditRunning(false);
-    setBuildMessages((current) => [...current, { role: "assistant", content: result.message }]);
   }
 
   function handleBuildSubmit(event: React.FormEvent) {
@@ -358,7 +288,6 @@ export default function App() {
       setBuilderTasks(makeTasks("planned"));
       setBuilderActivity(makeActivity("planned"));
       setPlanApproved(false);
-      setExecutionPreviewed(false);
       setVerifiedEdit(null);
       setBuildMessages((current) => [
         ...current,
@@ -381,68 +310,6 @@ export default function App() {
       event.preventDefault();
       event.currentTarget.form?.requestSubmit();
     }
-  }
-
-  function renderModeSelector() {
-    return (
-      <button type="button" className="mode-selector" onClick={() => setCurrentMode((mode) => (mode === "build" ? "plan" : "build"))} aria-label="Toggle build mode">
-        <span>{currentMode === "build" ? "Build" : "Plan"}</span>
-        <ChevronDown size={13} strokeWidth={2.5} />
-      </button>
-    );
-  }
-
-  function renderBuildComposer(extraClass = "") {
-    return (
-      <form onSubmit={handleBuildSubmit} className={`ai-builder-input-form ${extraClass}`.trim()}>
-        <textarea placeholder={currentMode === "plan" ? "Describe your requirements and goals..." : "Make, test, iterate..."} value={buildInput} onChange={(event) => setBuildInput(event.target.value)} onKeyDown={handleKeyDown} />
-        <button type="button" className="ai-builder-plus" aria-label="Add context" onClick={() => action("Add context")}>
-          <Plus size={19} strokeWidth={2.6} />
-        </button>
-        <div className="composer-controls" aria-label="Composer controls">
-          {renderModeSelector()}
-          <button type="submit" className="send-button" aria-label="Send build request">
-            <Send size={17} strokeWidth={2.5} />
-          </button>
-        </div>
-      </form>
-    );
-  }
-
-  function renderWorkflowPanel() {
-    if (!builderPlan) return null;
-    return (
-      <>
-        <section className="builder-workflow-panel">
-          <div className="builder-workflow-header">
-            <div><strong>{planApproved ? "Approved build queue" : "Plan review"}</strong><br /><span>{planApproved ? "Execution transparency is active" : "Approve before implementation"}</span></div>
-            <span>{builderTasks.filter((task) => task.status === "done").length}/{builderTasks.length} done</span>
-          </div>
-          <div className="builder-plan-body">
-            <p className="builder-plan-summary">{builderPlan.summary}</p>
-            <div className="builder-plan-grid">
-              <div className="builder-plan-section"><strong>Requirements</strong><ul>{builderPlan.requirements.map((item) => <li key={item}>{item}</li>)}</ul></div>
-              <div className="builder-plan-section"><strong>Acceptance criteria</strong><ul>{builderPlan.acceptance.map((item) => <li key={item}>{item}</li>)}</ul></div>
-            </div>
-            <div className="builder-plan-section"><strong>Task queue</strong><ul className="builder-task-list">{builderTasks.map((task) => <li key={task.id} className="builder-task-item"><span className={`task-status-pill ${task.status}`}>{task.status}</span><span>{task.title}</span></li>)}</ul></div>
-            <div className="builder-plan-section"><strong>Activity transparency</strong><ul className="builder-activity-list">{builderActivity.map((activity) => <li key={activity.id} className="builder-activity-item"><span className={`activity-status-dot ${activity.status}`} /><span><strong>{activity.label}</strong><em>{activity.detail}</em></span></li>)}</ul></div>
-            <div className="builder-workflow-actions">
-              <button type="button" onClick={handleRevisePlan}>Revise plan</button>
-              <button type="button" className="primary" onClick={handleApprovePlan} disabled={planApproved}>{planApproved ? "Approved" : "Approve plan"}</button>
-              <button type="button" className="primary" onClick={handleExecutionPreview} disabled={!planApproved || executionPreviewed || isExecuting}>{isExecuting ? "Running..." : executionPreviewed ? "Preview complete" : "Run execution preview"}</button>
-            </div>
-          </div>
-        </section>
-        {planApproved && (
-          <VerifiedEditPanel
-            state={verifiedEdit}
-            isRunning={isVerifiedEditRunning}
-            onPrepare={handlePrepareVerifiedEdit}
-            onRun={handleRunVerifiedEdit}
-          />
-        )}
-      </>
-    );
   }
 
   function renderCreate() {
@@ -487,21 +354,75 @@ export default function App() {
     return <main className="simple-page"><div className="account-shell"><div className="avatar">SM</div><h1>Spencer Moya</h1><p>@smgunner14</p><p>smgunner14@gmail.com</p><div className="account-section">{["Profile", "Theme - Dark", "Usage", "Notifications", "Help"].map((item) => <button key={item} type="button" className="account-row" onClick={() => action(item)}><span>{item}</span><em>›</em></button>)}</div></div></main>;
   }
 
-  function renderEmptyBuilder() {
-    return <section className="builder-empty-state"><div className="empty-composer-wrap">{activeProject && <div className="project-context-card"><span className="project-pill-dot" aria-hidden="true" /><span>Current workspace</span><strong>{activeProject.name}</strong><p>{activeProject.originalPrompt}</p></div>}{renderBuildComposer("initial-composer")}<div className="vivus-greeting-card"><div className="greeting-icon">V</div><div><strong>Vivus</strong><p>{greetingMessage(activeProject)}</p></div></div></div></section>;
-  }
-
-  function renderBuilderConversation() {
-    return <section className="builder-conversation-state"><div className="ai-conversation"><div className="ai-message assistant-message"><strong>Vivus</strong><p>{greetingMessage(activeProject)}</p></div>{buildMessages.map((message, index) => <div key={`${message.role}-${index}`} className={`ai-message ${message.role === "user" ? "user-message" : "assistant-message"}`}><strong>{message.role === "user" ? "You" : "Vivus"}</strong><p>{message.content}</p></div>)}{renderWorkflowPanel()}<div ref={messagesEndRef} /></div><div className="bottom-composer-wrap">{renderBuildComposer("bottom-composer")}</div></section>;
-  }
-
   function renderWorkspaceContent() {
-    if (workspaceTab === "builder") return <section className={`workspace-content builder-workspace ${hasStartedConversation ? "builder-has-conversation" : "builder-is-empty"}`}>{hasStartedConversation ? renderBuilderConversation() : renderEmptyBuilder()}</section>;
-    if (workspaceTab === "files") return <ProjectFilesPanel projectId={activeProjectId} />;
-    if (workspaceTab === "commits") return <CommitPanel projectName={activeProject?.name ?? "Untitled Project"} />;
-    if (workspaceTab === "preview") return <WorkspacePreviewPanel />;
-    return <section className="workspace-content tool-panel-screen"><div className="tool-panel-card"><div className="tool-panel-heading"><Code2 size={18} /><h2>{pluginLabel(workspaceTab)}</h2></div><p className="placeholder-copy">This tool area is reserved for the future {pluginLabel(workspaceTab).toLowerCase()} system.</p></div></section>;
+  if (workspaceTab === "builder") {
+    return (
+      <section className="workspace-content builder-workspace">
+        <VivusWorkspaceUI
+          activeProject={activeProject}
+          buildInput={buildInput}
+          setBuildInput={setBuildInput}
+          handleKeyDown={handleKeyDown}
+          onPreparePatch={
+            builderPlan
+              ? handleApprovePlan
+              : () =>
+                  handleBuildSubmit({
+                    preventDefault() {},
+                  } as React.FormEvent)
+          }
+        />
+      </section>
+    );
   }
+
+  if (workspaceTab === "files") {
+    return (
+      <ProjectFilesPanel
+        projectId={activeProjectId}
+      />
+    );
+  }
+
+  if (workspaceTab === "commits") {
+    return (
+      <CommitPanel
+        projectName={
+          activeProject?.name ??
+          "Untitled Project"
+        }
+      />
+    );
+  }
+
+  if (workspaceTab === "preview") {
+    return (
+      <WorkspacePreviewPanel />
+    );
+  }
+
+  return (
+    <section className="workspace-content tool-panel-screen">
+      <div className="tool-panel-card">
+        <div className="tool-panel-heading">
+          <Code2 size={18} />
+          <h2>
+            {pluginLabel(workspaceTab)}
+          </h2>
+        </div>
+
+        <p className="placeholder-copy">
+          This tool area is reserved
+          for the future{" "}
+          {pluginLabel(
+            workspaceTab
+          ).toLowerCase()}{" "}
+          system.
+        </p>
+      </div>
+    </section>
+  );
+}
 
   function renderDockTab(pluginId: OpenPlugin, canClose: boolean) {
     return <button key={pluginId} type="button" className={`dock-tab ${workspaceTab === pluginId ? "active" : ""}`} onClick={() => switchWorkspaceTab(pluginId)}>{pluginLabel(pluginId)}{canClose && <span role="button" tabIndex={0} className="dock-tab-close" onClick={(event) => { event.stopPropagation(); closePlugin(pluginId); }} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); event.stopPropagation(); closePlugin(pluginId); } }} aria-label={`Close ${pluginLabel(pluginId)}`}><X size={12} /></span>}</button>;
