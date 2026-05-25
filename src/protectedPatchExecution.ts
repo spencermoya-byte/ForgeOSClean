@@ -19,7 +19,13 @@ export type ProtectedPatchResult = {
   blockedReason: string | null;
 };
 
-type TauriPatchResult = Partial<ProtectedPatchResult>;
+type BackendPatchResponse = {
+  ok?: boolean;
+  relativePath?: string;
+  changed?: boolean;
+  diffPreview?: string;
+  blockedReason?: string | null;
+};
 
 function hasTauriRuntime() {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -57,23 +63,6 @@ function blockedPatchResult(projectPath: string, relativePath: string, reason: s
     changed: false,
     diff: "",
     blockedReason: reason,
-  };
-}
-
-function normalizePatchResult(
-  request: ProtectedPatchRequest,
-  projectPath: string,
-  result: TauriPatchResult | null | undefined,
-): ProtectedPatchResult {
-  const changed = Boolean(result?.changed ?? request.originalContent !== request.nextContent);
-
-  return {
-    ok: Boolean(result?.ok),
-    projectPath: result?.projectPath ?? projectPath,
-    relativePath: result?.relativePath ?? request.relativePath,
-    changed,
-    diff: result?.diff ?? makeSimpleDiff(request.relativePath, request.originalContent, request.nextContent),
-    blockedReason: result?.blockedReason ?? null,
   };
 }
 
@@ -137,29 +126,36 @@ export async function runProtectedPatchExecution(request: ProtectedPatchRequest)
   }
 
   if (!hasTauriRuntime()) {
-    return {
-      ok: false,
-      projectPath: guard.projectPath,
-      relativePath: request.relativePath,
-      changed: false,
-      diff: makeSimpleDiff(request.relativePath, request.originalContent, request.nextContent),
-      blockedReason: "Protected patch execution requires the Tauri desktop runtime.",
-    };
+    return blockedPatchResult(
+      guard.projectPath,
+      request.relativePath,
+      "Protected patch execution requires the Tauri desktop runtime.",
+    );
   }
 
   try {
     const { invoke } = await import("@tauri-apps/api/core");
-    const result = await invoke<TauriPatchResult>("vivus_apply_protected_patch", {
+
+    const result = await invoke<BackendPatchResponse>("vivus_apply_approved_file_patch", {
       request: {
         projectPath: guard.projectPath,
         relativePath: request.relativePath,
-        originalContent: request.originalContent,
+        expectedCurrentContent: request.originalContent,
         nextContent: request.nextContent,
-        reason: request.reason,
+        approvalToken: "APPROVE_PATCH",
       },
     });
 
-    return normalizePatchResult(request, guard.projectPath, result);
+    return {
+      ok: Boolean(result?.ok),
+      projectPath: guard.projectPath,
+      relativePath: result?.relativePath ?? request.relativePath,
+      changed: Boolean(result?.changed),
+      diff:
+        result?.diffPreview ??
+        makeSimpleDiff(request.relativePath, request.originalContent, request.nextContent),
+      blockedReason: result?.blockedReason ?? null,
+    };
   } catch (error) {
     return blockedPatchResult(
       guard.projectPath,
