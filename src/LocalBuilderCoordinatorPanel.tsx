@@ -1,10 +1,11 @@
 import React from "react";
 import { prepareBuilderExecution } from "./builderExecutionCoordinator";
+import { applyGroupedVerifiedEdits } from "./builderGroupedApply";
 import { describeOllamaStatus, getOllamaStatus, type OllamaModelInfo } from "./builderOllama";
 import { getWorkspaceProjectPath } from "./workspaceSync";
 import type { VerifiedEditState } from "./vivusExecutionLoop";
 
-type Phase = "idle" | "checking" | "planning" | "approval-ready" | "blocked";
+type Phase = "idle" | "checking" | "planning" | "approval-ready" | "applying" | "complete" | "blocked";
 
 function statusLabel(state: VerifiedEditState | null) {
   if (!state) return "No result";
@@ -19,10 +20,12 @@ export function LocalBuilderCoordinatorPanel() {
   const [models, setModels] = React.useState<OllamaModelInfo[]>([]);
   const [modelMessage, setModelMessage] = React.useState("Checking local AI model status...");
   const [prepared, setPrepared] = React.useState<VerifiedEditState[]>([]);
+  const [applied, setApplied] = React.useState<VerifiedEditState[]>([]);
   const [primary, setPrimary] = React.useState<VerifiedEditState | null>(null);
   const [message, setMessage] = React.useState("Describe a change and Vivus will plan the safest implementation scope.");
 
   const projectPath = getWorkspaceProjectPath();
+  const busy = phase === "checking" || phase === "planning" || phase === "applying";
 
   React.useEffect(() => {
     let cancelled = false;
@@ -40,9 +43,10 @@ export function LocalBuilderCoordinatorPanel() {
 
   async function prepare() {
     const trimmed = task.trim();
-    if (!trimmed || phase === "checking" || phase === "planning") return;
+    if (!trimmed || busy) return;
 
     setPrepared([]);
+    setApplied([]);
     setPrimary(null);
     setPhase("checking");
     setMessage("Checking local models...");
@@ -67,12 +71,27 @@ export function LocalBuilderCoordinatorPanel() {
     setPhase(result.ok ? "approval-ready" : "blocked");
   }
 
+  async function applyPrepared() {
+    if (!prepared.length || busy) return;
+
+    setPhase("applying");
+    setMessage("Applying approved grouped edits with checkpoint and verification...");
+
+    const result = await applyGroupedVerifiedEdits(prepared, `User request: ${task.trim()}`);
+    setApplied(result.applied);
+    setPrimary(result.failed ?? result.applied[0] ?? primary);
+    setMessage(result.message);
+    setPhase(result.ok ? "complete" : "blocked");
+  }
+
+  const shownStates = applied.length ? applied : prepared;
+
   return (
     <section className="local-builder-panel">
       <div className="local-builder-header">
         <div>
           <h2>Local AI Builder</h2>
-          <p>Coordinator-backed planning, grouped targeting, and verified diff preparation.</p>
+          <p>Coordinator-backed planning, grouped targeting, grouped apply, and verified execution.</p>
         </div>
         <span className={`local-builder-phase ${phase}`}>{phase}</span>
       </div>
@@ -90,15 +109,20 @@ export function LocalBuilderCoordinatorPanel() {
 
       <div className="local-builder-input-card">
         <textarea value={task} onChange={(event) => setTask(event.target.value)} placeholder="Describe the change Vivus should make to the current project..." />
-        <button type="button" onClick={() => void prepare()} disabled={!task.trim() || phase === "checking" || phase === "planning"}>{phase === "checking" || phase === "planning" ? "Preparing..." : "Prepare Patch"}</button>
+        <button type="button" onClick={() => void prepare()} disabled={!task.trim() || busy}>{busy ? "Working..." : "Prepare Patch"}</button>
       </div>
 
       <div className="local-builder-result">
-        <div className="local-builder-result-header"><strong>Builder coordinator</strong><span>{prepared.length} prepared</span></div>
+        <div className="local-builder-result-header"><strong>Builder coordinator</strong><span>{shownStates.length} file{shownStates.length === 1 ? "" : "s"}</span></div>
         <p>{message}</p>
+        {phase === "approval-ready" && prepared.length > 0 && (
+          <div className="file-editor-actions">
+            <button type="button" onClick={() => void applyPrepared()}>Approve & Apply Group</button>
+          </div>
+        )}
       </div>
 
-      {prepared.map((state) => (
+      {shownStates.map((state) => (
         <div key={state.proposal?.relativePath ?? state.message} className="local-builder-result">
           <div className="local-builder-result-header"><strong>{state.proposal?.relativePath ?? "No file"}</strong><span>{state.stage}</span></div>
           <p>{state.message}</p>
