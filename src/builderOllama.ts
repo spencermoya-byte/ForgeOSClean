@@ -113,8 +113,8 @@ export async function getOllamaStatus(): Promise<OllamaStatusResponse> {
     models: [],
     blockedReason:
       tauriResult?.blockedReason ??
-      directFailure ||
-      "No local Ollama models are available. Start Ollama and install a recommended local coder model.",
+      (directFailure ??
+        "No local Ollama models are available. Start Ollama and install a recommended local coder model."),
     degraded: true,
     recommendedModels: RECOMMENDED_LOCAL_MODELS,
   };

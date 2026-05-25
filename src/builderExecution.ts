@@ -363,7 +363,7 @@ export async function inspectBuilderFile(relativePath: string, projectPath = "."
 export async function runBuilderFileIntelligence(prompt: string, projectPath = "."): Promise<BuilderFileIntelligenceResult> {
   const searchDecision = checkSearchIndexAccessAllowed(projectPath, "index");
   if (!searchDecision.allowed) {
-    return { ok: false, message: "Project inspection was blocked by the protection system.", candidates: [], inspectedFiles: [], blockedReason: searchDecision.reason };
+    return { ok: false, message: "Project inspection was blocked by the protection system.", candidates: [], inspectedFiles: [], blockedReason: searchDecision.reason ?? null };
   }
 
   const root = await listBuilderProjectTree(searchDecision.projectPath);
