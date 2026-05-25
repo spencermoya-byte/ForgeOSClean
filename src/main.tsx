@@ -6,6 +6,7 @@ import './commitsLayout.css';
 import './executionPolicyStyles.css';
 import './workspaceUtilityRail.css';
 import './vivusResponsiveFix.css';
+import './workspaceResponsiveHardening.css';
 import { AppErrorBoundary } from './appErrorBoundary';
 import { WorkspaceAwareApp } from './WorkspaceAwareApp';
 import { bootstrapWorkspaceRuntime } from './workspaceRuntimeBootstrap';
