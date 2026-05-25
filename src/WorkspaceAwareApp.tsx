@@ -3,14 +3,18 @@ import React from "react";
 import App from "./App";
 import { subscribeWorkspaceChanged } from "./workspaceEvents";
 
+const MemoizedApp = React.memo(App);
+
 export function WorkspaceAwareApp() {
-  const [workspaceVersion, setWorkspaceVersion] = React.useState(0);
+  const [, forceWorkspaceRefresh] = React.useReducer((value: number) => value + 1, 0);
 
   React.useEffect(() => {
     return subscribeWorkspaceChanged(() => {
-      setWorkspaceVersion((version) => version + 1);
+      React.startTransition(() => {
+        forceWorkspaceRefresh();
+      });
     });
   }, []);
 
-  return <App key={`workspace-app-${workspaceVersion}`} />;
+  return <MemoizedApp />;
 }
