@@ -1,6 +1,7 @@
 import React from "react";
 import Editor from "@monaco-editor/react";
 import { getActiveWorkspaceFilesRoot } from "./workspaceFilesRoot";
+import { subscribeWorkspaceChanged } from "./workspaceEvents";
 
 const DEFAULT_PROJECT_PATH = "C:/ForgeOSClean";
 const PROJECT_PATH_KEY = "vivus.previewProjectPath.v1";
@@ -91,6 +92,18 @@ export function ProjectFilesPanel({ projectId }: { projectId: string }) {
   const hasTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
   const selectedTab = openTabs.find((tab) => tab.path === selectedPath);
   const dirtyTabs = openTabs.filter((tab) => tab.content !== tab.savedContent);
+
+  React.useEffect(() => {
+    return subscribeWorkspaceChanged(() => {
+      const nextRoot = getActiveWorkspaceFilesRoot();
+      if (!nextRoot) return;
+      setProjectPath(nextRoot);
+      setEntries([]);
+      setOpenTabs([]);
+      setSelectedPath("");
+      setStatus(`Workspace root changed: ${nextRoot}`);
+    });
+  }, []);
 
   const listDirectory = React.useCallback(async (relativePath = "") => {
     const { invoke } = await import("@tauri-apps/api/core");
