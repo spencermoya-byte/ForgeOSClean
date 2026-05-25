@@ -33,11 +33,11 @@ export async function runBuilderExecutionPreview(_planSummary: string) {
   return { backendAvailable: guard.allowed, message: guard.reason ?? "Builder ready.", tasks: [], activity: [], diagnostics: [] };
 }
 
-export async function runSafeBuilderCommand(commandId: SafeCommandId): Promise<SafeCommandResult> {
+export async function runSafeBuilderCommand(commandId: SafeCommandId, _projectPath = "."): Promise<SafeCommandResult> {
   return { ok: false, commandId, commandDisplay: commandId, exitCode: null, stdout: "", stderr: "", durationMs: 0, blockedReason: null };
 }
 
-export async function inspectBuilderFile() {
+export async function inspectBuilderFile(_relativePath?: string, _projectPath = ".") {
   return { ok: true, content: "", blockedReason: null };
 }
 
