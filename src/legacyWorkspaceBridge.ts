@@ -1,4 +1,5 @@
 import { createWorkspaceFromPath, switchWorkspace } from "./workspaceProjectActions";
+import { isWorkspaceBridgeWrite } from "./workspaceBridgeLoopGuard";
 import { projectRootFromPrompt } from "./workspaceProjectAdapter";
 
 const ACTIVE_PROJECT_KEY = "vivus.activeProject.v1";
@@ -16,7 +17,7 @@ function readLegacyProjects(): Array<{ id?: string; name?: string; originalPromp
 }
 
 function syncLegacyActiveProject() {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || isWorkspaceBridgeWrite()) return;
 
   const activeProjectId = window.localStorage.getItem(ACTIVE_PROJECT_KEY)?.trim();
   if (!activeProjectId) return;
@@ -39,7 +40,7 @@ export function startLegacyWorkspaceBridge() {
 
   window.localStorage.setItem = (key: string, value: string) => {
     originalSetItem(key, value);
-    if (key === ACTIVE_PROJECT_KEY || key === PROJECTS_KEY) {
+    if (!isWorkspaceBridgeWrite() && (key === ACTIVE_PROJECT_KEY || key === PROJECTS_KEY)) {
       window.queueMicrotask(syncLegacyActiveProject);
     }
   };
