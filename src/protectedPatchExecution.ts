@@ -2,6 +2,7 @@ import { checkBuilderExecutionAllowed, resolveBuilderExecutionPath } from "./bui
 import { assertCanReadFilesystemPath, assertCanWriteFilesystemPath } from "./protectedFilesystemGuard";
 import { checkSearchIndexAccessAllowed } from "./searchIndexProtectionGuard";
 import { checkTerminalExecutionAllowed } from "./terminalExecutionSandbox";
+import { enforceVerifiedFixed, type VerifiedFixedResult } from "./verifiedFixedEnforcement";
 
 export type ProtectedPatchRequest = {
   projectPath?: string;
@@ -37,8 +38,11 @@ export type ProtectedPatchResult = {
   checkpointId: string | null;
   verification: ProtectedPatchVerification | null;
   rollback: ProtectedPatchRollback | null;
+  verifiedFixed: VerifiedFixedResult | null;
   blockedReason: string | null;
 };
+
+type PatchResultWithoutVerification = Omit<ProtectedPatchResult, "verifiedFixed">;
 
 type BackendPatchResponse = {
   ok?: boolean;
@@ -92,8 +96,13 @@ function makeSimpleDiff(relativePath: string, originalContent: string, nextConte
   return lines.join("\n");
 }
 
+function withVerifiedFixed(result: PatchResultWithoutVerification): ProtectedPatchResult {
+  const completeResult = { ...result, verifiedFixed: null } satisfies ProtectedPatchResult;
+  return { ...completeResult, verifiedFixed: enforceVerifiedFixed(completeResult) };
+}
+
 function blockedPatchResult(projectPath: string, relativePath: string, reason: string): ProtectedPatchResult {
-  return {
+  return withVerifiedFixed({
     ok: false,
     projectPath,
     relativePath,
@@ -103,7 +112,7 @@ function blockedPatchResult(projectPath: string, relativePath: string, reason: s
     verification: null,
     rollback: null,
     blockedReason: reason,
-  };
+  });
 }
 
 export function checkProtectedPatchAllowed(request: ProtectedPatchRequest) {
@@ -226,7 +235,7 @@ export async function runProtectedPatchExecution(request: ProtectedPatchRequest)
   }
 
   if (request.originalContent === request.nextContent) {
-    return {
+    return withVerifiedFixed({
       ok: true,
       projectPath: guard.projectPath,
       relativePath: request.relativePath,
@@ -236,7 +245,7 @@ export async function runProtectedPatchExecution(request: ProtectedPatchRequest)
       verification: null,
       rollback: null,
       blockedReason: null,
-    };
+    });
   }
 
   if (!hasTauriRuntime()) {
@@ -271,7 +280,7 @@ export async function runProtectedPatchExecution(request: ProtectedPatchRequest)
 
     if (!result?.ok) {
       const rollback = await restoreProtectedPatchCheckpoint(guard.projectPath, checkpoint.checkpointId);
-      return {
+      return withVerifiedFixed({
         ok: false,
         projectPath: guard.projectPath,
         relativePath: result?.relativePath ?? request.relativePath,
@@ -283,14 +292,14 @@ export async function runProtectedPatchExecution(request: ProtectedPatchRequest)
         verification: null,
         rollback,
         blockedReason: result?.blockedReason ?? "Protected patch backend rejected the write.",
-      };
+      });
     }
 
     const verification = await verifyProtectedPatchBuild(guard.projectPath);
 
     if (!verification.ok) {
       const rollback = await restoreProtectedPatchCheckpoint(guard.projectPath, checkpoint.checkpointId);
-      return {
+      return withVerifiedFixed({
         ok: false,
         projectPath: guard.projectPath,
         relativePath: result.relativePath ?? request.relativePath,
@@ -304,10 +313,10 @@ export async function runProtectedPatchExecution(request: ProtectedPatchRequest)
         blockedReason:
           verification.blockedReason ??
           (rollback.ok ? "Build verification failed after patch. Changes were rolled back." : "Build verification failed after patch. Rollback failed."),
-      };
+      });
     }
 
-    return {
+    return withVerifiedFixed({
       ok: true,
       projectPath: guard.projectPath,
       relativePath: result.relativePath ?? request.relativePath,
@@ -319,7 +328,7 @@ export async function runProtectedPatchExecution(request: ProtectedPatchRequest)
       verification,
       rollback: null,
       blockedReason: null,
-    };
+    });
   } catch (error) {
     return blockedPatchResult(
       guard.projectPath,
