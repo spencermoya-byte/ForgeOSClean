@@ -9,23 +9,38 @@ export type BuilderExecutionGuardResult = {
 
 function activeWorkspacePath() {
   const project = getCurrentWorkspaceProject();
-  return project?.rootPath ?? "";
+  return project?.rootPath?.trim() ?? "";
+}
+
+function looksLikeFilesystemPath(value: string) {
+  return /^[a-zA-Z]:[\\/]/.test(value) || value.startsWith("/") || value.startsWith("~");
 }
 
 export function resolveBuilderExecutionPath(projectPath?: string): string {
-  const requestedPath = projectPath?.trim();
-  if (requestedPath && requestedPath !== ".") return requestedPath;
-  return activeWorkspacePath();
+  const workspacePath = activeWorkspacePath();
+  const requested = projectPath?.trim() ?? "";
+
+  // User prompts should NEVER be treated as filesystem paths.
+  // Only allow explicit absolute paths.
+  if (!requested || requested === ".") {
+    return workspacePath;
+  }
+
+  if (!looksLikeFilesystemPath(requested)) {
+    return workspacePath;
+  }
+
+  return requested;
 }
 
 export function checkBuilderExecutionAllowed(projectPath?: string): BuilderExecutionGuardResult {
   const resolvedPath = resolveBuilderExecutionPath(projectPath);
 
-  if (!resolvedPath.trim()) {
+  if (!resolvedPath) {
     return {
       allowed: false,
-      projectPath: resolvedPath,
-      reason: "Builder execution requires an active user workspace.",
+      projectPath: "",
+      reason: "Select or create a workspace before building.",
     };
   }
 
@@ -47,6 +62,8 @@ export function checkBuilderExecutionAllowed(projectPath?: string): BuilderExecu
 
 export function requireBuilderExecutionAllowed(projectPath?: string) {
   const result = checkBuilderExecutionAllowed(projectPath);
-  if (!result.allowed) throw new Error(result.reason ?? "Builder execution blocked.");
+  if (!result.allowed) {
+    throw new Error(result.reason ?? "Builder execution blocked.");
+  }
   return result.projectPath;
 }
