@@ -5,7 +5,7 @@ import {
   prepareVerifiedEdit,
   type VerifiedEditState,
 } from "./vivusExecutionLoop";
-import { getOllamaStatus, pickModel, type OllamaModelInfo } from "./builderOllama";
+import { describeOllamaStatus, getOllamaStatus, pickModel, type OllamaModelInfo } from "./builderOllama";
 import { getWorkspaceProjectPath } from "./workspaceSync";
 import {
   addBuilderHistory,
@@ -101,6 +101,7 @@ export function LocalBuilderPanel() {
   const [startedAt, setStartedAt] = React.useState<number | null>(null);
   const [elapsedMs, setElapsedMs] = React.useState(0);
   const [models, setModels] = React.useState<OllamaModelInfo[]>([]);
+  const [modelMessage, setModelMessage] = React.useState("Checking local AI model status...");
   const [result, setResult] = React.useState<VerifiedEditState | null>(null);
   const [preparedState, setPreparedState] = React.useState<VerifiedEditState | null>(null);
   const [currentHistoryId, setCurrentHistoryId] = React.useState<string | null>(null);
@@ -148,7 +149,9 @@ export function LocalBuilderPanel() {
     let cancelled = false;
     async function loadModels() {
       const status = await getOllamaStatus();
-      if (!cancelled && status.ok) setModels(status.models);
+      if (cancelled) return;
+      setModelMessage(describeOllamaStatus(status));
+      setModels(status.ok ? status.models : []);
     }
     void loadModels();
     return () => { cancelled = true; };
@@ -186,11 +189,13 @@ export function LocalBuilderPanel() {
     setPhase("checking-models");
     applyTimelineEvent({ type: "models", label: "Checking local models", detail: "Connecting to Ollama and selecting planner/coder models.", status: "active" });
     const status = await getOllamaStatus();
+    const describedStatus = describeOllamaStatus(status);
+    setModelMessage(describedStatus);
     if (!status.ok || status.models.length === 0) {
       setModels([]);
       setPhase("blocked");
-      applyTimelineEvent({ type: "models", label: "Ollama unavailable", detail: status.blockedReason ?? "No local models found.", status: "blocked" });
-      updateBuilderHistory(historyEntry.id, { status: "blocked", summary: status.blockedReason ?? "No local models found.", stage: "ollama-blocked" });
+      applyTimelineEvent({ type: "models", label: "Ollama unavailable", detail: describedStatus, status: "blocked" });
+      updateBuilderHistory(historyEntry.id, { status: "blocked", summary: describedStatus, stage: "ollama-blocked" });
       refreshHistory();
       return;
     }
@@ -273,6 +278,7 @@ export function LocalBuilderPanel() {
     <section className="local-builder-panel">
       <div className="local-builder-header"><div><h2>Local AI Builder</h2><p>Planner + coder + verified patch loop for the active workspace.</p></div><span className={`local-builder-phase ${phase}`}>{phase} • {(elapsedMs / 1000).toFixed(1)}s</span></div>
       <div className="local-builder-grid"><div className="local-builder-card"><strong>Workspace</strong><span>{projectPath}</span></div><div className="local-builder-card"><strong>Planner</strong><span>{plannerModel}</span></div><div className="local-builder-card"><strong>Coder</strong><span>{coderModel}</span></div></div>
+      <div className={`local-builder-result ${models.length ? "" : "blocked"}`}><div className="local-builder-result-header"><strong>Local model status</strong><span>{models.length ? "ready" : "attention needed"}</span></div><p>{modelMessage}</p></div>
       <div className="local-builder-input-card"><textarea value={task} onChange={(event) => setTask(event.target.value)} placeholder="Describe the change Vivus should make to the current project..." /><button type="button" onClick={() => void prepareBuilderPatch()} disabled={running || !task.trim()}>{running ? "Running..." : "Prepare Patch"}</button></div>
       <div className="local-builder-result"><div className="local-builder-result-header"><strong>Live execution timeline</strong><span>{running ? "real-time" : phase}</span></div><div className="local-builder-log">{timeline.map((step) => <div key={step.id} className={`local-builder-log-row ${step.status}`}><span /><div><strong>{step.label}</strong><em>{step.detail}</em></div></div>)}</div></div>
       {preparedState?.proposal?.changed && phase === "approval-ready" && <div className="local-builder-result"><div className="local-builder-result-header"><strong>Approval required</strong><span>{preparedState.proposal.relativePath}</span></div><p>Review this diff before Vivus writes to disk.</p><pre>{preparedState.proposal.diffPreview}</pre><div className="file-editor-actions"><button type="button" onClick={() => void applyApprovedPatch()}>Approve & Apply</button><button type="button" onClick={rejectPreparedPatch}>Reject</button></div></div>}
