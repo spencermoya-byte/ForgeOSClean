@@ -13,7 +13,9 @@ import { startTerminalWorkflowInstaller } from './terminalWorkflowInstaller';
 import { startLocalBuilderInstaller } from './localBuilderInstaller';
 import { startExecutionPolicyInstaller } from './executionPolicyInstaller';
 import { startWorkspaceUtilityRail } from './workspaceUtilityRail';
+import { startWorkspaceRuntimeBridge } from './workspaceRuntimeBridge';
 
+startWorkspaceRuntimeBridge();
 startLivePreviewInstaller();
 startTerminalWorkflowInstaller();
 startLocalBuilderInstaller();
