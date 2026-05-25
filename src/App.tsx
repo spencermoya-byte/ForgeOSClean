@@ -1,10 +1,13 @@
 import React from "react";
 import "./App.css";
-import { Plus, Send, ChevronDown } from "lucide-react";
+import { Plus, Send, ChevronDown, LayoutGrid, Sparkles, UserRound } from "lucide-react";
+
+type Route = "apps" | "create" | "account";
 
 export default function App() {
   const [prompt, setPrompt] = React.useState("");
   const [mode, setMode] = React.useState<"build" | "plan">("build");
+  const [route, setRoute] = React.useState<Route>("create");
 
   return (
     <div className="app">
@@ -38,6 +41,14 @@ export default function App() {
           </form>
         </section>
       </main>
+
+      <nav className="bottom-nav">
+        <button className={route === "apps" ? "bottom-nav-item active" : "bottom-nav-item"} onClick={() => setRoute("apps")}><LayoutGrid size={20} /><strong>Apps</strong></button>
+        <div className="nav-divider" />
+        <button className={route === "create" ? "bottom-nav-item active" : "bottom-nav-item"} onClick={() => setRoute("create")}><Sparkles size={20} /><strong>Create</strong></button>
+        <div className="nav-divider" />
+        <button className={route === "account" ? "bottom-nav-item active" : "bottom-nav-item"} onClick={() => setRoute("account")}><UserRound size={20} /><strong>Account</strong></button>
+      </nav>
     </div>
   );
 }
