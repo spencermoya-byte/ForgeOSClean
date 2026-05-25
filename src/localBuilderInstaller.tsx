@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { LocalBuilderPanel } from "./LocalBuilderPanel";
+import { LocalBuilderCoordinatorPanel } from "./LocalBuilderCoordinatorPanel";
 import "./LocalBuilderPanel.css";
 
 let mountedElement: HTMLElement | null = null;
@@ -24,7 +24,7 @@ function installLocalBuilderPanel() {
   root = ReactDOM.createRoot(mountedElement);
   root.render(
     <React.StrictMode>
-      <LocalBuilderPanel />
+      <LocalBuilderCoordinatorPanel />
     </React.StrictMode>
   );
 }
