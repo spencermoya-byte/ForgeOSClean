@@ -8,6 +8,8 @@ export type OllamaStatusResponse = {
   ok: boolean;
   models: OllamaModelInfo[];
   blockedReason?: string | null;
+  degraded?: boolean;
+  recommendedModels?: string[];
 };
 
 export type OllamaGenerateResponse = {
@@ -21,13 +23,7 @@ const OLLAMA_BASE_URL = "http://127.0.0.1:11434";
 
 const PREFERRED_PLANNER_MODELS = ["qwen3.6:27b", "qwen3:32b", "qwen3-coder-next:latest", "qwen3-coder:30b"];
 const PREFERRED_CODER_MODELS = ["qwen3-coder:30b", "qwen3-coder-next:latest", "qwen2.5-coder:32b", "qwen3.6:27b"];
-const KNOWN_LOCAL_MODELS: OllamaModelInfo[] = [
-  { name: "qwen3.6:27b", size: null, modified_at: null },
-  { name: "qwen3-coder:30b", size: null, modified_at: null },
-  { name: "qwen3-coder-next:latest", size: null, modified_at: null },
-  { name: "qwen3:32b", size: null, modified_at: null },
-  { name: "qwen3-vl:32b", size: null, modified_at: null },
-];
+const RECOMMENDED_LOCAL_MODELS = Array.from(new Set([...PREFERRED_CODER_MODELS, ...PREFERRED_PLANNER_MODELS, "qwen3-vl:32b"]));
 
 async function tryTauriInvoke<T>(command: string, args: Record<string, unknown>): Promise<T | null> {
   try {
@@ -61,18 +57,30 @@ function normalizeModels(value: unknown): OllamaModelInfo[] {
 
 function responseFromModels(models: OllamaModelInfo[], source: string): OllamaStatusResponse {
   console.info(`Vivus Ollama models loaded from ${source}:`, models.map((model) => model.name));
-  return { ok: models.length > 0, models, blockedReason: models.length > 0 ? null : "No local models were returned." };
+  return {
+    ok: models.length > 0,
+    models,
+    blockedReason: models.length > 0 ? null : "No local models were returned.",
+    degraded: false,
+    recommendedModels: RECOMMENDED_LOCAL_MODELS,
+  };
 }
 
 export async function getOllamaStatus(): Promise<OllamaStatusResponse> {
+  let directFailure = "";
+
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/tags`, { cache: "no-store" });
     if (response.ok) {
       const data = await response.json();
       const models = normalizeModels(data);
       if (models.length > 0) return responseFromModels(models, "direct HTTP");
+      directFailure = "Ollama responded, but no local models were returned.";
+    } else {
+      directFailure = `Ollama status failed with HTTP ${response.status}.`;
     }
   } catch (error) {
+    directFailure = `Unable to reach Ollama at ${OLLAMA_BASE_URL}. ${String(error)}`;
     console.warn("Vivus direct Ollama status failed", error);
   }
 
@@ -82,9 +90,14 @@ export async function getOllamaStatus(): Promise<OllamaStatusResponse> {
   }
 
   return {
-    ok: true,
-    models: KNOWN_LOCAL_MODELS,
-    blockedReason: null,
+    ok: false,
+    models: [],
+    blockedReason:
+      tauriResult?.blockedReason ??
+      directFailure ||
+      "No local Ollama models are available. Start Ollama and install a recommended local coder model.",
+    degraded: true,
+    recommendedModels: RECOMMENDED_LOCAL_MODELS,
   };
 }
 
@@ -94,7 +107,25 @@ export function pickModel(models: OllamaModelInfo[], role: "planner" | "coder") 
   return preferred.find((name) => installedNames.includes(name)) ?? installedNames[0] ?? "";
 }
 
+export function describeOllamaStatus(status: OllamaStatusResponse) {
+  if (status.ok && status.models.length > 0) {
+    return `Local AI ready: ${status.models.length} model${status.models.length === 1 ? "" : "s"} detected.`;
+  }
+
+  const recommended = status.recommendedModels?.slice(0, 3).join(", ") || "qwen3-coder:30b";
+  return `${status.blockedReason ?? "Local AI is unavailable."} Recommended: ${recommended}.`;
+}
+
 export async function generateWithOllama(model: string, prompt: string, systemPrompt?: string): Promise<OllamaGenerateResponse> {
+  if (!model.trim()) {
+    return {
+      ok: false,
+      model,
+      response: "",
+      blockedReason: "No local model is selected. Start Ollama and install a recommended coder model.",
+    };
+  }
+
   const tauriResult = await tryTauriInvoke<OllamaGenerateResponse>(
     "vivus_ollama_generate",
     { request: { model, prompt, systemPrompt } },
