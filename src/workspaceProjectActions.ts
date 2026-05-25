@@ -1,6 +1,7 @@
 import { createProject, removeProject, renameProject, setActiveProject, type VivusProject } from "./lib/projects/projectRegistry";
 import { emitWorkspaceChanged, emitWorkspaceRefresh } from "./workspaceEvents";
 import { getWorkspaceSnapshot } from "./stores/workspaceStore";
+import { validateWorkspacePath } from "./workspaceValidation";
 
 export type WorkspaceActionResult = {
   ok: boolean;
@@ -19,12 +20,23 @@ function emitWorkspaceAction() {
 }
 
 export function createWorkspaceFromPath(rootPath: string, name?: string): WorkspaceActionResult {
-  const normalizedRoot = rootPath.trim();
-  if (!normalizedRoot) return { ok: false, reason: "Workspace path is required." };
+  const validation = validateWorkspacePath(rootPath);
 
-  const next = createProject(name?.trim() || projectNameFromRoot(normalizedRoot), normalizedRoot);
+  if (!validation.valid) {
+    return {
+      ok: false,
+      reason: validation.reason ?? "Workspace path is invalid.",
+    };
+  }
+
+  const next = createProject(
+    name?.trim() || projectNameFromRoot(validation.normalizedPath),
+    validation.normalizedPath,
+  );
+
   const project = next.projects.find((item) => item.id === next.activeProjectId) ?? null;
   emitWorkspaceAction();
+
   return { ok: true, project };
 }
 
@@ -34,7 +46,12 @@ export function switchWorkspace(projectId: string): WorkspaceActionResult {
   const next = setActiveProject(projectId);
   const project = next.projects.find((item) => item.id === next.activeProjectId) ?? null;
   emitWorkspaceAction();
-  return { ok: Boolean(project), project, reason: project ? undefined : "Workspace was not found." };
+
+  return {
+    ok: Boolean(project),
+    project,
+    reason: project ? undefined : "Workspace was not found.",
+  };
 }
 
 export function renameWorkspace(projectId: string, name: string): WorkspaceActionResult {
@@ -44,7 +61,12 @@ export function renameWorkspace(projectId: string, name: string): WorkspaceActio
   const next = renameProject(projectId, name);
   const project = next.projects.find((item) => item.id === projectId) ?? null;
   emitWorkspaceAction();
-  return { ok: Boolean(project), project, reason: project ? undefined : "Workspace was not found." };
+
+  return {
+    ok: Boolean(project),
+    project,
+    reason: project ? undefined : "Workspace was not found.",
+  };
 }
 
 export function deleteWorkspace(projectId: string): WorkspaceActionResult {
@@ -53,5 +75,6 @@ export function deleteWorkspace(projectId: string): WorkspaceActionResult {
   const next = removeProject(projectId);
   const project = next.projects.find((item) => item.id === next.activeProjectId) ?? null;
   emitWorkspaceAction();
+
   return { ok: true, project };
 }
