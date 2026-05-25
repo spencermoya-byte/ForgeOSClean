@@ -16,6 +16,7 @@ export type ProtectedPatchResult = {
   relativePath: string;
   changed: boolean;
   diff: string;
+  checkpointId: string | null;
   blockedReason: string | null;
 };
 
@@ -24,6 +25,13 @@ type BackendPatchResponse = {
   relativePath?: string;
   changed?: boolean;
   diffPreview?: string;
+  blockedReason?: string | null;
+};
+
+type BackendCheckpointResponse = {
+  ok?: boolean;
+  checkpointId?: string | null;
+  files?: string[];
   blockedReason?: string | null;
 };
 
@@ -62,6 +70,7 @@ function blockedPatchResult(projectPath: string, relativePath: string, reason: s
     relativePath,
     changed: false,
     diff: "",
+    checkpointId: null,
     blockedReason: reason,
   };
 }
@@ -107,6 +116,17 @@ export function checkProtectedPatchAllowed(request: ProtectedPatchRequest) {
   };
 }
 
+async function createProtectedPatchCheckpoint(projectPath: string, relativePath: string) {
+  const { invoke } = await import("@tauri-apps/api/core");
+
+  return invoke<BackendCheckpointResponse>("vivus_create_patch_checkpoint", {
+    request: {
+      projectPath,
+      files: [relativePath],
+    },
+  });
+}
+
 export async function runProtectedPatchExecution(request: ProtectedPatchRequest): Promise<ProtectedPatchResult> {
   const guard = checkProtectedPatchAllowed(request);
 
@@ -121,6 +141,7 @@ export async function runProtectedPatchExecution(request: ProtectedPatchRequest)
       relativePath: request.relativePath,
       changed: false,
       diff: "",
+      checkpointId: null,
       blockedReason: null,
     };
   }
@@ -135,6 +156,15 @@ export async function runProtectedPatchExecution(request: ProtectedPatchRequest)
 
   try {
     const { invoke } = await import("@tauri-apps/api/core");
+    const checkpoint = await createProtectedPatchCheckpoint(guard.projectPath, request.relativePath);
+
+    if (!checkpoint?.ok || !checkpoint.checkpointId) {
+      return blockedPatchResult(
+        guard.projectPath,
+        request.relativePath,
+        checkpoint?.blockedReason ?? "Unable to create checkpoint before patch.",
+      );
+    }
 
     const result = await invoke<BackendPatchResponse>("vivus_apply_approved_file_patch", {
       request: {
@@ -154,6 +184,7 @@ export async function runProtectedPatchExecution(request: ProtectedPatchRequest)
       diff:
         result?.diffPreview ??
         makeSimpleDiff(request.relativePath, request.originalContent, request.nextContent),
+      checkpointId: checkpoint.checkpointId,
       blockedReason: result?.blockedReason ?? null,
     };
   } catch (error) {
