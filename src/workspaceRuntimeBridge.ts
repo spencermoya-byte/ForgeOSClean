@@ -4,6 +4,7 @@ import {
   emitWorkspaceRefresh,
   VIVUS_WORKSPACE_CHANGED,
 } from "./workspaceEvents";
+import { workspaceProjectsToAppRecords } from "./workspaceProjectAdapter";
 
 const ACTIVE_PROJECT_KEY = "vivus.activeProject.v1";
 const PROJECTS_KEY = "vivus.projects.v1";
@@ -13,33 +14,18 @@ function dispatchWorkspaceRefresh() {
   emitWorkspaceChanged(getWorkspaceSnapshot());
 }
 
-function syncLegacyActiveProjectToRegistry() {
+function syncLegacyAppStateFromWorkspace() {
   if (typeof window === "undefined") return;
 
   const snapshot = getWorkspaceSnapshot();
-  const activeProject = snapshot.activeProject;
-  if (!activeProject) return;
+  const legacyProjects = workspaceProjectsToAppRecords(snapshot.projects);
 
-  window.localStorage.setItem(ACTIVE_PROJECT_KEY, activeProject.id);
+  window.localStorage.setItem(PROJECTS_KEY, JSON.stringify(legacyProjects));
 
-  try {
-    const existing = JSON.parse(window.localStorage.getItem(PROJECTS_KEY) ?? "[]") as Array<Record<string, unknown>>;
-    const alreadyExists = existing.some((project) => project.id === activeProject.id);
-    if (alreadyExists) return;
-
-    const now = new Date(activeProject.updatedAt || Date.now()).toISOString();
-    const bridgedProject = {
-      id: activeProject.id,
-      name: activeProject.name,
-      originalPrompt: `Workspace root: ${activeProject.rootPath}`,
-      createdAt: new Date(activeProject.createdAt || Date.now()).toISOString(),
-      updatedAt: now,
-      status: "active",
-    };
-
-    window.localStorage.setItem(PROJECTS_KEY, JSON.stringify([bridgedProject, ...existing]));
-  } catch {
-    // Registry remains source of truth.
+  if (snapshot.activeProject) {
+    window.localStorage.setItem(ACTIVE_PROJECT_KEY, snapshot.activeProject.id);
+  } else {
+    window.localStorage.removeItem(ACTIVE_PROJECT_KEY);
   }
 }
 
@@ -47,11 +33,11 @@ export function startWorkspaceRuntimeBridge() {
   if (typeof window === "undefined") return;
 
   const refresh = () => {
-    syncLegacyActiveProjectToRegistry();
+    syncLegacyAppStateFromWorkspace();
     dispatchWorkspaceRefresh();
   };
 
   refresh();
   window.addEventListener("storage", refresh);
-  window.addEventListener(VIVUS_WORKSPACE_CHANGED, syncLegacyActiveProjectToRegistry);
+  window.addEventListener(VIVUS_WORKSPACE_CHANGED, syncLegacyAppStateFromWorkspace);
 }
