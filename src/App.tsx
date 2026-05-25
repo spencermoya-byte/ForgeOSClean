@@ -7,7 +7,7 @@ import { CommitPanel } from "./CommitPanel";
 import { ProjectFilesPanel, initializeProjectFiles } from "./ProjectFilesPanel";
 import { runBuilderExecutionPreview } from "./builderExecution";
 import { VerifiedEditPanel } from "./VerifiedEditPanel";
-import { useAppWorkspaceMigrationRuntime } from "./AppWorkspaceMigrationRuntime";
+import { useAppWorkspaceRuntime } from "./AppWorkspaceRuntime";
 import { createWorkspaceFromUserInput } from "./workspaceCreateRuntime";
 import { activateWorkspaceById } from "./workspaceSwitcherController";
 import {
@@ -129,7 +129,7 @@ function makeActivity(mode: "planned" | "approved" | "complete"): BuilderActivit
 }
 
 export default function App() {
-  const workspaceRuntime = useAppWorkspaceMigrationRuntime();
+  const workspaceRuntime = useAppWorkspaceRuntime();
   const projects = workspaceRuntime.projects;
   const activeProjectId = workspaceRuntime.activeProjectId;
   const activeProject = workspaceRuntime.activeProject;
