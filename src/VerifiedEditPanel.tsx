@@ -30,6 +30,14 @@ function stageLabel(stage: VerifiedEditState["stage"]) {
   }
 }
 
+function verificationStatus(state: VerifiedEditState) {
+  if (state.stage === "verified" || state.stage === "repaired") return "Verified Fixed";
+  if (state.stage === "rolled-back") return "Not Fixed — Rolled Back";
+  if (state.stage === "blocked") return "Blocked";
+  if (state.verification) return "Verification Failed";
+  return "Pending";
+}
+
 export function VerifiedEditPanel({ state, isRunning, onPrepare, onRun }: VerifiedEditPanelProps) {
   if (!state) {
     return (
@@ -66,6 +74,11 @@ export function VerifiedEditPanel({ state, isRunning, onPrepare, onRun }: Verifi
 
       <p className="verified-edit-message">{state.message}</p>
 
+      <div className="verified-edit-result-row">
+        <strong>Proof status</strong>
+        <span>{verificationStatus(state)}</span>
+      </div>
+
       <div className="verified-edit-steps">
         {state.steps.map((step) => (
           <div key={step.id} className={`verified-edit-step ${step.status}`}>
@@ -92,6 +105,13 @@ export function VerifiedEditPanel({ state, isRunning, onPrepare, onRun }: Verifi
         <div className="verified-edit-result-row">
           <strong>Checkpoint</strong>
           <span>{state.checkpoint.checkpointId}</span>
+        </div>
+      )}
+
+      {state.patchResult && (
+        <div className="verified-edit-result-row">
+          <strong>Patch</strong>
+          <span>{state.patchResult.ok ? "Applied" : state.patchResult.blockedReason ?? "Blocked"}</span>
         </div>
       )}
 
