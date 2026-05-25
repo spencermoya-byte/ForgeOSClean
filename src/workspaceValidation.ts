@@ -12,8 +12,28 @@ function normalizeWorkspacePath(path: string) {
   return path.trim().replace(/\\+/g, "/").replace(/\/+$/, "");
 }
 
+export function looksLikeWorkspacePath(path: string) {
+  const normalizedPath = normalizeWorkspacePath(path);
+
+  return (
+    WINDOWS_ABSOLUTE_PATH.test(normalizedPath) ||
+    UNIX_ABSOLUTE_PATH.test(normalizedPath) ||
+    HOME_RELATIVE_PATH.test(normalizedPath)
+  );
+}
+
 export function validateWorkspacePath(path: string): WorkspaceValidationResult {
   const normalizedPath = normalizeWorkspacePath(path);
+
+  // Production behavior:
+  // Natural language prompts are NOT invalid workspace paths.
+  // They are build requests and should bypass validation.
+  if (!looksLikeWorkspacePath(normalizedPath)) {
+    return {
+      valid: true,
+      normalizedPath,
+    };
+  }
 
   if (!normalizedPath) {
     return { valid: false, normalizedPath, reason: "Workspace path is required." };
@@ -27,19 +47,7 @@ export function validateWorkspacePath(path: string): WorkspaceValidationResult {
     return { valid: false, normalizedPath, reason: "Workspace path contains an invalid character." };
   }
 
-  if (
-    WINDOWS_ABSOLUTE_PATH.test(normalizedPath) ||
-    UNIX_ABSOLUTE_PATH.test(normalizedPath) ||
-    HOME_RELATIVE_PATH.test(normalizedPath)
-  ) {
-    return { valid: true, normalizedPath };
-  }
-
-  return {
-    valid: false,
-    normalizedPath,
-    reason: "Workspace must be an absolute local path, such as C:/ForgeOSClean or /Users/name/project.",
-  };
+  return { valid: true, normalizedPath };
 }
 
 export function requireValidWorkspacePath(path: string) {
