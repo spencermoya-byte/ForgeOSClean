@@ -9,7 +9,7 @@ export type BuilderExecutionGuardResult = {
 
 function activeWorkspacePath() {
   const project = getCurrentWorkspaceProject();
-  return project?.rootPath ?? project?.path ?? project?.originalPrompt ?? "";
+  return project?.rootPath ?? "";
 }
 
 export function resolveBuilderExecutionPath(projectPath?: string): string {
