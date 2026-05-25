@@ -1,9 +1,15 @@
-const PROJECT_PATH_KEY = "vivus.previewProjectPath.v1";
-const DEFAULT_PROJECT_PATH = "C:/ForgeOSClean";
+import { getActiveWorkspaceRootPath } from "./stores/workspaceStore";
 
 export function getWorkspaceProjectPath() {
-  if (typeof window === "undefined") return DEFAULT_PROJECT_PATH;
-  return window.localStorage.getItem(PROJECT_PATH_KEY)?.trim() || DEFAULT_PROJECT_PATH;
+  return getActiveWorkspaceRootPath();
+}
+
+export function requireWorkspaceProjectPath() {
+  const projectPath = getWorkspaceProjectPath();
+  if (!projectPath) {
+    throw new Error("No active workspace selected. Open or create a project before building.");
+  }
+  return projectPath;
 }
 
 export function syncWorkspaceFile(relativePath: string) {
