@@ -7,6 +7,7 @@ import { CommitPanel } from "./CommitPanel";
 import { ProjectFilesPanel, initializeProjectFiles } from "./ProjectFilesPanel";
 import { WorkspacePreviewPanel } from "./WorkspacePreviewPanel";
 import { VivusWorkspaceUI } from "./ui/VivusWorkspaceUI";
+import { WorkspaceDock } from "./ui/WorkspaceDock";
 import { useAppWorkspaceRuntime } from "./AppWorkspaceRuntime";
 import { createWorkspaceFromUserInput } from "./workspaceCreateRuntime";
 import { activateWorkspaceById } from "./workspaceSwitcherController";
@@ -424,14 +425,8 @@ export default function App() {
   );
 }
 
-  function renderDockTab(pluginId: OpenPlugin, canClose: boolean) {
-    return <button key={pluginId} type="button" className={`dock-tab ${workspaceTab === pluginId ? "active" : ""}`} onClick={() => switchWorkspaceTab(pluginId)}>{pluginLabel(pluginId)}{canClose && <span role="button" tabIndex={0} className="dock-tab-close" onClick={(event) => { event.stopPropagation(); closePlugin(pluginId); }} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); event.stopPropagation(); closePlugin(pluginId); } }} aria-label={`Close ${pluginLabel(pluginId)}`}><X size={12} /></span>}</button>;
-  }
-
   function renderWorkspace() {
-    const defaultDockPlugins = defaultPlugins.filter((pluginId) => openPlugins.includes(pluginId));
-    const extensionDockPlugins = openPlugins.filter((pluginId) => !defaultPlugins.includes(pluginId));
-
+  
     return (
       <main className="workspace-screen">
         <header className="workspace-topbar">
@@ -454,7 +449,22 @@ export default function App() {
           <button type="button" onClick={() => navigate("create")} style={{ marginLeft: "auto", height: "36px", padding: "0 14px", borderRadius: "10px", border: "1px solid rgba(167, 139, 250, 0.24)", background: "rgba(255, 255, 255, 0.05)", color: "#f8fafc", fontSize: "13px", fontWeight: 600 }}>Home</button>
         </header>
         {renderWorkspaceContent()}
-        <nav className="workspace-dock" aria-label="Workspace plugins">{defaultDockPlugins.map((pluginId) => renderDockTab(pluginId, false))}<div className="dock-divider" aria-hidden="true" />{extensionDockPlugins.map((pluginId) => renderDockTab(pluginId, true))}<button type="button" className="dock-plugin-launcher" onClick={() => setShowPluginLauncher((open) => !open)} aria-label="Open plugin launcher"><Plus size={18} strokeWidth={2.5} /></button></nav>
+       <WorkspaceDock
+  workspaceTab={workspaceTab}
+  defaultPlugins={defaultPlugins}
+  openPlugins={openPlugins}
+  showPluginLauncher={
+    showPluginLauncher
+  }
+  switchWorkspaceTab={
+    switchWorkspaceTab
+  }
+  closePlugin={closePlugin}
+  setShowPluginLauncher={
+    setShowPluginLauncher
+  }
+  pluginLabel={pluginLabel}
+/>
         {showPluginLauncher && <div className="plugin-launcher"><div className="plugin-launcher-header"><h3>Open Tool</h3><button type="button" className="plugin-launcher-close" onClick={() => setShowPluginLauncher(false)} aria-label="Close plugin launcher"><X size={16} /></button></div><div className="plugin-launcher-content">{availablePlugins.map((plugin) => <button key={plugin.id} type="button" className="plugin-launcher-item" onClick={() => openPlugin(plugin.id)}>{plugin.label}</button>)}</div></div>}
       </main>
     );
