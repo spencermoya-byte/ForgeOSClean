@@ -1,32 +1,15 @@
 import React from "react";
 import "./App.css";
-import "./BuilderLifecycle.css";
-import "./BuilderWorkflow.css";
-import "./VerifiedEditPanel.css";
-import { CommitPanel } from "./CommitPanel";
-import { ProjectFilesPanel, initializeProjectFiles } from "./ProjectFilesPanel";
-import { runBuilderExecutionPreview } from "./builderExecution";
-import { VerifiedEditPanel } from "./VerifiedEditPanel";
-import { WorkspacePreviewPanel } from "./WorkspacePreviewPanel";
-import { useAppWorkspaceRuntime } from "./AppWorkspaceRuntime";
-import { createWorkspaceFromUserInput } from "./workspaceCreateRuntime";
-import { activateWorkspaceById } from "./workspaceSwitcherController";
-import {
-  applyAndVerifyEdit,
-  checkpointVerifiedEdit,
-  prepareVerifiedEdit,
-  type VerifiedEditState,
-} from "./vivusExecutionLoop";
-import {
-  ChevronDown,
-  Code2,
-  LayoutGrid,
-  Plus,
-  Send,
-  Sparkles,
-  UserRound,
-  X,
-} from "lucide-react";
 
-// Restored working App.tsx implementation from builder-runtime-hardening to fix self-import corruption.
-export { default } from "./WorkspaceAwareApp";
+export default function App() {
+  return (
+    <div className="app" style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#0b1020",color:"#f8fafc",padding:"24px"}}>
+      <div style={{maxWidth:"700px",textAlign:"center"}}>
+        <h1 style={{fontSize:"32px",marginBottom:"12px"}}>Vivus Recovery Mode</h1>
+        <p style={{opacity:0.85,lineHeight:1.6}}>
+          App render loop corruption was detected and disabled. The UI shell is being restored.
+        </p>
+      </div>
+    </div>
+  );
+}
