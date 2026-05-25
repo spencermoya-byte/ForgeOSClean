@@ -14,12 +14,14 @@ import { startTerminalWorkflowInstaller } from './terminalWorkflowInstaller';
 import { startLocalBuilderInstaller } from './localBuilderInstaller';
 import { startExecutionPolicyInstaller } from './executionPolicyInstaller';
 import { startWorkspaceUtilityRail } from './workspaceUtilityRail';
+import { hydrateWorkspaceAppState } from './workspaceAppHydrator';
 import { startWorkspaceRuntimeBridge } from './workspaceRuntimeBridge';
 
 (window as Window & { __VIVUS_WORKSPACE_OWNED__?: boolean }).__VIVUS_WORKSPACE_OWNED__ = true;
 
 startLegacyWorkspaceBridge();
 startWorkspaceRuntimeBridge();
+hydrateWorkspaceAppState();
 startLivePreviewInstaller();
 startTerminalWorkflowInstaller();
 startLocalBuilderInstaller();
