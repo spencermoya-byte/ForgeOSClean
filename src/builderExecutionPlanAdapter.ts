@@ -1,4 +1,5 @@
 import { createBuilderImplementationPlan, type BuilderImplementationPlan } from "./builderImplementationPlan";
+import { createBuilderExecutionGroup, type BuilderExecutionGroup } from "./builderExecutionGroup";
 import { listProjectTree, type ProjectTreeEntry } from "./builderPatchEngine";
 
 export type BuilderExecutionPlanRequest = {
@@ -9,6 +10,7 @@ export type BuilderExecutionPlanRequest = {
 export type BuilderExecutionPlanResult = {
   ok: boolean;
   plan: BuilderImplementationPlan | null;
+  executionGroup: BuilderExecutionGroup | null;
   selectedRelativePath: string | null;
   planSummary: string;
   blockedReason: string | null;
@@ -27,7 +29,7 @@ async function collectWorkspaceSourceEntries(projectPath: string): Promise<Proje
   return entries;
 }
 
-function formatPlanSummary(plan: BuilderImplementationPlan) {
+function formatPlanSummary(plan: BuilderImplementationPlan, executionGroup: BuilderExecutionGroup | null) {
   const files = plan.candidateFiles
     .slice(0, 5)
     .map((candidate, index) => `${index + 1}. ${candidate.relativePath} — ${candidate.reason}`)
@@ -35,8 +37,11 @@ function formatPlanSummary(plan: BuilderImplementationPlan) {
 
   const checks = plan.acceptanceChecks.map((check) => `- ${check}`).join("\n");
   const blocked = plan.blockedChanges.map((item) => `- ${item}`).join("\n");
+  const execution = executionGroup
+    ? `Mode: ${executionGroup.mode}\nPrimary target: ${executionGroup.primaryTarget ?? "none"}\n${executionGroup.summary}`
+    : "No execution group available.";
 
-  return `${plan.summary}\n\nRisk: ${plan.riskLevel}\n\nCandidate files:\n${files || "No candidate files found."}\n\nAcceptance checks:\n${checks}\n\nBlocked changes:\n${blocked}`;
+  return `${plan.summary}\n\nRisk: ${plan.riskLevel}\n\nExecution group:\n${execution}\n\nCandidate files:\n${files || "No candidate files found."}\n\nAcceptance checks:\n${checks}\n\nBlocked changes:\n${blocked}`;
 }
 
 export async function createBuilderExecutionPlan(
@@ -48,6 +53,7 @@ export async function createBuilderExecutionPlan(
     return {
       ok: false,
       plan: null,
+      executionGroup: null,
       selectedRelativePath: null,
       planSummary: "",
       blockedReason: "Builder execution requires an active workspace path.",
@@ -58,6 +64,7 @@ export async function createBuilderExecutionPlan(
     return {
       ok: false,
       plan: null,
+      executionGroup: null,
       selectedRelativePath: null,
       planSummary: "",
       blockedReason: "Builder execution requires a user request.",
@@ -66,14 +73,16 @@ export async function createBuilderExecutionPlan(
 
   const entries = await collectWorkspaceSourceEntries(request.projectPath);
   const plan = createBuilderImplementationPlan(request.projectPath, userRequest, entries);
-  const selectedRelativePath = plan.candidateFiles[0]?.relativePath ?? null;
+  const executionGroup = createBuilderExecutionGroup(plan);
+  const selectedRelativePath = executionGroup.primaryTarget ?? plan.candidateFiles[0]?.relativePath ?? null;
 
   if (!selectedRelativePath) {
     return {
       ok: false,
       plan,
+      executionGroup,
       selectedRelativePath: null,
-      planSummary: formatPlanSummary(plan),
+      planSummary: formatPlanSummary(plan, executionGroup),
       blockedReason: "No safe candidate source file was found for this request.",
     };
   }
@@ -81,8 +90,9 @@ export async function createBuilderExecutionPlan(
   return {
     ok: true,
     plan,
+    executionGroup,
     selectedRelativePath,
-    planSummary: formatPlanSummary(plan),
+    planSummary: formatPlanSummary(plan, executionGroup),
     blockedReason: null,
   };
 }
