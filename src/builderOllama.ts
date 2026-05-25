@@ -25,6 +25,16 @@ const PREFERRED_PLANNER_MODELS = ["qwen3.6:27b", "qwen3:32b", "qwen3-coder-next:
 const PREFERRED_CODER_MODELS = ["qwen3-coder:30b", "qwen3-coder-next:latest", "qwen2.5-coder:32b", "qwen3.6:27b"];
 const RECOMMENDED_LOCAL_MODELS = Array.from(new Set([...PREFERRED_CODER_MODELS, ...PREFERRED_PLANNER_MODELS, "qwen3-vl:32b"]));
 
+const EXPLANATION_PREFIXES = [
+  "here",
+  "sure",
+  "i updated",
+  "i changed",
+  "explanation",
+  "the following",
+  "updated file",
+];
+
 async function tryTauriInvoke<T>(command: string, args: Record<string, unknown>): Promise<T | null> {
   try {
     const { invoke } = await import("@tauri-apps/api/core");
@@ -162,13 +172,25 @@ export async function generateWithOllama(model: string, prompt: string, systemPr
 
 export function extractFullFileResponse(response: string): string | null {
   const trimmed = response.trim();
-  const codeBlock = trimmed.match(/```(?:tsx|ts|jsx|js|css|rust|rs)?\s*([\s\S]*?)```/i);
-  const content = (codeBlock?.[1] ?? trimmed).trim();
 
-  if (!content) return null;
-  if (content.includes("<FULL_FILE>") && content.includes("</FULL_FILE>")) {
-    return content.split("<FULL_FILE>")[1]?.split("</FULL_FILE>")[0]?.trim() ?? null;
+  const tagged = trimmed.match(/<FULL_FILE>([\s\S]*?)<\/FULL_FILE>/i)?.[1]?.trim();
+  if (tagged) return tagged;
+
+  const codeBlock = trimmed.match(/```(?:tsx|ts|jsx|js|css|rust|rs|json)?\s*([\s\S]*?)```/i)?.[1]?.trim();
+  const candidate = codeBlock ?? trimmed;
+
+  const lower = candidate.toLowerCase();
+  if (EXPLANATION_PREFIXES.some((prefix) => lower.startsWith(prefix))) {
+    return null;
   }
 
-  return content;
+  if (candidate.includes("```")) {
+    return null;
+  }
+
+  if (candidate.length < 12) {
+    return null;
+  }
+
+  return candidate.trim() || null;
 }
