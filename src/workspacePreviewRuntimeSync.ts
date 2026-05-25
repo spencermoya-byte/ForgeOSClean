@@ -8,6 +8,26 @@ export type WorkspacePreviewRuntimeState = {
   updatedAt: string;
 };
 
+let refreshQueued = false;
+let resetQueued = false;
+
+function dispatchCoalescedPreviewRefresh({ resetLifecycle }: { resetLifecycle: boolean }) {
+  if (typeof window === "undefined") return;
+
+  resetQueued = resetQueued || resetLifecycle;
+  if (refreshQueued) return;
+
+  refreshQueued = true;
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      if (resetQueued) resetWorkspacePreviewLifecycleForWorkspace();
+      window.dispatchEvent(new Event("vivus-preview-refresh"));
+      refreshQueued = false;
+      resetQueued = false;
+    });
+  });
+}
+
 function syncPreviewRuntimeState() {
   if (typeof window === "undefined") return;
 
@@ -21,8 +41,7 @@ function syncPreviewRuntimeState() {
     __VIVUS_PREVIEW_WORKSPACE_RUNTIME__?: WorkspacePreviewRuntimeState;
   }).__VIVUS_PREVIEW_WORKSPACE_RUNTIME__ = state;
 
-  resetWorkspacePreviewLifecycleForWorkspace();
-  window.dispatchEvent(new Event("vivus-preview-refresh"));
+  dispatchCoalescedPreviewRefresh({ resetLifecycle: true });
 }
 
 export function startWorkspacePreviewRuntimeSync() {
