@@ -10,12 +10,12 @@ import { VivusWorkspaceUI } from "./ui/VivusWorkspaceUI";
 import { WorkspaceDock } from "./ui/WorkspaceDock";
 import { useAppWorkspaceRuntime } from "./AppWorkspaceRuntime";
 import { createWorkspaceFromUserInput } from "./workspaceCreateRuntime";
+import { WorkspaceTopBar } from "./ui/WorkspaceTopBar";
 import { activateWorkspaceById } from "./workspaceSwitcherController";
 import {
   type VerifiedEditState,
 } from "./vivusExecutionLoop";
 import {
-  ChevronDown,
   Code2,
   LayoutGrid,
   Plus,
@@ -429,25 +429,26 @@ export default function App() {
   
     return (
       <main className="workspace-screen">
-        <header className="workspace-topbar">
-          <div className="workspace-brand project-switcher-wrap">
-            <div className="logo-box">V</div>
-            <button type="button" className="project-name" onClick={() => setShowProjectMenu((open) => !open)} aria-expanded={showProjectMenu}>
-              {activeProject?.name ?? "No Workspace Selected"} <ChevronDown size={16} strokeWidth={2.4} />
-            </button>
-            {showProjectMenu && <div className="project-switcher-menu">
-              <div className="project-switcher-header">Workspaces</div>
-              {projects.length === 0 ? <div className="project-switcher-empty">No saved workspaces yet</div> : projects.map((project) => (
-                <button key={project.id} type="button" className={project.id === activeProjectId ? "project-switcher-item active" : "project-switcher-item"} onClick={() => openProject(project)}>
-                  <strong>{project.name}</strong>
-                  <span>{shortDate(project.updatedAt)}</span>
-                </button>
-              ))}
-              <button type="button" className="project-switcher-new" onClick={() => { setShowProjectMenu(false); navigate("create"); }}>New Workspace</button>
-            </div>}
-          </div>
-          <button type="button" onClick={() => navigate("create")} style={{ marginLeft: "auto", height: "36px", padding: "0 14px", borderRadius: "10px", border: "1px solid rgba(167, 139, 250, 0.24)", background: "rgba(255, 255, 255, 0.05)", color: "#f8fafc", fontSize: "13px", fontWeight: 600 }}>Home</button>
-        </header>
+        <WorkspaceTopBar
+  activeProjectName={
+    activeProject?.name
+  }
+  activeProjectId={
+    activeProjectId
+  }
+  projects={projects}
+  showProjectMenu={
+    showProjectMenu
+  }
+  setShowProjectMenu={
+    setShowProjectMenu
+  }
+  openProject={openProject}
+  navigateHome={() =>
+  navigate("create")
+}
+  shortDate={shortDate}
+/>
         {renderWorkspaceContent()}
        <WorkspaceDock
   workspaceTab={workspaceTab}

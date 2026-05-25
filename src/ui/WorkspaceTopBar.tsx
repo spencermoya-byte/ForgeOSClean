@@ -1,11 +1,7 @@
 import React from "react";
 import { ChevronDown } from "lucide-react";
 
-type ProjectRecord = {
-  id: string;
-  name: string;
-  updatedAt: string;
-};
+type ProjectRecord = any;
 
 type Props = {
   activeProjectName?: string;
