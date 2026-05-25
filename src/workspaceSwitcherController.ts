@@ -9,9 +9,7 @@ export function activateWorkspaceById(workspaceId: string) {
   const workspace = getWorkspaceProjects().find((project) => project.id === id);
   if (!workspace) return false;
 
-  const protectedPath = isProtectedWorkspacePath(
-    workspace.rootPath ?? workspace.path ?? workspace.originalPrompt ?? ""
-  );
+  const protectedPath = isProtectedWorkspacePath(workspace.rootPath ?? "");
 
   if (protectedPath.protected) {
     console.warn(
