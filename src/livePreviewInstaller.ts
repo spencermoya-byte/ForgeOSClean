@@ -5,6 +5,7 @@ import {
   getWorkspacePreviewRuntimePath,
   persistWorkspacePreviewRuntimePath,
 } from "./workspacePreviewRuntimePath";
+import { setWorkspacePreviewLifecycleStatus } from "./workspacePreviewLifecycle";
 
 type PreviewStatus = "stopped" | "starting" | "running" | "failed";
 
@@ -65,12 +66,14 @@ function normalizeResponse(response: LivePreviewResponse | null | undefined) {
 function setStatus(status: PreviewStatus, reason = "") {
   previewStatus = status;
   failureReason = reason;
+  setWorkspacePreviewLifecycleStatus(status, reason || status);
   renderMountedPanel();
 }
 
 function refreshPreview() {
   if (!previewUrl) return;
   refreshKey += 1;
+  setWorkspacePreviewLifecycleStatus(previewStatus, "Preview refreshed.");
   renderMountedPanel();
 }
 
@@ -86,9 +89,11 @@ async function syncPreviewStatus() {
       previewUrl = normalized.url;
       previewPid = normalized.pid;
       previewStatus = "running";
+      setWorkspacePreviewLifecycleStatus("running", "Preview server is running.");
     } else if (previewStatus !== "starting") {
       previewPid = null;
       previewStatus = "stopped";
+      setWorkspacePreviewLifecycleStatus("stopped", "Preview server stopped.");
     }
 
     renderMountedPanel();
@@ -114,13 +119,13 @@ async function startLivePreview() {
   }
 
   const projectPath = getPreviewProjectPath();
-  setStatus("starting");
+  setStatus("starting", `Starting preview for ${projectPath}`);
 
   if (!hasTauriRuntime()) {
     previewUrl = DEFAULT_PREVIEW_URL;
     previewPid = null;
     refreshKey += 1;
-    setStatus("running");
+    setStatus("running", "Preview running in browser fallback mode.");
     return;
   }
 
@@ -141,7 +146,7 @@ async function startLivePreview() {
     previewUrl = normalized.url;
     previewPid = normalized.pid;
     refreshKey += 1;
-    setStatus(normalized.status === "starting" ? "starting" : "running");
+    setStatus(normalized.status === "starting" ? "starting" : "running", `Preview server ${normalized.status}.`);
 
     window.setTimeout(() => {
       void syncPreviewStatus();
@@ -155,6 +160,7 @@ async function stopLivePreview() {
   if (!hasTauriRuntime()) {
     previewStatus = "stopped";
     previewPid = null;
+    setWorkspacePreviewLifecycleStatus("stopped", "Preview stopped.");
     renderMountedPanel();
     return;
   }
@@ -166,6 +172,7 @@ async function stopLivePreview() {
     previewStatus = "stopped";
     previewPid = null;
     failureReason = "";
+    setWorkspacePreviewLifecycleStatus("stopped", "Preview stopped.");
     renderMountedPanel();
   } catch (error) {
     setStatus("failed", error instanceof Error ? error.message : String(error));
