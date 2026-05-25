@@ -25,15 +25,7 @@ const PREFERRED_PLANNER_MODELS = ["qwen3.6:27b", "qwen3:32b", "qwen3-coder-next:
 const PREFERRED_CODER_MODELS = ["qwen3-coder:30b", "qwen3-coder-next:latest", "qwen2.5-coder:32b", "qwen3.6:27b"];
 const RECOMMENDED_LOCAL_MODELS = Array.from(new Set([...PREFERRED_CODER_MODELS, ...PREFERRED_PLANNER_MODELS, "qwen3-vl:32b"]));
 
-const EXPLANATION_PREFIXES = [
-  "here",
-  "sure",
-  "i updated",
-  "i changed",
-  "explanation",
-  "the following",
-  "updated file",
-];
+const EXPLANATION_PREFIXES = ["here","sure","i updated","i changed","explanation","the following","updated file"];
 
 async function tryTauriInvoke<T>(command: string, args: Record<string, unknown>): Promise<T | null> {
   try {
@@ -51,18 +43,35 @@ function normalizeModels(value: unknown): OllamaModelInfo[] {
   if (!Array.isArray(maybeModels)) return [];
 
   return maybeModels
-    .map((model) => {
+    .map((model): OllamaModelInfo | null => {
       if (!model || typeof model !== "object") return null;
-      const item = model as { name?: unknown; model?: unknown; size?: unknown; modified_at?: unknown };
-      const name = typeof item.name === "string" ? item.name : typeof item.model === "string" ? item.model : "";
+
+      const item = model as {
+        name?: unknown;
+        model?: unknown;
+        size?: unknown;
+        modified_at?: unknown;
+      };
+
+      const name =
+        typeof item.name === "string"
+          ? item.name
+          : typeof item.model === "string"
+          ? item.model
+          : "";
+
       if (!name) return null;
+
       return {
         name,
         size: typeof item.size === "number" ? item.size : null,
-        modified_at: typeof item.modified_at === "string" ? item.modified_at : null,
+        modified_at:
+          typeof item.modified_at === "string"
+            ? item.modified_at
+            : null,
       };
     })
-    .filter((model): model is OllamaModelInfo => Boolean(model));
+    .filter((model): model is OllamaModelInfo => model !== null);
 }
 
 function responseFromModels(models: OllamaModelInfo[], source: string): OllamaStatusResponse {
@@ -136,22 +145,14 @@ export async function generateWithOllama(model: string, prompt: string, systemPr
     };
   }
 
-  const tauriResult = await tryTauriInvoke<OllamaGenerateResponse>(
-    "vivus_ollama_generate",
-    { request: { model, prompt, systemPrompt } },
-  );
+  const tauriResult = await tryTauriInvoke<OllamaGenerateResponse>("vivus_ollama_generate", { request: { model, prompt, systemPrompt } });
   if (tauriResult?.ok) return tauriResult;
 
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model,
-        prompt,
-        system: systemPrompt || undefined,
-        stream: false,
-      }),
+      body: JSON.stringify({ model, prompt, system: systemPrompt || undefined, stream: false }),
     });
 
     if (!response.ok) {
@@ -161,31 +162,15 @@ export async function generateWithOllama(model: string, prompt: string, systemPr
     const data = await response.json();
     return { ok: true, model, response: typeof data.response === "string" ? data.response : "", blockedReason: null };
   } catch (error) {
-    return {
-      ok: false,
-      model,
-      response: "",
-      blockedReason: `Unable to reach Ollama generation endpoint. ${String(error)}`,
-    };
+    return { ok: false, model, response: "", blockedReason: `Unable to reach Ollama generation endpoint. ${String(error)}` };
   }
 }
 
 function hasExplanationContamination(candidate: string) {
   const lower = candidate.trim().toLowerCase();
   if (EXPLANATION_PREFIXES.some((prefix) => lower.startsWith(prefix))) return true;
-
   const firstLine = lower.split(/\r?\n/, 1)[0]?.trim() ?? "";
-  return (
-    /^#+\s/.test(firstLine) ||
-    /^[-*]\s/.test(firstLine) ||
-    firstLine.startsWith("target file:") ||
-    firstLine.startsWith("file:") ||
-    firstLine.startsWith("changes made") ||
-    firstLine.startsWith("this patch") ||
-    lower.includes("\nexplanation:") ||
-    lower.includes("\nchanges made:") ||
-    lower.includes("\n```")
-  );
+  return /^#+\s/.test(firstLine) || /^[-*]\s/.test(firstLine) || firstLine.startsWith("target file:") || firstLine.startsWith("file:") || firstLine.startsWith("changes made") || firstLine.startsWith("this patch") || lower.includes("\nexplanation:") || lower.includes("\nchanges made:") || lower.includes("\n```");
 }
 
 function isPlausibleFileContent(candidate: string) {
@@ -197,20 +182,14 @@ function isPlausibleFileContent(candidate: string) {
 }
 
 function extractTaggedFullFile(response: string) {
-  const matches = [...response.matchAll(/<FULL_FILE>([\s\S]*?)<\/FULL_FILE>/gi)]
-    .map((match) => match[1]?.trim() ?? "")
-    .filter(Boolean);
-
+  const matches = [...response.matchAll(/<FULL_FILE>([\s\S]*?)<\/FULL_FILE>/gi)].map((match) => match[1]?.trim() ?? "").filter(Boolean);
   if (matches.length !== 1) return null;
   const candidate = matches[0];
   return isPlausibleFileContent(candidate) ? candidate : null;
 }
 
 function extractSingleCodeBlock(response: string) {
-  const matches = [...response.matchAll(/```(?:tsx|ts|jsx|js|css|rust|rs|json)?\s*([\s\S]*?)```/gi)]
-    .map((match) => match[1]?.trim() ?? "")
-    .filter(Boolean);
-
+  const matches = [...response.matchAll(/```(?:tsx|ts|jsx|js|css|rust|rs|json)?\s*([\s\S]*?)```/gi)].map((match) => match[1]?.trim() ?? "").filter(Boolean);
   if (matches.length !== 1) return null;
   const candidate = matches[0];
   return isPlausibleFileContent(candidate) ? candidate : null;
@@ -219,16 +198,11 @@ function extractSingleCodeBlock(response: string) {
 export function extractFullFileResponse(response: string): string | null {
   const trimmed = response.trim();
   if (!trimmed) return null;
-
   const tagged = extractTaggedFullFile(trimmed);
   if (tagged) return tagged;
-
   if (/<\/?FULL_FILE>/i.test(trimmed)) return null;
-
   const codeBlock = extractSingleCodeBlock(trimmed);
   if (codeBlock) return codeBlock;
-
   if (/```/.test(trimmed)) return null;
-
   return isPlausibleFileContent(trimmed) ? trimmed : null;
 }
