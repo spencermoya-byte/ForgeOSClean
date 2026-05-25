@@ -16,6 +16,8 @@ import { startExecutionPolicyInstaller } from './executionPolicyInstaller';
 import { startWorkspaceUtilityRail } from './workspaceUtilityRail';
 import { startWorkspaceRuntimeBridge } from './workspaceRuntimeBridge';
 
+(window as Window & { __VIVUS_WORKSPACE_OWNED__?: boolean }).__VIVUS_WORKSPACE_OWNED__ = true;
+
 startLegacyWorkspaceBridge();
 startWorkspaceRuntimeBridge();
 startLivePreviewInstaller();
