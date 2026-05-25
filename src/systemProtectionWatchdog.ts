@@ -110,7 +110,7 @@ function checkActiveWorkspaceProtection() {
   const active = getCurrentWorkspaceProject();
   if (!active) return;
 
-  const path = active.rootPath ?? active.path ?? active.originalPrompt ?? "";
+  const path = active.rootPath ?? "";
   if (!path) return;
 
   checkProtectedWorkspaceRuntime(path);
