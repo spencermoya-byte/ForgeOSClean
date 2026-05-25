@@ -12,6 +12,7 @@ import { startWorkspaceActiveProjectInstaller } from './workspaceActiveProjectIn
 import { startWorkspaceAppOwnershipGuard } from './workspaceAppOwnershipGuard';
 import { startWorkspaceAppOwnershipRuntime } from './workspaceAppOwnershipRuntime';
 import { startWorkspaceBuilderRuntimeInstaller } from './workspaceBuilderRuntimeInstaller';
+import { startWorkspaceCutoverVerificationRuntime } from './workspaceCutoverVerificationRuntime';
 import { startWorkspaceExecutionRuntimeInstaller } from './workspaceExecutionRuntimeInstaller';
 import { startWorkspaceFilesRuntimeInstaller } from './workspaceFilesRuntimeInstaller';
 import { startWorkspaceLegacyStateBlocker } from './workspaceLegacyStateBlocker';
@@ -46,6 +47,7 @@ startWorkspaceAppOwnershipGuard();
 startWorkspaceOwnershipCutoverRuntime();
 startWorkspaceLegacyStateBlocker();
 startWorkspaceLegacyStateWriteBlocker();
+startWorkspaceCutoverVerificationRuntime();
 startWorkspaceSystemRuntimeInstaller();
 startWorkspaceRouteRuntimeInstaller();
 startWorkspaceBuilderRuntimeInstaller();
