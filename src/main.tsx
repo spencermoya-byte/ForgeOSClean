@@ -24,6 +24,7 @@ import { startWorkspacePreviewAutoRestart } from './workspacePreviewAutoRestart'
 import { startWorkspacePreviewCrashMonitor } from './workspacePreviewCrashMonitor';
 import { startWorkspacePreviewRuntimeInstaller } from './workspacePreviewRuntimeInstaller';
 import { startWorkspacePreviewRuntimeSync } from './workspacePreviewRuntimeSync';
+import { startWorkspaceResizePerformanceRuntime } from './workspaceResizePerformance';
 import { startWorkspaceRouteRuntimeInstaller } from './workspaceRouteRuntimeInstaller';
 import { startWorkspaceRuntimeHealthInstaller } from './workspaceRuntimeHealthInstaller';
 import { startWorkspaceRuntimeReadinessInstaller } from './workspaceRuntimeReadinessInstaller';
@@ -67,6 +68,7 @@ startWorkspacePreviewRuntimeInstaller();
 startWorkspacePreviewRuntimeSync();
 startWorkspacePreviewCrashMonitor();
 startWorkspacePreviewAutoRestart();
+startWorkspaceResizePerformanceRuntime();
 startWorkspaceExecutionRuntimeInstaller();
 startWorkspaceFilesRuntimeInstaller();
 startWorkspaceTerminalRuntimeInstaller();
