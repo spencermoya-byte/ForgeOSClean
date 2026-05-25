@@ -11,6 +11,7 @@ import {
   type ProjectTreeEntry,
 } from "./builderPatchEngine";
 import { runBuilderExecutionPreview, type BuildDiagnostic, type BuilderExecutionResult } from "./builderExecution";
+import { validateGeneratedFile } from "./builderGeneratedFileValidator";
 import { extractFullFileResponse, generateWithOllama, getOllamaStatus, pickModel } from "./builderOllama";
 import { createBuilderImplementationPlan } from "./builderImplementationPlan";
 import { getWorkspaceProjectPath, syncWorkspaceFile } from "./workspaceSync";
@@ -223,6 +224,14 @@ async function generateNextContent(relativePath: string, currentContent: string,
   return { content: extracted, generatedBy: diagnostics.length ? `${model} repair` : model };
 }
 
+function validateGeneratedPatchContent(relativePath: string, content: string, generatedBy?: string) {
+  const validation = validateGeneratedFile(relativePath, content);
+  if (validation.ok) return null;
+
+  const source = generatedBy ? ` Source: ${generatedBy}.` : "";
+  return `Generated patch for ${relativePath} was blocked before diff preview because it failed output validation.${source} Issues: ${validation.issues.join(" ")}`;
+}
+
 async function prepareRepairProposal(state: VerifiedEditState, diagnostics: BuildDiagnostic[], planSummary: string) {
   if (!state.proposal) return null;
   emitExecution("repair", "Repair attempt", "Using verification diagnostics for one local repair pass.", "active");
@@ -234,6 +243,11 @@ async function prepareRepairProposal(state: VerifiedEditState, diagnostics: Buil
   }));
   const validContext = contextFiles.filter((file): file is ContextFile => Boolean(file));
   const generated = await generateNextContent(state.proposal.relativePath, currentAfterPatch.content, planSummary, state.proposal.targetReason ?? "repair target", validContext, undefined, diagnostics);
+  const validationBlock = validateGeneratedPatchContent(state.proposal.relativePath, generated.content, generated.generatedBy);
+  if (validationBlock) {
+    emitExecution("repair", "Repair output blocked", validationBlock, "blocked");
+    return null;
+  }
   const diff = await previewFilePatch(state.proposal.projectPath, state.proposal.relativePath, generated.content);
   if (!diff.ok || !diff.changed) return null;
   emitExecution("repair", "Repair patch prepared", state.proposal.relativePath, "done");
@@ -258,6 +272,10 @@ export async function prepareVerifiedEdit(request: VerifiedEditRequest): Promise
 
   const contextFiles = await buildContextPack(projectPath, target);
   const generated = await generateNextContent(relativePath, file.content, request.planSummary, target.reason, contextFiles, request.nextContent);
+  const validationBlock = validateGeneratedPatchContent(relativePath, generated.content, generated.generatedBy);
+  if (validationBlock) {
+    return blocked(validationBlock, { target: "done", context: "done", inspect: "done", ai: "blocked", diff: "blocked" });
+  }
   emitExecution("build-diff", "Build diff preview", "Generating reviewable patch preview.", "active");
   const diff = await previewFilePatch(projectPath, relativePath, generated.content);
 
