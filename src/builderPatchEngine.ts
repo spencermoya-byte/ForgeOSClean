@@ -1,9 +1,12 @@
+import { runProtectedPatchExecution, type ProtectedPatchResult } from "./protectedPatchExecution";
+
 export type BuilderPatchResponse = {
   ok: boolean;
   relativePath: string;
   changed: boolean;
   diffPreview: string;
   blockedReason?: string | null;
+  protectedResult?: ProtectedPatchResult | null;
 };
 
 export type BuilderCheckpointResponse = {
@@ -95,6 +98,7 @@ export async function previewFilePatch(projectPath: string, relativePath: string
       changed: false,
       diffPreview: "",
       blockedReason: "Patch preview requires the Tauri runtime.",
+      protectedResult: null,
     },
   );
 }
@@ -119,17 +123,35 @@ export async function applyApprovedFilePatch(
   nextContent: string,
   approvalToken: "APPROVE_PATCH",
 ): Promise<BuilderPatchResponse> {
-  return invokeOrFallback<BuilderPatchResponse>(
-    "vivus_apply_approved_file_patch",
-    { request: { projectPath, relativePath, expectedCurrentContent, nextContent, approvalToken } },
-    {
+  if (approvalToken !== "APPROVE_PATCH") {
+    return {
       ok: false,
       relativePath,
       changed: false,
       diffPreview: "",
-      blockedReason: "Patch application requires the Tauri runtime.",
-    },
-  );
+      blockedReason: "Patch application requires explicit approval.",
+      protectedResult: null,
+    };
+  }
+
+  const protectedResult = await runProtectedPatchExecution({
+    projectPath,
+    relativePath,
+    originalContent: expectedCurrentContent,
+    nextContent,
+    reason: "Verified edit loop approved patch",
+  });
+
+  return {
+    ok: protectedResult.ok,
+    relativePath: protectedResult.relativePath,
+    changed: protectedResult.changed,
+    diffPreview: protectedResult.diff,
+    blockedReason:
+      protectedResult.blockedReason ??
+      (protectedResult.verifiedFixed?.verified ? null : protectedResult.verifiedFixed?.message ?? null),
+    protectedResult,
+  };
 }
 
 export async function restorePatchCheckpoint(projectPath: string, checkpointId: string): Promise<BuilderCheckpointResponse> {
