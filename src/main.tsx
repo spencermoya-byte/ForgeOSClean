@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
 import './App.css';
 import './workspaceSticky.css';
 import './commitsLayout.css';
@@ -8,6 +7,7 @@ import './executionPolicyStyles.css';
 import './workspaceUtilityRail.css';
 import './vivusResponsiveFix.css';
 import { AppErrorBoundary } from './appErrorBoundary';
+import { WorkspaceAwareApp } from './WorkspaceAwareApp';
 import { startLivePreviewInstaller } from './livePreviewInstaller';
 import { startTerminalWorkflowInstaller } from './terminalWorkflowInstaller';
 import { startLocalBuilderInstaller } from './localBuilderInstaller';
@@ -26,7 +26,7 @@ const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(
   <React.StrictMode>
     <AppErrorBoundary>
-      <App />
+      <WorkspaceAwareApp />
     </AppErrorBoundary>
   </React.StrictMode>
 );
