@@ -170,27 +170,65 @@ export async function generateWithOllama(model: string, prompt: string, systemPr
   }
 }
 
+function hasExplanationContamination(candidate: string) {
+  const lower = candidate.trim().toLowerCase();
+  if (EXPLANATION_PREFIXES.some((prefix) => lower.startsWith(prefix))) return true;
+
+  const firstLine = lower.split(/\r?\n/, 1)[0]?.trim() ?? "";
+  return (
+    /^#+\s/.test(firstLine) ||
+    /^[-*]\s/.test(firstLine) ||
+    firstLine.startsWith("target file:") ||
+    firstLine.startsWith("file:") ||
+    firstLine.startsWith("changes made") ||
+    firstLine.startsWith("this patch") ||
+    lower.includes("\nexplanation:") ||
+    lower.includes("\nchanges made:") ||
+    lower.includes("\n```")
+  );
+}
+
+function isPlausibleFileContent(candidate: string) {
+  const trimmed = candidate.trim();
+  if (trimmed.length < 24) return false;
+  if (trimmed.includes("```")) return false;
+  if (hasExplanationContamination(trimmed)) return false;
+  return true;
+}
+
+function extractTaggedFullFile(response: string) {
+  const matches = [...response.matchAll(/<FULL_FILE>([\s\S]*?)<\/FULL_FILE>/gi)]
+    .map((match) => match[1]?.trim() ?? "")
+    .filter(Boolean);
+
+  if (matches.length !== 1) return null;
+  const candidate = matches[0];
+  return isPlausibleFileContent(candidate) ? candidate : null;
+}
+
+function extractSingleCodeBlock(response: string) {
+  const matches = [...response.matchAll(/```(?:tsx|ts|jsx|js|css|rust|rs|json)?\s*([\s\S]*?)```/gi)]
+    .map((match) => match[1]?.trim() ?? "")
+    .filter(Boolean);
+
+  if (matches.length !== 1) return null;
+  const candidate = matches[0];
+  return isPlausibleFileContent(candidate) ? candidate : null;
+}
+
 export function extractFullFileResponse(response: string): string | null {
   const trimmed = response.trim();
+  if (!trimmed) return null;
 
-  const tagged = trimmed.match(/<FULL_FILE>([\s\S]*?)<\/FULL_FILE>/i)?.[1]?.trim();
+  const tagged = extractTaggedFullFile(trimmed);
   if (tagged) return tagged;
 
-  const codeBlock = trimmed.match(/```(?:tsx|ts|jsx|js|css|rust|rs|json)?\s*([\s\S]*?)```/i)?.[1]?.trim();
-  const candidate = codeBlock ?? trimmed;
+  if (/<\/?FULL_FILE>/i.test(trimmed)) return null;
 
-  const lower = candidate.toLowerCase();
-  if (EXPLANATION_PREFIXES.some((prefix) => lower.startsWith(prefix))) {
-    return null;
-  }
+  const codeBlock = extractSingleCodeBlock(trimmed);
+  if (codeBlock) return codeBlock;
 
-  if (candidate.includes("```")) {
-    return null;
-  }
+  if (/```/.test(trimmed)) return null;
 
-  if (candidate.length < 12) {
-    return null;
-  }
-
-  return candidate.trim() || null;
+  return isPlausibleFileContent(trimmed) ? trimmed : null;
 }
