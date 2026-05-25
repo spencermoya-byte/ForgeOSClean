@@ -4,21 +4,19 @@ export type ProtectedWorkspacePathResult = {
   reason?: string;
 };
 
+// Protect actual system/runtime locations.
+// Do NOT block the active Vivus development repo.
 const PROTECTED_REPO_ROOTS = [
-  "c:/forgeosclean",
   "c:/vivus",
   "c:/deogloria",
 ];
 
-const PROTECTED_APP_MARKERS = [
-  "/src/",
-  "/src-tauri/",
-  "/.aider-modes/",
-  "/scripts/",
-  "/tauri.conf.json",
-  "/package.json",
-  "/vite.config",
-  "/tsconfig",
+const PROTECTED_SYSTEM_PATHS = [
+  "c:/windows",
+  "c:/program files",
+  "c:/program files (x86)",
+  "c:/programdata",
+  "c:/users/default",
 ];
 
 export function normalizeProtectedWorkspacePath(path: string) {
@@ -32,19 +30,34 @@ export function isProtectedWorkspacePath(path: string): ProtectedWorkspacePathRe
     return { protected: false, normalizedPath };
   }
 
-  if (PROTECTED_REPO_ROOTS.some((root) => normalizedPath === root || normalizedPath.startsWith(`${root}/`))) {
+  // Allow Vivus development repo.
+  if (normalizedPath === "c:/forgeosclean") {
+    return { protected: false, normalizedPath };
+  }
+
+  if (
+    PROTECTED_SYSTEM_PATHS.some(
+      (root) => normalizedPath === root || normalizedPath.startsWith(`${root}/`)
+    )
+  ) {
     return {
       protected: true,
       normalizedPath,
-      reason: "Vivus cannot open or execute against its own application repository as a normal user workspace.",
+      reason:
+        "System folders cannot be used as Builder workspaces.",
     };
   }
 
-  if (PROTECTED_APP_MARKERS.some((marker) => normalizedPath.includes(marker))) {
+  if (
+    PROTECTED_REPO_ROOTS.some(
+      (root) => normalizedPath === root || normalizedPath.startsWith(`${root}/`)
+    )
+  ) {
     return {
       protected: true,
       normalizedPath,
-      reason: "Vivus application/runtime files are protected and cannot be used as Builder workspaces.",
+      reason:
+        "Vivus cannot execute against protected application repositories.",
     };
   }
 
@@ -53,6 +66,10 @@ export function isProtectedWorkspacePath(path: string): ProtectedWorkspacePathRe
 
 export function requireUnprotectedWorkspacePath(path: string) {
   const result = isProtectedWorkspacePath(path);
-  if (result.protected) throw new Error(result.reason ?? "Workspace path is protected.");
+
+  if (result.protected) {
+    throw new Error(result.reason ?? "Workspace path is protected.");
+  }
+
   return path;
 }
