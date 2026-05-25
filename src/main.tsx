@@ -14,6 +14,7 @@ import { startWorkspaceAppOwnershipRuntime } from './workspaceAppOwnershipRuntim
 import { startWorkspaceBuilderRuntimeInstaller } from './workspaceBuilderRuntimeInstaller';
 import { startWorkspaceExecutionRuntimeInstaller } from './workspaceExecutionRuntimeInstaller';
 import { startWorkspaceFilesRuntimeInstaller } from './workspaceFilesRuntimeInstaller';
+import { startWorkspaceOwnershipCutoverRuntime } from './workspaceOwnershipCutoverRuntime';
 import { startWorkspacePreviewRuntimeInstaller } from './workspacePreviewRuntimeInstaller';
 import { startWorkspaceRouteRuntimeInstaller } from './workspaceRouteRuntimeInstaller';
 import { startWorkspaceSystemRuntimeInstaller } from './workspaceSystemRuntimeInstaller';
@@ -40,6 +41,7 @@ startWorkspaceRuntimeGlobals();
 startWorkspaceActiveProjectInstaller();
 startWorkspaceAppOwnershipRuntime();
 startWorkspaceAppOwnershipGuard();
+startWorkspaceOwnershipCutoverRuntime();
 startWorkspaceSystemRuntimeInstaller();
 startWorkspaceRouteRuntimeInstaller();
 startWorkspaceBuilderRuntimeInstaller();
