@@ -12,6 +12,7 @@ import {
 } from "./builderPatchEngine";
 import { runBuilderExecutionPreview, type BuildDiagnostic, type BuilderExecutionResult } from "./builderExecution";
 import { extractFullFileResponse, generateWithOllama, getOllamaStatus, pickModel } from "./builderOllama";
+import { createBuilderImplementationPlan } from "./builderImplementationPlan";
 import { getWorkspaceProjectPath, syncWorkspaceFile } from "./workspaceSync";
 import { emitBuilderExecutionEvent } from "./builderExecutionEvents";
 
@@ -155,16 +156,23 @@ async function collectProjectFiles(projectPath: string) {
 async function inferTargetFile(projectPath: string, planSummary: string, explicitRelativePath?: string): Promise<TargetSelection> {
   emitExecution("infer-target", "Infer target file", "Ranking source files for the safest edit target.", "active");
   const entries = await collectProjectFiles(projectPath);
-  const candidates = entries.map((entry) => scoreEntry(entry, planSummary)).sort((a, b) => b.score - a.score);
+  const fallbackCandidates = entries.map((entry) => scoreEntry(entry, planSummary)).sort((a, b) => b.score - a.score);
+
   if (explicitRelativePath?.trim()) {
     emitExecution("infer-target", "Target selected", explicitRelativePath.trim(), "done");
-    return { relativePath: explicitRelativePath.trim(), reason: "explicit target supplied", candidates };
+    return { relativePath: explicitRelativePath.trim(), reason: "explicit target supplied", candidates: fallbackCandidates };
   }
+
+  const implementationPlan = createBuilderImplementationPlan(projectPath, planSummary, entries);
+  const candidates = implementationPlan.candidateFiles.length > 0 ? implementationPlan.candidateFiles : fallbackCandidates;
   const best = candidates.find((candidate) => candidate.score > 0) ?? candidates[0];
+
   if (best) {
-    emitExecution("infer-target", "Target selected", `${best.relativePath} (${best.reason})`, "done");
-    return { relativePath: best.relativePath, reason: `${best.reason}; score ${best.score}`, candidates };
+    const reason = `${best.reason}; score ${best.score}; risk ${implementationPlan.riskLevel}`;
+    emitExecution("infer-target", "Target selected", `${best.relativePath} (${reason})`, "done");
+    return { relativePath: best.relativePath, reason, candidates };
   }
+
   emitExecution("infer-target", "Target selected", DEFAULT_RELATIVE_PATH, "done");
   return { relativePath: DEFAULT_RELATIVE_PATH, reason: "fallback default target", candidates: [] };
 }
