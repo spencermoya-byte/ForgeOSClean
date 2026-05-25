@@ -12,6 +12,7 @@ import { useAppWorkspaceRuntime } from "./AppWorkspaceRuntime";
 import { createWorkspaceFromUserInput } from "./workspaceCreateRuntime";
 import { WorkspaceTopBar } from "./ui/WorkspaceTopBar";
 import { activateWorkspaceById } from "./workspaceSwitcherController";
+import { PluginRail } from "./ui/PluginRail";
 import {
   type VerifiedEditState,
 } from "./vivusExecutionLoop";
@@ -126,6 +127,7 @@ function makeActivity(mode: "planned" | "approved" | "complete"): BuilderActivit
 }
 
 export default function App() {
+  void PluginRail;
   const workspaceRuntime = useAppWorkspaceRuntime();
   const projects = workspaceRuntime.projects;
   const activeProjectId = workspaceRuntime.activeProjectId;
