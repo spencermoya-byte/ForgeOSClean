@@ -1,5 +1,6 @@
 import { createWorkspaceFromPath } from "./workspaceProjectActions";
 import { projectRootFromPrompt } from "./workspaceProjectAdapter";
+import { validateWorkspacePath } from "./workspaceValidation";
 
 export type WorkspaceCreateResult = {
   created: boolean;
@@ -12,7 +13,13 @@ export function createWorkspaceFromUserInput(input: string): WorkspaceCreateResu
   if (!trimmed) return { created: false, reason: "Workspace path is required." };
 
   const rootPath = projectRootFromPrompt(trimmed) || trimmed;
-  const result = createWorkspaceFromPath(rootPath);
+  const validation = validateWorkspacePath(rootPath);
+
+  if (!validation.valid) {
+    return { created: false, reason: validation.reason ?? "Workspace path is invalid." };
+  }
+
+  const result = createWorkspaceFromPath(validation.normalizedPath);
 
   if (!result.ok || !result.project) {
     return { created: false, reason: result.reason ?? "Workspace could not be created." };
