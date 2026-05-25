@@ -3,3 +3,6 @@ pub mod builder_terminal;
 pub mod builder_files;
 pub mod builder_patches;
 pub mod builder_ollama;
+pub mod builder_guardrails;
+pub mod builder_verification;
+pub mod builder_state;
