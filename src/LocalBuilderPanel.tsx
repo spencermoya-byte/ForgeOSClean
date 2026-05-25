@@ -77,6 +77,10 @@ function stageLabel(state: VerifiedEditState | null) {
   return state.stage;
 }
 
+const StatusRow = React.memo(function StatusRow({ label, detail, status }: { label: string; detail: string; status: BuilderLog["status"] }) {
+  return <div className={`local-builder-log-row ${status}`}><span /><div><strong>{label}</strong><em>{detail}</em></div></div>;
+});
+
 function historyStatus(stage: VerifiedEditState["stage"]): BuilderHistoryEntry["status"] {
   if (stage === "verified" || stage === "repaired") return "complete";
   if (stage === "rolled-back") return "rolled-back";
@@ -111,9 +115,10 @@ export function LocalBuilderPanel() {
   const [approvals, setApprovals] = React.useState<BuilderApprovalItem[]>([]);
 
   const projectPath = getWorkspaceProjectPath();
-  const plannerModel = modelLabel(models, "planner");
-  const coderModel = modelLabel(models, "coder");
+  const plannerModel = React.useMemo(() => modelLabel(models, "planner"), [models]);
+  const coderModel = React.useMemo(() => modelLabel(models, "coder"), [models]);
   const running = phase === "checking-models" || phase === "planning" || phase === "running";
+  const elapsedSeconds = React.useMemo(() => (elapsedMs / 1000).toFixed(1), [elapsedMs]);
 
   const refreshHistory = React.useCallback(() => setHistory(listBuilderHistory(projectPath)), [projectPath]);
   const refreshApprovals = React.useCallback(() => setApprovals(listBuilderApprovals(projectPath)), [projectPath]);
@@ -131,7 +136,7 @@ export function LocalBuilderPanel() {
 
   React.useEffect(() => {
     if (!startedAt || !running) return undefined;
-    const id = window.setInterval(() => setElapsedMs(Date.now() - startedAt), 250);
+    const id = window.setInterval(() => setElapsedMs(Date.now() - startedAt), 500);
     return () => window.clearInterval(id);
   }, [startedAt, running]);
 
@@ -276,16 +281,16 @@ export function LocalBuilderPanel() {
 
   return (
     <section className="local-builder-panel">
-      <div className="local-builder-header"><div><h2>Local AI Builder</h2><p>Planner + coder + verified patch loop for the active workspace.</p></div><span className={`local-builder-phase ${phase}`}>{phase} • {(elapsedMs / 1000).toFixed(1)}s</span></div>
+      <div className="local-builder-header"><div><h2>Local AI Builder</h2><p>Planner + coder + verified patch loop for the active workspace.</p></div><span className={`local-builder-phase ${phase}`}>{phase} • {elapsedSeconds}s</span></div>
       <div className="local-builder-grid"><div className="local-builder-card"><strong>Workspace</strong><span>{projectPath}</span></div><div className="local-builder-card"><strong>Planner</strong><span>{plannerModel}</span></div><div className="local-builder-card"><strong>Coder</strong><span>{coderModel}</span></div></div>
       <div className={`local-builder-result ${models.length ? "" : "blocked"}`}><div className="local-builder-result-header"><strong>Local model status</strong><span>{models.length ? "ready" : "attention needed"}</span></div><p>{modelMessage}</p></div>
       <div className="local-builder-input-card"><textarea value={task} onChange={(event) => setTask(event.target.value)} placeholder="Describe the change Vivus should make to the current project..." /><button type="button" onClick={() => void prepareBuilderPatch()} disabled={running || !task.trim()}>{running ? "Running..." : "Prepare Patch"}</button></div>
-      <div className="local-builder-result"><div className="local-builder-result-header"><strong>Live execution timeline</strong><span>{running ? "real-time" : phase}</span></div><div className="local-builder-log">{timeline.map((step) => <div key={step.id} className={`local-builder-log-row ${step.status}`}><span /><div><strong>{step.label}</strong><em>{step.detail}</em></div></div>)}</div></div>
+      <div className="local-builder-result"><div className="local-builder-result-header"><strong>Live execution timeline</strong><span>{running ? "real-time" : phase}</span></div><div className="local-builder-log">{timeline.map((step) => <StatusRow key={step.id} label={step.label} detail={step.detail} status={step.status} />)}</div></div>
       {preparedState?.proposal?.changed && phase === "approval-ready" && <div className="local-builder-result"><div className="local-builder-result-header"><strong>Approval required</strong><span>{preparedState.proposal.relativePath}</span></div><p>Review this diff before Vivus writes to disk.</p><pre>{preparedState.proposal.diffPreview}</pre><div className="file-editor-actions"><button type="button" onClick={() => void applyApprovedPatch()}>Approve & Apply</button><button type="button" onClick={rejectPreparedPatch}>Reject</button></div></div>}
       {approvals.length > 0 && <div className="local-builder-result"><div className="local-builder-result-header"><strong>Approval queue</strong><span>{approvals.length} saved</span></div>{approvals.slice(0, 5).map((item) => <p key={item.id}><strong>{item.status}</strong> — {item.task} • {item.relativePath}</p>)}</div>}
       {history.length > 0 && <div className="local-builder-result"><div className="local-builder-result-header"><strong>Recent builder history</strong><span>{history.length} saved</span></div>{history.slice(0, 5).map((entry) => <p key={entry.id}><strong>{entry.status}</strong> — {entry.task}{entry.changedFile ? ` • ${entry.changedFile}` : ""}</p>)}</div>}
       {result && phase !== "approval-ready" && <div className="local-builder-result"><div className="local-builder-result-header"><strong>{stageLabel(result)}</strong><span>{result.proposal?.relativePath ?? "No file changed"}</span></div><p>{result.message}</p>{result.proposal?.diffPreview && <pre>{result.proposal.diffPreview}</pre>}</div>}
-      <div className="local-builder-log">{logs.map((log) => <div key={log.id} className={`local-builder-log-row ${log.status}`}><span /><div><strong>{log.label}</strong><em>{log.detail}</em></div></div>)}</div>
+      <div className="local-builder-log">{logs.map((log) => <StatusRow key={log.id} label={log.label} detail={log.detail} status={log.status} />)}</div>
     </section>
   );
 }
