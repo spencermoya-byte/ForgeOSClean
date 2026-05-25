@@ -1,5 +1,6 @@
 import React from "react";
 import Editor from "@monaco-editor/react";
+import { getActiveWorkspaceFilesRoot } from "./workspaceFilesRoot";
 
 const DEFAULT_PROJECT_PATH = "C:/ForgeOSClean";
 const PROJECT_PATH_KEY = "vivus.previewProjectPath.v1";
@@ -35,7 +36,7 @@ type OpenFileEvent = CustomEvent<{ relativePath: string }>;
 
 function readInitialProjectPath() {
   try {
-    return window.localStorage.getItem(PROJECT_PATH_KEY)?.trim() || DEFAULT_PROJECT_PATH;
+    return getActiveWorkspaceFilesRoot() || window.localStorage.getItem(PROJECT_PATH_KEY)?.trim() || DEFAULT_PROJECT_PATH;
   } catch {
     return DEFAULT_PROJECT_PATH;
   }
