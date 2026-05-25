@@ -1,0 +1,18 @@
+export { useWorkspaceStore, getWorkspaceSnapshot, getActiveWorkspaceProject, getActiveWorkspaceRootPath } from "./stores/workspaceStore";
+export { createWorkspaceFromPath, switchWorkspace, renameWorkspace, deleteWorkspace } from "./workspaceProjectActions";
+export { getWorkspaceProjects, getCurrentWorkspaceProject, hasActiveWorkspace } from "./workspaceSelectors";
+export { getWorkspaceStatus } from "./workspaceStatus";
+export { getBuilderWorkspaceScope } from "./workspaceBuilderScope";
+export { getPreviewWorkspaceScope } from "./workspacePreviewScope";
+export { getFileWorkspaceScope } from "./workspaceFileScope";
+export { getExecutionWorkspaceScope } from "./workspaceExecutionScope";
+export { guardWorkspacePath, requireWorkspacePath, normalizeWorkspacePath, NO_ACTIVE_WORKSPACE_MESSAGE } from "./workspacePathGuards";
+export { emitWorkspaceChanged, emitWorkspaceRefresh, subscribeWorkspaceChanged } from "./workspaceEvents";
+export { workspaceProjectToAppRecord, workspaceProjectsToAppRecords, projectRootFromPrompt } from "./workspaceProjectAdapter";
+export type { VivusProject, WorkspaceState } from "./lib/projects/projectRegistry";
+export type { WorkspaceStoreSnapshot, WorkspaceStoreApi } from "./stores/workspaceStore";
+export type { WorkspaceStatus } from "./workspaceStatus";
+export type { BuilderWorkspaceScope } from "./workspaceBuilderScope";
+export type { PreviewWorkspaceScope } from "./workspacePreviewScope";
+export type { FileWorkspaceScope } from "./workspaceFileScope";
+export type { ExecutionWorkspaceScope } from "./workspaceExecutionScope";
