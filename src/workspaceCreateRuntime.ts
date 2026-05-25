@@ -1,3 +1,4 @@
+import { getActiveProjectPath } from "./lib/projects/projectRegistry";
 import { createWorkspaceFromPath } from "./workspaceProjectActions";
 import { projectRootFromPrompt } from "./workspaceProjectAdapter";
 import { validateSafeWorkspacePath } from "./workspaceSafeValidation";
@@ -8,17 +9,47 @@ export type WorkspaceCreateResult = {
   reason?: string;
 };
 
+function looksLikeAbsolutePath(value: string) {
+  return /^[a-zA-Z]:[\\/]/.test(value) || value.startsWith("/") || value.startsWith("~");
+}
+
 export function createWorkspaceFromUserInput(input: string): WorkspaceCreateResult {
   const trimmed = input.trim();
+
   if (!trimmed) {
     return {
       created: false,
-      reason: "Workspace path is required.",
+      reason: "Describe what to build or provide a workspace path.",
     };
   }
 
-  const rootPath = projectRootFromPrompt(trimmed) || trimmed;
-  const validation = validateSafeWorkspacePath(rootPath);
+  // Production behavior:
+  // Ideas/prompts should NOT be validated as filesystem paths.
+  // Only explicit absolute paths are treated as workspace roots.
+  const inferredPath = projectRootFromPrompt(trimmed);
+  const requestedPath = inferredPath || trimmed;
+
+  const isPathRequest = looksLikeAbsolutePath(requestedPath);
+
+  // User entered an idea like "bedjet app"
+  // Reuse current workspace if available instead of throwing a fake path error.
+  if (!isPathRequest) {
+    const activeWorkspace = getActiveProjectPath();
+
+    if (activeWorkspace) {
+      return {
+        created: true,
+        projectId: undefined,
+      };
+    }
+
+    return {
+      created: false,
+      reason: "Select or create a local workspace before building.",
+    };
+  }
+
+  const validation = validateSafeWorkspacePath(requestedPath);
 
   if (!validation.valid) {
     return {
