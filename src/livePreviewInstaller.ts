@@ -1,4 +1,10 @@
 import "./LivePreviewPanel.css";
+import {
+  canRunWorkspacePreview,
+  getWorkspacePreviewBlockedReason,
+  getWorkspacePreviewRuntimePath,
+  persistWorkspacePreviewRuntimePath,
+} from "./workspacePreviewRuntimePath";
 
 type PreviewStatus = "stopped" | "starting" | "running" | "failed";
 
@@ -14,8 +20,6 @@ type LivePreviewResponse = {
 };
 
 const DEFAULT_PREVIEW_URL = "http://127.0.0.1:1420";
-const DEFAULT_PROJECT_PATH = "C:/ForgeOSClean";
-const PREVIEW_PROJECT_PATH_KEY = "vivus.previewProjectPath.v1";
 
 let previewUrl = "";
 let previewPid: number | null = null;
@@ -39,17 +43,11 @@ function escapeHtml(value: string) {
 }
 
 function getPreviewProjectPath() {
-  try {
-    return window.localStorage.getItem(PREVIEW_PROJECT_PATH_KEY)?.trim() || DEFAULT_PROJECT_PATH;
-  } catch {
-    return DEFAULT_PROJECT_PATH;
-  }
+  return getWorkspacePreviewRuntimePath();
 }
 
 function setPreviewProjectPath(path: string) {
-  try {
-    window.localStorage.setItem(PREVIEW_PROJECT_PATH_KEY, path.trim() || DEFAULT_PROJECT_PATH);
-  } catch {}
+  persistWorkspacePreviewRuntimePath(path);
 }
 
 function normalizeResponse(response: LivePreviewResponse | null | undefined) {
@@ -109,6 +107,11 @@ function startStatusPolling() {
 
 async function startLivePreview() {
   if (previewStatus === "starting") return;
+
+  if (!canRunWorkspacePreview()) {
+    setStatus("failed", getWorkspacePreviewBlockedReason());
+    return;
+  }
 
   const projectPath = getPreviewProjectPath();
   setStatus("starting");
@@ -195,27 +198,28 @@ function renderMountedPanel() {
 
   const running = previewStatus === "running" && Boolean(previewUrl);
   const frameUrl = previewFrameUrl();
+  const canRun = canRunWorkspacePreview();
 
   mountedPanel.innerHTML = `
     <div class="live-preview-header">
       <div class="tool-panel-heading">
         <div>
           <h2>Live Preview</h2>
-          <p>Embedded localhost preview for the selected project folder.</p>
+          <p>Workspace-owned localhost preview for the active project folder.</p>
         </div>
       </div>
-      <div class="live-preview-status ${previewStatus}">
-        <span></span>${previewStatus}
+      <div class="live-preview-status ${canRun ? previewStatus : "failed"}">
+        <span></span>${canRun ? previewStatus : "blocked"}
       </div>
     </div>
 
     <label class="live-preview-path-field">
-      <span>Project folder</span>
+      <span>Workspace folder</span>
       <input type="text" value="${escapeHtml(getPreviewProjectPath())}" spellcheck="false" data-preview-path-input />
     </label>
 
     <div class="live-preview-actions">
-      <button type="button" data-preview-action="start" ${previewStatus === "starting" ? "disabled" : ""}>
+      <button type="button" data-preview-action="start" ${!canRun || previewStatus === "starting" ? "disabled" : ""}>
         ${running ? "Restart Preview" : previewStatus === "starting" ? "Starting..." : "Start Preview"}
       </button>
       <button type="button" data-preview-action="stop" ${running || previewStatus === "starting" ? "" : "disabled"}>
@@ -226,14 +230,14 @@ function renderMountedPanel() {
     </div>
 
     <div class="live-preview-meta">
-      <span>${previewUrl || "Preview not started"}</span>
+      <span>${canRun ? previewUrl || "Preview not started" : escapeHtml(getWorkspacePreviewBlockedReason())}</span>
       ${previewPid !== null ? `<em>PID ${previewPid}</em>` : ""}
     </div>
 
     <div class="live-preview-frame-shell">
       ${running
         ? `<iframe title="Vivus embedded live preview" src="${frameUrl}" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"></iframe>`
-        : `<div class="live-preview-empty"><div class="preview-window"><div class="preview-window-top"></div><div class="preview-window-body">${escapeHtml(failureReason || (previewStatus === "starting" ? "Starting preview server..." : "Preview not started."))}</div></div></div>`}
+        : `<div class="live-preview-empty"><div class="preview-window"><div class="preview-window-top"></div><div class="preview-window-body">${escapeHtml(failureReason || (!canRun ? getWorkspacePreviewBlockedReason() : previewStatus === "starting" ? "Starting preview server..." : "Preview not started."))}</div></div></div>`}
     </div>
   `;
 
