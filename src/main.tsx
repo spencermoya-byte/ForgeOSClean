@@ -13,6 +13,7 @@ import { startWorkspaceBuilderRuntimeInstaller } from './workspaceBuilderRuntime
 import { startWorkspaceExecutionRuntimeInstaller } from './workspaceExecutionRuntimeInstaller';
 import { startWorkspaceFilesRuntimeInstaller } from './workspaceFilesRuntimeInstaller';
 import { startWorkspacePreviewRuntimeInstaller } from './workspacePreviewRuntimeInstaller';
+import { startWorkspaceTerminalRuntimeInstaller } from './workspaceTerminalRuntimeInstaller';
 import { startLegacyWorkspaceBridge } from './legacyWorkspaceBridge';
 import { startLivePreviewInstaller } from './livePreviewInstaller';
 import { startTerminalWorkflowInstaller } from './terminalWorkflowInstaller';
@@ -37,6 +38,7 @@ startWorkspaceBuilderRuntimeInstaller();
 startWorkspacePreviewRuntimeInstaller();
 startWorkspaceExecutionRuntimeInstaller();
 startWorkspaceFilesRuntimeInstaller();
+startWorkspaceTerminalRuntimeInstaller();
 startWorkspaceProjectSwitcherInstaller();
 startWorkspaceAppsPageInstaller();
 startWorkspaceCreatePageInstaller();
