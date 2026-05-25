@@ -9,6 +9,7 @@ import {
   setActiveProject as setRegistryActiveProject,
   type VivusProject,
 } from "../lib/projects/projectRegistry";
+import { emitWorkspaceChanged, emitWorkspaceRefresh } from "../workspaceEvents";
 
 export type WorkspaceStoreSnapshot = {
   activeProject: VivusProject | null;
@@ -35,18 +36,15 @@ function readSnapshot(): WorkspaceStoreSnapshot {
   };
 }
 
-function emitWorkspaceChanged() {
-  if (typeof window !== "undefined") {
-    window.dispatchEvent(new CustomEvent("vivus-workspace-changed", { detail: snapshot }));
-    window.dispatchEvent(new Event("vivus-files-refresh"));
-    window.dispatchEvent(new Event("vivus-preview-refresh"));
-  }
+function emitWorkspaceStoreChanged() {
+  emitWorkspaceChanged(snapshot);
+  emitWorkspaceRefresh();
 }
 
 function refreshSnapshot() {
   snapshot = readSnapshot();
   listeners.forEach((listener) => listener());
-  emitWorkspaceChanged();
+  emitWorkspaceStoreChanged();
 }
 
 function subscribe(listener: Listener) {
