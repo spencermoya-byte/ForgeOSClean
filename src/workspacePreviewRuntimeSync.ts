@@ -1,4 +1,5 @@
 import { subscribeWorkspaceChanged } from "./workspaceEvents";
+import { resetWorkspacePreviewLifecycleForWorkspace } from "./workspacePreviewLifecycle";
 import { canRunWorkspacePreview, getWorkspacePreviewRuntimePath } from "./workspacePreviewRuntimePath";
 
 export type WorkspacePreviewRuntimeState = {
@@ -20,6 +21,7 @@ function syncPreviewRuntimeState() {
     __VIVUS_PREVIEW_WORKSPACE_RUNTIME__?: WorkspacePreviewRuntimeState;
   }).__VIVUS_PREVIEW_WORKSPACE_RUNTIME__ = state;
 
+  resetWorkspacePreviewLifecycleForWorkspace();
   window.dispatchEvent(new Event("vivus-preview-refresh"));
 }
 
