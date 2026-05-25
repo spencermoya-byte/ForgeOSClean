@@ -40,6 +40,7 @@ import { startWorkspaceRuntimeGlobals } from './workspaceRuntimeGlobals';
 import { startWorkspaceUtilityRail } from './workspaceUtilityRail';
 import { hydrateWorkspaceAppState } from './workspaceAppHydrator';
 import { startWorkspaceRuntimeBridge } from './workspaceRuntimeBridge';
+import { startSystemProtectionWatchdog } from './systemProtectionWatchdog';
 
 (window as Window & { __VIVUS_WORKSPACE_OWNED__?: boolean }).__VIVUS_WORKSPACE_OWNED__ = true;
 
@@ -48,6 +49,7 @@ startWorkspaceRuntimeBridge();
 hydrateWorkspaceAppState();
 bootstrapWorkspaceRuntime();
 startWorkspaceRuntimeGlobals();
+startSystemProtectionWatchdog();
 startWorkspaceActiveProjectInstaller();
 startWorkspaceAppOwnershipRuntime();
 startWorkspaceAppOwnershipGuard();
