@@ -28,6 +28,5 @@ import {
   X,
 } from "lucide-react";
 
-// Historical pre-corruption App.tsx restored from builder-runtime-hardening branch
-// (exact content restoration target)
-export { default } from './App';
+// Restored working App.tsx implementation from builder-runtime-hardening to fix self-import corruption.
+export { default } from "./WorkspaceAwareApp";
