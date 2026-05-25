@@ -7,6 +7,9 @@ import { CommitPanel } from "./CommitPanel";
 import { ProjectFilesPanel, initializeProjectFiles } from "./ProjectFilesPanel";
 import { runBuilderExecutionPreview } from "./builderExecution";
 import { VerifiedEditPanel } from "./VerifiedEditPanel";
+import { useAppWorkspaceMigrationRuntime } from "./AppWorkspaceMigrationRuntime";
+import { createWorkspaceFromUserInput } from "./workspaceCreateRuntime";
+import { activateWorkspaceById } from "./workspaceSwitcherController";
 import {
   applyAndVerifyEdit,
   checkpointVerifiedEdit,
@@ -37,8 +40,6 @@ type BuilderTask = { id: string; title: string; status: TaskStatus };
 type ActivityStatus = "pending" | "active" | "done" | "blocked";
 type BuilderActivity = { id: string; label: string; detail: string; status: ActivityStatus };
 
-const PROJECT_KEY = "vivus.projects.v1";
-const ACTIVE_PROJECT_KEY = "vivus.activeProject.v1";
 const quickStarts = ["Website", "Desktop App", "AI Tool", "Automation", "API", "Game", "Utility"];
 const bottomNav: Array<{ route: Route; label: string; icon: React.ReactNode }> = [
   { route: "apps", label: "Apps", icon: <LayoutGrid size={20} strokeWidth={2.2} /> },
@@ -66,20 +67,6 @@ function normalizeRoute(value: string): Route {
 
 function pluginLabel(id: OpenPlugin) {
   return availablePlugins.find((plugin) => plugin.id === id)?.label ?? id;
-}
-
-function readProjects(): ProjectRecord[] {
-  try {
-    const raw = localStorage.getItem(PROJECT_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function projectNameFrom(prompt: string) {
-  const words = prompt.trim().replace(/^(build|create|make|design)\s+/i, "").split(/\s+/).slice(0, 5).join(" ");
-  return words ? words.charAt(0).toUpperCase() + words.slice(1) : "Untitled Project";
 }
 
 function shortDate(value: string) {
@@ -142,6 +129,11 @@ function makeActivity(mode: "planned" | "approved" | "complete"): BuilderActivit
 }
 
 export default function App() {
+  const workspaceRuntime = useAppWorkspaceMigrationRuntime();
+  const projects = workspaceRuntime.projects;
+  const activeProjectId = workspaceRuntime.activeProjectId;
+  const activeProject = workspaceRuntime.activeProject;
+
   const [route, setRoute] = React.useState<Route>(() => normalizeRoute(window.location.hash || "create"));
   const [workspaceTab, setWorkspaceTab] = React.useState<WorkspaceTab>("builder");
   const [openPlugins, setOpenPlugins] = React.useState<OpenPlugin[]>(defaultPlugins);
@@ -149,8 +141,6 @@ export default function App() {
   const [showProjectMenu, setShowProjectMenu] = React.useState(false);
   const [toast, setToast] = React.useState("");
   const [homePrompt, setHomePrompt] = React.useState("");
-  const [projects, setProjects] = React.useState<ProjectRecord[]>(readProjects);
-  const [activeProjectId, setActiveProjectId] = React.useState(() => localStorage.getItem(ACTIVE_PROJECT_KEY) ?? "");
   const [buildInput, setBuildInput] = React.useState("");
   const [buildMessages, setBuildMessages] = React.useState<BuildMessage[]>([]);
   const [currentMode, setCurrentMode] = React.useState<BuildMode>("build");
@@ -163,7 +153,6 @@ export default function App() {
   const [verifiedEdit, setVerifiedEdit] = React.useState<VerifiedEditState | null>(null);
   const [isVerifiedEditRunning, setIsVerifiedEditRunning] = React.useState(false);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
-  const activeProject = projects.find((project) => project.id === activeProjectId) ?? null;
   const hasStartedConversation = buildMessages.length > 0;
 
   React.useEffect(() => {
@@ -171,14 +160,6 @@ export default function App() {
     window.addEventListener("hashchange", handleHash);
     return () => window.removeEventListener("hashchange", handleHash);
   }, []);
-
-  React.useEffect(() => {
-    localStorage.setItem(PROJECT_KEY, JSON.stringify(projects));
-  }, [projects]);
-
-  React.useEffect(() => {
-    if (activeProjectId) localStorage.setItem(ACTIVE_PROJECT_KEY, activeProjectId);
-  }, [activeProjectId]);
 
   React.useEffect(() => {
     if (!toast) return undefined;
@@ -215,17 +196,16 @@ export default function App() {
     setIsVerifiedEditRunning(false);
   }
 
-  function seedWorkspace(project: ProjectRecord, startWithPrompt = false) {
+  function seedWorkspace(project: ProjectRecord | null, startWithPrompt = false) {
     initializeProjectFiles();
-    setActiveProjectId(project.id);
     setWorkspaceTab("builder");
     setShowProjectMenu(false);
     resetBuilderWorkflow();
     setBuildMessages(
-      startWithPrompt
+      startWithPrompt && project
         ? [
             { role: "user", content: project.originalPrompt },
-            { role: "assistant", content: `Project saved locally.\n\nProject: ${project.name}\n\nStarter files are ready in the Files tab. I’ll use this as the starting build specification.` },
+            { role: "assistant", content: `Workspace opened locally.\n\nWorkspace: ${project.name}\n\nStarter files are ready in the Files tab. I’ll use this as the starting build specification.` },
           ]
         : []
     );
@@ -234,33 +214,42 @@ export default function App() {
   function createProject(prompt: string) {
     const trimmed = prompt.trim();
     if (!trimmed) {
-      setToast("Describe the project first");
+      setToast("Describe the workspace or path first");
       return;
     }
 
-    const now = new Date().toISOString();
-    const project: ProjectRecord = {
-      id: `project-${Date.now()}`,
-      name: projectNameFrom(trimmed),
-      originalPrompt: trimmed,
-      createdAt: now,
-      updatedAt: now,
-      status: "active",
-    };
+    const result = createWorkspaceFromUserInput(trimmed);
+    if (!result.created) {
+      setToast(result.reason ?? "Workspace could not be created");
+      return;
+    }
 
     initializeProjectFiles();
-    setProjects((current) => [project, ...current]);
     setHomePrompt("");
-    seedWorkspace(project, true);
+    seedWorkspace(
+      {
+        id: result.projectId ?? "",
+        name: "Workspace",
+        originalPrompt: trimmed,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: "active",
+      },
+      true
+    );
     navigate("workspace");
-    setToast("Project created");
+    setToast("Workspace created");
   }
 
   function openProject(project: ProjectRecord) {
+    const switched = activateWorkspaceById(project.id);
+    if (!switched) {
+      setToast("Workspace could not be opened");
+      return;
+    }
+
     initializeProjectFiles();
-    const updated = { ...project, updatedAt: new Date().toISOString(), status: "active" as const };
-    setProjects((current) => current.map((item) => (item.id === project.id ? updated : item)));
-    seedWorkspace(updated, false);
+    seedWorkspace(project, false);
     navigate("workspace");
   }
 
@@ -467,7 +456,7 @@ export default function App() {
             {quickStarts.map((item) => <button key={item} type="button" className="quick-pill" onClick={() => setHomePrompt(`Build a ${item.toLowerCase()}`)}>{item}</button>)}
           </div>
           <form className="home-composer" onSubmit={(event) => { event.preventDefault(); createProject(homePrompt); }}>
-            <textarea placeholder="Describe your idea..." value={homePrompt} onChange={(event) => setHomePrompt(event.target.value)} onKeyDown={handleKeyDown} />
+            <textarea placeholder="Describe your idea or paste a local project path..." value={homePrompt} onChange={(event) => setHomePrompt(event.target.value)} onKeyDown={handleKeyDown} />
             <button type="button" className="home-composer-plus" onClick={() => action("Attach files/photos")} aria-label="Attach files"><Plus size={18} strokeWidth={2.5} /></button>
             <div className="home-composer-actions">
               <button type="button" className="soft-button" onClick={() => setCurrentMode("plan")}>Plan</button>
@@ -483,9 +472,9 @@ export default function App() {
     return (
       <main className="simple-page">
         <div className="page-shell">
-          <div className="page-heading-row"><div><h1>Apps</h1><p>Saved local Vivus projects.</p></div><button type="button" className="soft-button" onClick={() => navigate("create")}>New Project</button></div>
+          <div className="page-heading-row"><div><h1>Apps</h1><p>Saved local Vivus workspaces.</p></div><button type="button" className="soft-button" onClick={() => navigate("create")}>New Workspace</button></div>
           {projects.length === 0 ? (
-            <div className="app-card"><div className="app-preview"><span>No saved projects yet</span></div><h2>Create your first app</h2><p>Describe an idea on the Create page and Vivus will save it locally as a project.</p><button type="button" className="soft-button" onClick={() => navigate("create")}>Create Project</button></div>
+            <div className="app-card"><div className="app-preview"><span>No saved workspaces yet</span></div><h2>Create your first workspace</h2><p>Describe an idea or paste a local path on the Create page and Vivus will save it locally as a workspace.</p><button type="button" className="soft-button" onClick={() => navigate("create")}>Create Workspace</button></div>
           ) : (
             <div className="project-list">{projects.map((project) => <button key={project.id} type="button" className="project-card" onClick={() => openProject(project)}><div className="project-card-topline"><span>{project.status}</span><em>{shortDate(project.updatedAt)}</em></div><h2>{project.name}</h2><p>{project.originalPrompt}</p></button>)}</div>
           )}
@@ -499,7 +488,7 @@ export default function App() {
   }
 
   function renderEmptyBuilder() {
-    return <section className="builder-empty-state"><div className="empty-composer-wrap">{activeProject && <div className="project-context-card"><span className="project-pill-dot" aria-hidden="true" /><span>Current project</span><strong>{activeProject.name}</strong><p>{activeProject.originalPrompt}</p></div>}{renderBuildComposer("initial-composer")}<div className="vivus-greeting-card"><div className="greeting-icon">V</div><div><strong>Vivus</strong><p>{greetingMessage(activeProject)}</p></div></div></div></section>;
+    return <section className="builder-empty-state"><div className="empty-composer-wrap">{activeProject && <div className="project-context-card"><span className="project-pill-dot" aria-hidden="true" /><span>Current workspace</span><strong>{activeProject.name}</strong><p>{activeProject.originalPrompt}</p></div>}{renderBuildComposer("initial-composer")}<div className="vivus-greeting-card"><div className="greeting-icon">V</div><div><strong>Vivus</strong><p>{greetingMessage(activeProject)}</p></div></div></div></section>;
   }
 
   function renderBuilderConversation() {
@@ -528,17 +517,17 @@ export default function App() {
           <div className="workspace-brand project-switcher-wrap">
             <div className="logo-box">V</div>
             <button type="button" className="project-name" onClick={() => setShowProjectMenu((open) => !open)} aria-expanded={showProjectMenu}>
-              {activeProject?.name ?? "Untitled Project"} <ChevronDown size={16} strokeWidth={2.4} />
+              {activeProject?.name ?? "No Workspace Selected"} <ChevronDown size={16} strokeWidth={2.4} />
             </button>
             {showProjectMenu && <div className="project-switcher-menu">
-              <div className="project-switcher-header">Projects</div>
-              {projects.length === 0 ? <div className="project-switcher-empty">No saved projects yet</div> : projects.map((project) => (
+              <div className="project-switcher-header">Workspaces</div>
+              {projects.length === 0 ? <div className="project-switcher-empty">No saved workspaces yet</div> : projects.map((project) => (
                 <button key={project.id} type="button" className={project.id === activeProjectId ? "project-switcher-item active" : "project-switcher-item"} onClick={() => openProject(project)}>
                   <strong>{project.name}</strong>
                   <span>{shortDate(project.updatedAt)}</span>
                 </button>
               ))}
-              <button type="button" className="project-switcher-new" onClick={() => { setShowProjectMenu(false); navigate("create"); }}>New Project</button>
+              <button type="button" className="project-switcher-new" onClick={() => { setShowProjectMenu(false); navigate("create"); }}>New Workspace</button>
             </div>}
           </div>
           <button type="button" onClick={() => navigate("create")} style={{ marginLeft: "auto", height: "36px", padding: "0 14px", borderRadius: "10px", border: "1px solid rgba(167, 139, 250, 0.24)", background: "rgba(255, 255, 255, 0.05)", color: "#f8fafc", fontSize: "13px", fontWeight: 600 }}>Home</button>
