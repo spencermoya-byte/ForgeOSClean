@@ -46,40 +46,61 @@ import { startSystemProtectionWatchdog } from './systemProtectionWatchdog';
 
 (window as Window & { __VIVUS_WORKSPACE_OWNED__?: boolean }).__VIVUS_WORKSPACE_OWNED__ = true;
 
-startLegacyWorkspaceBridge();
-startWorkspaceRuntimeBridge();
-hydrateWorkspaceAppState();
-bootstrapWorkspaceRuntime();
-startWorkspaceRuntimeGlobals();
-startSystemProtectionWatchdog();
-startWorkspaceActiveProjectInstaller();
-startWorkspaceAppOwnershipRuntime();
-startWorkspaceAppOwnershipGuard();
-startWorkspaceOwnershipCutoverRuntime();
-startWorkspaceLegacyStateBlocker();
-startWorkspaceLegacyStateWriteBlocker();
-startWorkspaceCutoverVerificationRuntime();
-startWorkspaceRuntimeReadinessInstaller();
-startWorkspaceRuntimeHealthInstaller();
-startWorkspaceSystemRuntimeInstaller();
-startWorkspaceRouteRuntimeInstaller();
-startWorkspaceBuilderRuntimeInstaller();
-startWorkspacePreviewRuntimeInstaller();
-startWorkspacePreviewRuntimeSync();
-startWorkspacePreviewCrashMonitor();
-startWorkspacePreviewAutoRestart();
-startWorkspaceResizePerformanceRuntime();
-startWorkspaceExecutionRuntimeInstaller();
-startWorkspaceFilesRuntimeInstaller();
-startWorkspaceTerminalRuntimeInstaller();
-startWorkspaceProjectSwitcherInstaller();
-startWorkspaceAppsPageInstaller();
-startWorkspaceCreatePageInstaller();
-startLivePreviewInstaller();
-startTerminalWorkflowInstaller();
-startLocalBuilderInstaller();
-startExecutionPolicyInstaller();
-startWorkspaceUtilityRail();
+function afterFirstPaint(callback: () => void) {
+  if (typeof window === 'undefined') {
+    callback();
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => {
+      window.setTimeout(callback, 0);
+    });
+  });
+}
+
+function startCriticalRuntimes() {
+  startLegacyWorkspaceBridge();
+  startWorkspaceRuntimeBridge();
+  hydrateWorkspaceAppState();
+  bootstrapWorkspaceRuntime();
+  startWorkspaceRuntimeGlobals();
+  startSystemProtectionWatchdog();
+  startWorkspaceResizePerformanceRuntime();
+  startWorkspaceActiveProjectInstaller();
+  startWorkspaceAppOwnershipRuntime();
+  startWorkspaceAppOwnershipGuard();
+  startWorkspaceOwnershipCutoverRuntime();
+  startWorkspaceLegacyStateBlocker();
+  startWorkspaceLegacyStateWriteBlocker();
+  startWorkspaceCutoverVerificationRuntime();
+  startWorkspaceRuntimeReadinessInstaller();
+  startWorkspaceRuntimeHealthInstaller();
+  startWorkspaceSystemRuntimeInstaller();
+  startWorkspaceRouteRuntimeInstaller();
+}
+
+function startDeferredRuntimes() {
+  startWorkspaceBuilderRuntimeInstaller();
+  startWorkspacePreviewRuntimeInstaller();
+  startWorkspacePreviewRuntimeSync();
+  startWorkspacePreviewCrashMonitor();
+  startWorkspacePreviewAutoRestart();
+  startWorkspaceExecutionRuntimeInstaller();
+  startWorkspaceFilesRuntimeInstaller();
+  startWorkspaceTerminalRuntimeInstaller();
+  startWorkspaceProjectSwitcherInstaller();
+  startWorkspaceAppsPageInstaller();
+  startWorkspaceCreatePageInstaller();
+  startLivePreviewInstaller();
+  startTerminalWorkflowInstaller();
+  startLocalBuilderInstaller();
+  startExecutionPolicyInstaller();
+  startWorkspaceUtilityRail();
+}
+
+startCriticalRuntimes();
+afterFirstPaint(startDeferredRuntimes);
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
