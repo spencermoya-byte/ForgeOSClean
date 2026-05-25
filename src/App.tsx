@@ -7,6 +7,7 @@ import { CommitPanel } from "./CommitPanel";
 import { ProjectFilesPanel, initializeProjectFiles } from "./ProjectFilesPanel";
 import { runBuilderExecutionPreview } from "./builderExecution";
 import { VerifiedEditPanel } from "./VerifiedEditPanel";
+import { WorkspacePreviewPanel } from "./WorkspacePreviewPanel";
 import { useAppWorkspaceRuntime } from "./AppWorkspaceRuntime";
 import { createWorkspaceFromUserInput } from "./workspaceCreateRuntime";
 import { activateWorkspaceById } from "./workspaceSwitcherController";
@@ -20,7 +21,6 @@ import {
   ChevronDown,
   Code2,
   LayoutGrid,
-  Monitor,
   Plus,
   Send,
   Sparkles,
@@ -499,7 +499,7 @@ export default function App() {
     if (workspaceTab === "builder") return <section className={`workspace-content builder-workspace ${hasStartedConversation ? "builder-has-conversation" : "builder-is-empty"}`}>{hasStartedConversation ? renderBuilderConversation() : renderEmptyBuilder()}</section>;
     if (workspaceTab === "files") return <ProjectFilesPanel projectId={activeProjectId} />;
     if (workspaceTab === "commits") return <CommitPanel projectName={activeProject?.name ?? "Untitled Project"} />;
-    if (workspaceTab === "preview") return <section className="workspace-content tool-panel-screen"><div className="tool-panel-card preview-panel-card"><div className="tool-panel-heading"><Monitor size={18} /><h2>Live Preview</h2></div><div className="preview-placeholder"><div className="preview-window"><div className="preview-window-top" /><div className="preview-window-body">Your app preview will appear here.</div></div><p>Run your project to preview changes.</p></div></div></section>;
+    if (workspaceTab === "preview") return <WorkspacePreviewPanel />;
     return <section className="workspace-content tool-panel-screen"><div className="tool-panel-card"><div className="tool-panel-heading"><Code2 size={18} /><h2>{pluginLabel(workspaceTab)}</h2></div><p className="placeholder-copy">This tool area is reserved for the future {pluginLabel(workspaceTab).toLowerCase()} system.</p></div></section>;
   }
 
