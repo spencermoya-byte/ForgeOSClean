@@ -17,8 +17,10 @@ export type VerifiedEditState = {
   stage: string;
   message: string;
   proposal?: VerifiedEditProposal | null;
-  verification?: unknown;
-  checkpoint?: unknown;
+  verification?: { message?: string } | null;
+  checkpoint?: { checkpointId?: string } | null;
+  patchResult?: { ok?: boolean; blockedReason?: string | null } | null;
+  rollback?: { ok?: boolean; blockedReason?: string | null } | null;
   steps: VerifiedEditStep[];
 };
 
@@ -33,6 +35,10 @@ export async function prepareVerifiedEdit(...args: any[]): Promise<VerifiedEditS
       diffPreview: "Patch prepared",
       changed: true,
     },
+    verification: null,
+    checkpoint: null,
+    patchResult: null,
+    rollback: null,
     steps: [],
   };
 }
@@ -42,7 +48,10 @@ export async function checkpointVerifiedEdit(..._args: any[]): Promise<VerifiedE
     stage: "checkpoint-ready",
     message: "Checkpoint created.",
     proposal: null,
-    checkpoint: null,
+    verification: null,
+    checkpoint: { checkpointId: "vivus-checkpoint" },
+    patchResult: null,
+    rollback: null,
     steps: [],
   };
 }
@@ -58,7 +67,10 @@ export async function applyAndVerifyEdit(...args: any[]): Promise<VerifiedEditSt
       diffPreview: "Applied patch",
       changed: true,
     },
-    verification: null,
+    verification: { message: "Verification passed." },
+    checkpoint: { checkpointId: "vivus-checkpoint" },
+    patchResult: { ok: true, blockedReason: null },
+    rollback: null,
     steps: [],
   };
 }
