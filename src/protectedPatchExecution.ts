@@ -1,6 +1,7 @@
 import { checkBuilderExecutionAllowed, resolveBuilderExecutionPath } from "./builderExecutionGuard";
 import { assertCanReadFilesystemPath, assertCanWriteFilesystemPath } from "./protectedFilesystemGuard";
 import { checkSearchIndexAccessAllowed } from "./searchIndexProtectionGuard";
+import { checkTerminalExecutionAllowed } from "./terminalExecutionSandbox";
 
 export type ProtectedPatchRequest = {
   projectPath?: string;
@@ -10,6 +11,15 @@ export type ProtectedPatchRequest = {
   reason: string;
 };
 
+export type ProtectedPatchVerification = {
+  ok: boolean;
+  commandId: string;
+  exitCode: number | null;
+  stdout: string;
+  stderr: string;
+  blockedReason: string | null;
+};
+
 export type ProtectedPatchResult = {
   ok: boolean;
   projectPath: string;
@@ -17,6 +27,7 @@ export type ProtectedPatchResult = {
   changed: boolean;
   diff: string;
   checkpointId: string | null;
+  verification: ProtectedPatchVerification | null;
   blockedReason: string | null;
 };
 
@@ -32,6 +43,15 @@ type BackendCheckpointResponse = {
   ok?: boolean;
   checkpointId?: string | null;
   files?: string[];
+  blockedReason?: string | null;
+};
+
+type BackendSafeCommandResponse = {
+  ok?: boolean;
+  commandId?: string;
+  exitCode?: number | null;
+  stdout?: string;
+  stderr?: string;
   blockedReason?: string | null;
 };
 
@@ -71,6 +91,7 @@ function blockedPatchResult(projectPath: string, relativePath: string, reason: s
     changed: false,
     diff: "",
     checkpointId: null,
+    verification: null,
     blockedReason: reason,
   };
 }
@@ -127,6 +148,38 @@ async function createProtectedPatchCheckpoint(projectPath: string, relativePath:
   });
 }
 
+async function verifyProtectedPatchBuild(projectPath: string): Promise<ProtectedPatchVerification> {
+  const terminalDecision = checkTerminalExecutionAllowed({ cwd: projectPath, commandId: "npm_build" });
+
+  if (!terminalDecision.allowed) {
+    return {
+      ok: false,
+      commandId: "npm_build",
+      exitCode: null,
+      stdout: "",
+      stderr: "",
+      blockedReason: terminalDecision.reason ?? "Build verification blocked by terminal sandbox.",
+    };
+  }
+
+  const { invoke } = await import("@tauri-apps/api/core");
+  const result = await invoke<BackendSafeCommandResponse>("vivus_run_safe_command", {
+    request: {
+      projectPath,
+      commandId: "npm_build",
+    },
+  });
+
+  return {
+    ok: Boolean(result?.ok),
+    commandId: result?.commandId ?? "npm_build",
+    exitCode: typeof result?.exitCode === "number" ? result.exitCode : null,
+    stdout: result?.stdout ?? "",
+    stderr: result?.stderr ?? "",
+    blockedReason: result?.blockedReason ?? null,
+  };
+}
+
 export async function runProtectedPatchExecution(request: ProtectedPatchRequest): Promise<ProtectedPatchResult> {
   const guard = checkProtectedPatchAllowed(request);
 
@@ -142,6 +195,7 @@ export async function runProtectedPatchExecution(request: ProtectedPatchRequest)
       changed: false,
       diff: "",
       checkpointId: null,
+      verification: null,
       blockedReason: null,
     };
   }
@@ -176,16 +230,34 @@ export async function runProtectedPatchExecution(request: ProtectedPatchRequest)
       },
     });
 
+    if (!result?.ok) {
+      return {
+        ok: false,
+        projectPath: guard.projectPath,
+        relativePath: result?.relativePath ?? request.relativePath,
+        changed: false,
+        diff:
+          result?.diffPreview ??
+          makeSimpleDiff(request.relativePath, request.originalContent, request.nextContent),
+        checkpointId: checkpoint.checkpointId,
+        verification: null,
+        blockedReason: result?.blockedReason ?? "Protected patch backend rejected the write.",
+      };
+    }
+
+    const verification = await verifyProtectedPatchBuild(guard.projectPath);
+
     return {
-      ok: Boolean(result?.ok),
+      ok: verification.ok,
       projectPath: guard.projectPath,
-      relativePath: result?.relativePath ?? request.relativePath,
-      changed: Boolean(result?.changed),
+      relativePath: result.relativePath ?? request.relativePath,
+      changed: Boolean(result.changed),
       diff:
-        result?.diffPreview ??
+        result.diffPreview ??
         makeSimpleDiff(request.relativePath, request.originalContent, request.nextContent),
       checkpointId: checkpoint.checkpointId,
-      blockedReason: result?.blockedReason ?? null,
+      verification,
+      blockedReason: verification.ok ? null : verification.blockedReason ?? "Build verification failed after patch.",
     };
   } catch (error) {
     return blockedPatchResult(
