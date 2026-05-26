@@ -87,3 +87,13 @@ function makePlan(input: string): BuilderPlan {
     ],
   };
 }
+
+function makeTasks(mode: "planned" | "approved" | "complete"): BuilderTask[] {
+  return [
+    { id: "task-1", title: "Analyze the request and convert it into acceptance criteria", status: mode === "planned" ? "queued" : "done" },
+    { id: "task-2", title: "Find the relevant project files and verify current source state", status: mode === "planned" ? "queued" : mode === "approved" ? "running" : "done" },
+    { id: "task-3", title: "Apply a minimal implementation patch", status: mode === "complete" ? "done" : "queued" },
+    { id: "task-4", title: "Run build/type verification", status: mode === "complete" ? "done" : "queued" },
+    { id: "task-5", title: "Report verified result or stop with failure details", status: mode === "complete" ? "done" : "queued" },
+  ];
+}
