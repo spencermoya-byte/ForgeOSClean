@@ -16,6 +16,7 @@ type Props = {
   switchWorkspaceTab: (
     plugin: OpenPlugin
   ) => void;
+  className?: string;
 };
 
 export function PluginRail({
@@ -23,16 +24,22 @@ export function PluginRail({
   workspaceTab,
   pluginLabel,
   switchWorkspaceTab,
+  className,
 }: Props) {
   return (
-    <aside className="workspace-plugin-rail">
+    <aside
+      className={
+        className ??
+        "workspace-plugin-rail"
+      }
+      aria-label="Workspace plugins"
+    >
       {openPlugins.map((plugin) => (
         <button
           key={plugin}
           type="button"
           className={`plugin-rail-button ${
-            workspaceTab ===
-            plugin
+            workspaceTab === plugin
               ? "active"
               : ""
           }`}
@@ -40,6 +47,9 @@ export function PluginRail({
             switchWorkspaceTab(
               plugin
             )
+          }
+          aria-pressed={
+            workspaceTab === plugin
           }
         >
           {pluginLabel(plugin)}
