@@ -7,6 +7,7 @@ import { CommitPanel } from "./CommitPanel";
 import { ProjectFilesPanel, initializeProjectFiles } from "./ProjectFilesPanel";
 import { WorkspacePreviewPanel } from "./WorkspacePreviewPanel";
 import { AccountPage } from "./pages/AccountPage";
+import { AppsPage } from "./pages/AppsPage";
 import { VivusWorkspaceUI } from "./ui/VivusWorkspaceUI";
 import { useAppWorkspaceRuntime } from "./AppWorkspaceRuntime";
 import { createWorkspace } from "./workspace/workspaceController";
@@ -338,16 +339,12 @@ export default function App() {
 
   function renderApps() {
     return (
-      <main className="simple-page">
-        <div className="page-shell">
-          <div className="page-heading-row"><div><h1>Apps</h1><p>Saved local Vivus workspaces.</p></div><button type="button" className="soft-button" onClick={() => navigate("create")}>New Workspace</button></div>
-          {projects.length === 0 ? (
-            <div className="app-card"><div className="app-preview"><span>No saved workspaces yet</span></div><h2>Create your first workspace</h2><p>Describe an idea or paste a local path on the Create page and Vivus will save it locally as a workspace.</p><button type="button" className="soft-button" onClick={() => navigate("create")}>Create Workspace</button></div>
-          ) : (
-            <div className="project-list">{projects.map((project) => <button key={project.id} type="button" className="project-card" onClick={() => openProject(project)}><div className="project-card-topline"><span>{project.status}</span><em>{shortDate(project.updatedAt)}</em></div><h2>{project.name}</h2><p>{project.originalPrompt}</p></button>)}</div>
-          )}
-        </div>
-      </main>
+      <AppsPage
+        projects={projects}
+        shortDate={shortDate}
+        onOpenProject={openProject}
+        onNavigateCreate={() => navigate("create")}
+      />
     );
   }
 
@@ -466,6 +463,8 @@ export default function App() {
 
   return <div className="app">{renderPage()}{route !== "workspace" && <nav className="bottom-nav" aria-label="Main navigation">{bottomNav.map((item, index) => <React.Fragment key={item.route}><button className={route === item.route ? "bottom-nav-item active" : "bottom-nav-item"} onClick={() => navigate(item.route)}><span>{item.icon}</span><strong>{item.label}</strong></button>{index < bottomNav.length - 1 && <div className="nav-divider" />}</React.Fragment>)}</nav>}{toast && <div className="toast">{toast}</div>}</div>;
 }
+
+
 
 
 
