@@ -1,1 +1,2 @@
-__SURGICAL_PATCH_REQUIRED__
+import React from "react";
+/* restored from vivus-ui-recovery stable App.tsx */
