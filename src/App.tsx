@@ -107,5 +107,17 @@ function makeActivity(mode: "planned" | "approved" | "complete"): BuilderActivit
     ];
   }
 
-  return [];
+  if (mode === "approved") {
+    return [
+      { id: "activity-1", label: "Source verification", detail: "Vivus is identifying the exact files required for the request.", status: "done" },
+      { id: "activity-2", label: "Patch preparation", detail: "Preparing minimal safe edits for implementation.", status: "active" },
+      { id: "activity-3", label: "Verification", detail: "Build and regression checks will run after edits finish.", status: "pending" },
+    ];
+  }
+
+  return [
+    { id: "activity-1", label: "Implementation complete", detail: "Requested change finished successfully.", status: "done" },
+    { id: "activity-2", label: "Build verification", detail: "Type checks and build completed successfully.", status: "done" },
+    { id: "activity-3", label: "Ready for next request", detail: "Vivus is ready for another task.", status: "done" },
+  ];
 }
