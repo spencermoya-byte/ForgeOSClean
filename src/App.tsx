@@ -42,3 +42,29 @@ const bottomNav: Array<{ route: Route; label: string; icon: React.ReactNode }> =
   { route: "create", label: "Create", icon: <Sparkles size={20} strokeWidth={2.2} /> },
   { route: "account", label: "Account", icon: <UserRound size={20} strokeWidth={2.2} /> },
 ];
+const defaultPlugins: OpenPlugin[] = ["preview", "builder", "commits"];
+const availablePlugins: Array<{ id: OpenPlugin; label: string }> = [
+  { id: "preview", label: "Live Preview" },
+  { id: "builder", label: "Builder" },
+  { id: "files", label: "Files" },
+  { id: "commits", label: "Commits" },
+  { id: "plugins", label: "Plugins" },
+  { id: "console", label: "Console" },
+  { id: "publish", label: "Publish" },
+];
+
+function normalizeRoute(value: string): Route {
+  const cleaned = value.replace("#", "").replace("/", "").trim().toLowerCase();
+  if (cleaned === "apps") return "apps";
+  if (cleaned === "account") return "account";
+  if (cleaned === "workspace") return "workspace";
+  return "create";
+}
+
+function pluginLabel(id: OpenPlugin) {
+  return availablePlugins.find((plugin) => plugin.id === id)?.label ?? id;
+}
+
+function shortDate(value: string) {
+  return new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
