@@ -8,6 +8,7 @@ import { ProjectFilesPanel, initializeProjectFiles } from "./ProjectFilesPanel";
 import { WorkspacePreviewPanel } from "./WorkspacePreviewPanel";
 import { AccountPage } from "./pages/AccountPage";
 import { AppsPage } from "./pages/AppsPage";
+import { CreatePage } from "./pages/CreatePage";
 import { VivusWorkspaceUI } from "./ui/VivusWorkspaceUI";
 import { useAppWorkspaceRuntime } from "./AppWorkspaceRuntime";
 import { createWorkspace } from "./workspace/workspaceController";
@@ -20,7 +21,6 @@ import {
   Code2,
   LayoutGrid,
   Plus,
-  Send,
   Sparkles,
   UserRound,
   X,
@@ -316,24 +316,15 @@ export default function App() {
 
   function renderCreate() {
     return (
-      <main className="create-screen">
-        <section className="create-hero">
-          <div className="workspace-pill"><span className="live-dot" />Vivus local workspace</div>
-          <h1>What do you want to build?</h1>
-          <p className="hero-subtitle">Create anything. Vivus is your local AI-powered canvas.</p>
-          <div className="quick-pill-row">
-            {quickStarts.map((item) => <button key={item} type="button" className="quick-pill" onClick={() => setHomePrompt(`Build a ${item.toLowerCase()}`)}>{item}</button>)}
-          </div>
-          <form className="home-composer" onSubmit={(event) => { event.preventDefault(); createProject(homePrompt); }}>
-            <textarea placeholder="Describe your idea or paste a local project path..." value={homePrompt} onChange={(event) => setHomePrompt(event.target.value)} onKeyDown={handleKeyDown} />
-            <button type="button" className="home-composer-plus" onClick={() => action("Attach files/photos")} aria-label="Attach files"><Plus size={18} strokeWidth={2.5} /></button>
-            <div className="home-composer-actions">
-              <button type="button" className="soft-button" onClick={() => setCurrentMode("plan")}>Plan</button>
-              <button type="submit" className="send-button" aria-label="Create project"><Send size={17} strokeWidth={2.5} /></button>
-            </div>
-          </form>
-        </section>
-      </main>
+      <CreatePage
+        homePrompt={homePrompt}
+        setHomePrompt={setHomePrompt}
+        quickStarts={quickStarts}
+        handleKeyDown={handleKeyDown}
+        createProject={createProject}
+        setCurrentMode={setCurrentMode}
+        action={action}
+      />
     );
   }
 
@@ -463,6 +454,9 @@ export default function App() {
 
   return <div className="app">{renderPage()}{route !== "workspace" && <nav className="bottom-nav" aria-label="Main navigation">{bottomNav.map((item, index) => <React.Fragment key={item.route}><button className={route === item.route ? "bottom-nav-item active" : "bottom-nav-item"} onClick={() => navigate(item.route)}><span>{item.icon}</span><strong>{item.label}</strong></button>{index < bottomNav.length - 1 && <div className="nav-divider" />}</React.Fragment>)}</nav>}{toast && <div className="toast">{toast}</div>}</div>;
 }
+
+
+
 
 
 
