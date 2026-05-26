@@ -97,3 +97,15 @@ function makeTasks(mode: "planned" | "approved" | "complete"): BuilderTask[] {
     { id: "task-5", title: "Report verified result or stop with failure details", status: mode === "complete" ? "done" : "queued" },
   ];
 }
+
+function makeActivity(mode: "planned" | "approved" | "complete"): BuilderActivity[] {
+  if (mode === "planned") {
+    return [
+      { id: "activity-1", label: "Plan generated", detail: "Waiting for approval before file work begins.", status: "done" },
+      { id: "activity-2", label: "Source verification", detail: "Queued until the plan is approved.", status: "pending" },
+      { id: "activity-3", label: "Patch execution", detail: "Blocked until approval and backend execution are connected.", status: "pending" },
+    ];
+  }
+
+  return [];
+}
