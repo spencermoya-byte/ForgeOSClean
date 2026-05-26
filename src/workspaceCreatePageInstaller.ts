@@ -9,7 +9,7 @@ function findCreateForm(target: EventTarget | null) {
 function installWorkspaceCreatePage() {
   if (typeof document === "undefined") return;
 
-  document.addEventListener("submit", (event) => {
+  document.addEventListener("submit", async (event) => {
     const form = findCreateForm(event.target);
     if (!form) return;
 
@@ -17,7 +17,7 @@ function installWorkspaceCreatePage() {
     const value = textarea?.value.trim() ?? "";
     if (!value) return;
 
-    const result = createWorkspaceFromUserInput(value);
+    const result = await createWorkspaceFromUserInput(value);
     if (!result.created) return;
 
     event.preventDefault();
@@ -29,8 +29,11 @@ function installWorkspaceCreatePage() {
 
 let started = false;
 
-export function startWorkspaceCreatePageInstaller() {
+export async function startWorkspaceCreatePageInstaller() {
   if (started) return;
   started = true;
   installWorkspaceCreatePage();
 }
+
+
+

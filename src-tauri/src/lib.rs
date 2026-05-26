@@ -18,6 +18,7 @@ pub fn run() {
             commands::builder_patches::vivus_restore_patch_checkpoint,
             commands::builder_ollama::vivus_ollama_status,
             commands::builder_ollama::vivus_ollama_generate,
+            commands::workspace_fs::vivus_ensure_workspace_structure,
         ])
         .run(tauri::generate_context!())
         .expect("error while running Vivus");

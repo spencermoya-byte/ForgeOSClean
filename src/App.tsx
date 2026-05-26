@@ -6,9 +6,10 @@ import "./VerifiedEditPanel.css";
 import { CommitPanel } from "./CommitPanel";
 import { ProjectFilesPanel, initializeProjectFiles } from "./ProjectFilesPanel";
 import { WorkspacePreviewPanel } from "./WorkspacePreviewPanel";
+import { AccountPage } from "./pages/AccountPage";
 import { VivusWorkspaceUI } from "./ui/VivusWorkspaceUI";
 import { useAppWorkspaceRuntime } from "./AppWorkspaceRuntime";
-import { createWorkspaceFromUserInput } from "./workspaceCreateRuntime";
+import { createWorkspace } from "./workspace/workspaceController";
 import { activateWorkspaceById } from "./workspaceSwitcherController";
 import {
   type VerifiedEditState,
@@ -203,15 +204,15 @@ export default function App() {
     );
   }
 
-  function createProject(prompt: string) {
+  async function createProject(prompt: string) {
     const trimmed = prompt.trim();
     if (!trimmed) {
       setToast("Describe the workspace or path first");
       return;
     }
 
-    const result = createWorkspaceFromUserInput(trimmed);
-    if (!result.created) {
+    const result = await createWorkspace(trimmed);
+    if (!result.ok) {
       setToast(result.reason ?? "Workspace could not be created");
       return;
     }
@@ -350,11 +351,7 @@ export default function App() {
     );
   }
 
-  function renderAccount() {
-    return <main className="simple-page"><div className="account-shell"><div className="avatar">SM</div><h1>Spencer Moya</h1><p>@smgunner14</p><p>smgunner14@gmail.com</p><div className="account-section">{["Profile", "Theme - Dark", "Usage", "Notifications", "Help"].map((item) => <button key={item} type="button" className="account-row" onClick={() => action(item)}><span>{item}</span><em>›</em></button>)}</div></div></main>;
-  }
-
-  function renderWorkspaceContent() {
+  function renderAccount() {    return <AccountPage onAction={action} />;  }  function renderWorkspaceContent() {
   if (workspaceTab === "builder") {
     return (
       <section className="workspace-content builder-workspace">
@@ -469,3 +466,13 @@ export default function App() {
 
   return <div className="app">{renderPage()}{route !== "workspace" && <nav className="bottom-nav" aria-label="Main navigation">{bottomNav.map((item, index) => <React.Fragment key={item.route}><button className={route === item.route ? "bottom-nav-item active" : "bottom-nav-item"} onClick={() => navigate(item.route)}><span>{item.icon}</span><strong>{item.label}</strong></button>{index < bottomNav.length - 1 && <div className="nav-divider" />}</React.Fragment>)}</nav>}{toast && <div className="toast">{toast}</div>}</div>;
 }
+
+
+
+
+
+
+
+
+
+
