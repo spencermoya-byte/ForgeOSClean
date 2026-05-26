@@ -68,3 +68,22 @@ function pluginLabel(id: OpenPlugin) {
 function shortDate(value: string) {
   return new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
+
+function makePlan(input: string): BuilderPlan {
+  const cleaned = input.trim();
+  return {
+    summary: `Build request captured: ${cleaned}. Vivus will turn this into a scoped implementation plan before editing project files.`,
+    requirements: [
+      "Preserve the existing working UI and project structure.",
+      "Identify the files/components that must change before editing.",
+      "Use minimal safe patches instead of broad rewrites.",
+      "Keep the result local-first with no hidden telemetry or cloud dependency.",
+    ],
+    acceptance: [
+      "The requested behavior is visible in the app.",
+      "No unrelated routes or panels regress.",
+      "The project builds successfully after changes.",
+      "The user can revise the plan before execution.",
+    ],
+  };
+}
