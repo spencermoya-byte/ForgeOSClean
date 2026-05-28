@@ -3,12 +3,11 @@ import "./App.css";
 import "./BuilderLifecycle.css";
 import "./BuilderWorkflow.css";
 import "./VerifiedEditPanel.css";
-import { CommitPanel } from "./CommitPanel";
-import { ProjectFilesPanel, initializeProjectFiles } from "./ProjectFilesPanel";
+import { initializeProjectFiles } from "./ProjectFilesPanel";
 import { runBuilderExecutionPreview } from "./builderExecution";
 import { VerifiedEditPanel } from "./VerifiedEditPanel";
-import { WorkspacePreviewPanel } from "./WorkspacePreviewPanel";
 import { useAppWorkspaceRuntime } from "./AppWorkspaceRuntime";
+import { WorkspaceContent } from "./workspace/WorkspaceContent";
 import { createWorkspaceFromUserInput } from "./workspaceCreateRuntime";
 import { activateWorkspaceById } from "./workspaceSwitcherController";
 import {
@@ -19,7 +18,6 @@ import {
 } from "./vivusExecutionLoop";
 import {
   ChevronDown,
-  Code2,
   LayoutGrid,
   Plus,
   Send,
@@ -495,14 +493,6 @@ export default function App() {
     return <section className="builder-conversation-state"><div className="ai-conversation"><div className="ai-message assistant-message"><strong>Vivus</strong><p>{greetingMessage(activeProject)}</p></div>{buildMessages.map((message, index) => <div key={`${message.role}-${index}`} className={`ai-message ${message.role === "user" ? "user-message" : "assistant-message"}`}><strong>{message.role === "user" ? "You" : "Vivus"}</strong><p>{message.content}</p></div>)}{renderWorkflowPanel()}<div ref={messagesEndRef} /></div><div className="bottom-composer-wrap">{renderBuildComposer("bottom-composer")}</div></section>;
   }
 
-  function renderWorkspaceContent() {
-    if (workspaceTab === "builder") return <section className={`workspace-content builder-workspace ${hasStartedConversation ? "builder-has-conversation" : "builder-is-empty"}`}>{hasStartedConversation ? renderBuilderConversation() : renderEmptyBuilder()}</section>;
-    if (workspaceTab === "files") return <ProjectFilesPanel projectId={activeProjectId} />;
-    if (workspaceTab === "commits") return <CommitPanel projectName={activeProject?.name ?? "Untitled Project"} />;
-    if (workspaceTab === "preview") return <WorkspacePreviewPanel />;
-    return <section className="workspace-content tool-panel-screen"><div className="tool-panel-card"><div className="tool-panel-heading"><Code2 size={18} /><h2>{pluginLabel(workspaceTab)}</h2></div><p className="placeholder-copy">This tool area is reserved for the future {pluginLabel(workspaceTab).toLowerCase()} system.</p></div></section>;
-  }
-
   function renderDockTab(pluginId: OpenPlugin, canClose: boolean) {
     return <button key={pluginId} type="button" className={`dock-tab ${workspaceTab === pluginId ? "active" : ""}`} onClick={() => switchWorkspaceTab(pluginId)}>{pluginLabel(pluginId)}{canClose && <span role="button" tabIndex={0} className="dock-tab-close" onClick={(event) => { event.stopPropagation(); closePlugin(pluginId); }} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); event.stopPropagation(); closePlugin(pluginId); } }} aria-label={`Close ${pluginLabel(pluginId)}`}><X size={12} /></span>}</button>;
   }
@@ -532,7 +522,15 @@ export default function App() {
           </div>
           <button type="button" onClick={() => navigate("create")} style={{ marginLeft: "auto", height: "36px", padding: "0 14px", borderRadius: "10px", border: "1px solid rgba(167, 139, 250, 0.24)", background: "rgba(255, 255, 255, 0.05)", color: "#f8fafc", fontSize: "13px", fontWeight: 600 }}>Home</button>
         </header>
-        {renderWorkspaceContent()}
+        <WorkspaceContent
+          workspaceTab={workspaceTab}
+          hasStartedConversation={hasStartedConversation}
+          activeProjectId={activeProjectId}
+          projectName={activeProject?.name ?? "Untitled Project"}
+          pluginLabel={pluginLabel}
+          renderBuilderConversation={renderBuilderConversation}
+          renderEmptyBuilder={renderEmptyBuilder}
+        />
         <nav className="workspace-dock" aria-label="Workspace plugins">{defaultDockPlugins.map((pluginId) => renderDockTab(pluginId, false))}<div className="dock-divider" aria-hidden="true" />{extensionDockPlugins.map((pluginId) => renderDockTab(pluginId, true))}<button type="button" className="dock-plugin-launcher" onClick={() => setShowPluginLauncher((open) => !open)} aria-label="Open plugin launcher"><Plus size={18} strokeWidth={2.5} /></button></nav>
         {showPluginLauncher && <div className="plugin-launcher"><div className="plugin-launcher-header"><h3>Open Tool</h3><button type="button" className="plugin-launcher-close" onClick={() => setShowPluginLauncher(false)} aria-label="Close plugin launcher"><X size={16} /></button></div><div className="plugin-launcher-content">{availablePlugins.map((plugin) => <button key={plugin.id} type="button" className="plugin-launcher-item" onClick={() => openPlugin(plugin.id)}>{plugin.label}</button>)}</div></div>}
       </main>
